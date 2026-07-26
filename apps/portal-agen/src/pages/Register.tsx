@@ -56,7 +56,7 @@ export default function Register() {
       
       if (result.success) {
         setSuccess(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll ke atas agar notifikasi terlihat
+        document.getElementById('register-container')?.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll ke atas agar notifikasi terlihat
         setTimeout(() => {
           navigate('/login');
         }, 3000);
@@ -67,13 +67,15 @@ export default function Register() {
         }
         setError(errMsg);
         setTimeout(() => {
-          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+          const container = document.getElementById('register-container');
+          if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
         }, 100);
       }
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan jaringan');
       setTimeout(() => {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        const container = document.getElementById('register-container');
+        if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
       }, 100);
     } finally {
       setLoading(false);
@@ -81,9 +83,9 @@ export default function Register() {
   };
 
   return (
-    <div style={{
+    <div id="register-container" style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
-      minHeight: '100vh', width: '100%', boxSizing: 'border-box',
+      height: '100vh', width: '100vw', boxSizing: 'border-box', overflowY: 'auto', overflowX: 'hidden',
       background: 'radial-gradient(circle at 50% -20%, #1a365d 0%, #0f172a 50%, #020617 100%)',
       fontFamily: 'Inter, system-ui, sans-serif',
       padding: '40px 24px 100px 24px'
