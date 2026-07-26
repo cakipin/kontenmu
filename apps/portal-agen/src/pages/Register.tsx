@@ -61,10 +61,20 @@ export default function Register() {
           navigate('/login');
         }, 3000);
       } else {
-        setError(result.error || 'Gagal melakukan pendaftaran');
+        let errMsg = result.error || 'Gagal melakukan pendaftaran';
+        if (errMsg.includes('UNIQUE constraint failed: users.username')) {
+          errMsg = 'Username sudah digunakan. Silakan pilih username lain.';
+        }
+        setError(errMsg);
+        setTimeout(() => {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }, 100);
       }
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan jaringan');
+      setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }, 100);
     } finally {
       setLoading(false);
     }
@@ -76,7 +86,7 @@ export default function Register() {
       minHeight: '100vh', width: '100%', boxSizing: 'border-box',
       background: 'radial-gradient(circle at 50% -20%, #1a365d 0%, #0f172a 50%, #020617 100%)',
       fontFamily: 'Inter, system-ui, sans-serif',
-      padding: '40px 24px'
+      padding: '40px 24px 100px 24px'
     }}>
       <style>
         {`
