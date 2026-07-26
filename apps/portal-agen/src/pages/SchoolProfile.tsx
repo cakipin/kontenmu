@@ -36,7 +36,7 @@ export default function SchoolProfile() {
 
     if (hasAccess && schoolName) {
       setIsLoadingSchool(true);
-      fetch('/api/schools?nama=' + encodeURIComponent(schoolName), { cache: 'no-store' })
+      fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/sekolah?nama=` + encodeURIComponent(schoolName), { cache: 'no-store' })
         .then(res => res.json())
         .then(resData => {
           if (resData.success && resData.data) {
@@ -54,7 +54,7 @@ export default function SchoolProfile() {
     if (searchQuery.length >= 3) {
       setIsSearching(true);
       const timer = setTimeout(() => {
-        fetch('/api/schools?search=' + encodeURIComponent(searchQuery))
+        fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/sekolah?search=` + encodeURIComponent(searchQuery))
           .then(res => res.json())
           .then(resData => {
             if (resData.success) setSearchResults(resData.data || []);

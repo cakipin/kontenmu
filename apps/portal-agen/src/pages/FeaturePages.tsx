@@ -3288,7 +3288,7 @@ export function MasterSekolah() {
   useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
-      const url = `/api/schools?page=${currentPage}&limit=15` + (searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '');
+      const url = `${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/sekolah?page=${currentPage}&limit=15` + (searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '');
       fetch(url)
         .then(res => res.json())
         .then(resData => {

@@ -56,7 +56,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     if (searchQuery.length >= 3) {
       setIsSearching(true);
       const timer = setTimeout(() => {
-        fetch('/api/schools?search=' + encodeURIComponent(searchQuery))
+        fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/sekolah?search=` + encodeURIComponent(searchQuery))
           .then(res => res.json())
           .then(resData => {
             if (resData.success) setSearchResults(resData.data || []);
