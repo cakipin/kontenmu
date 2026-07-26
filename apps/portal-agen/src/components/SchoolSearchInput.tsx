@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export function SchoolSearchInput({ value, onChange }: { value: string, onChange: (val: string, id?: number) => void }) {
+export function SchoolSearchInput({ value, onChange, className }: { value: string, onChange: (val: string, id?: number) => void, className?: string }) {
   const [searchQuery, setSearchQuery] = useState(value || '');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -31,7 +31,7 @@ export function SchoolSearchInput({ value, onChange }: { value: string, onChange
   return (
     <div style={{ position: 'relative' }}>
       <input 
-        className="input-control"
+        className={className || "input-control"}
         type="text" 
         value={searchQuery}
         onFocus={() => setIsOpen(true)}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { GlassCard } from '../../../../packages/ui/src/GlassCard';
+import { SchoolSearchInput } from '../components/SchoolSearchInput';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -15,7 +16,9 @@ export default function Register() {
     username: '',
     email: '',
     password: '',
-    role: 'sekolah'
+    role: 'sekolah',
+    sekolah_id: undefined as number | undefined,
+    sekolah_nama: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -164,6 +167,17 @@ export default function Register() {
                 <option value="agen">Agen</option>
               </select>
             </div>
+
+            {(formData.role === 'sekolah' || formData.role === 'siswa') && (
+              <div style={{ textAlign: 'left' }}>
+                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Asal Sekolah</label>
+                <SchoolSearchInput 
+                  value={formData.sekolah_nama}
+                  onChange={(val, id) => setFormData({ ...formData, sekolah_nama: val, sekolah_id: id })}
+                  className="login-input"
+                />
+              </div>
+            )}
 
             <div style={{ textAlign: 'left' }}>
               <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Nama Lengkap</label>
