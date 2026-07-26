@@ -9,7 +9,7 @@ id = "84149d824f0f45ef9898b527c3d6b1e7"
 [[d1_databases]]
 binding = "DB"
 database_name = "KONTENMU_PROD_DB"
-database_id = "fb13bb27-0243-4e4b-bb2a-4df45e0dce41"
+database_id = "fed8248d-2ba2-4d68-8430-b5f64ad2f6bc"
 
 [[r2_buckets]]
 binding = "MEDIA"
