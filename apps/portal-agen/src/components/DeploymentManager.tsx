@@ -209,7 +209,7 @@ export function DeploymentManager() {
             disabled={isPushingGit}
           >
             <GitMerge size={18} />
-            {isPushingGit ? 'Memicu Git...' : 'Push Git'}
+            {isPushingGit ? 'Memicu Git...' : 'Push Git (Staging)'}
           </button>
           
           <button 
@@ -222,6 +222,16 @@ export function DeploymentManager() {
             <Rocket size={18} />
             {isPushingProd ? 'Mendeploy...' : 'Push Production'}
           </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: '16px', marginTop: '16px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+          <a href="https://kontenmu.pages.dev" target="_blank" rel="noreferrer" style={{ fontSize: '14px', color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+            <ExternalLink size={16} /> Buka Web Staging
+          </a>
+          <div style={{ width: '1px', backgroundColor: 'var(--border-subtle)' }}></div>
+          <a href="https://kontenmu-prod.pages.dev" target="_blank" rel="noreferrer" style={{ fontSize: '14px', color: 'var(--success)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+            <ExternalLink size={16} /> Buka Web Production
+          </a>
         </div>
       </div>
     </GlassCard>
