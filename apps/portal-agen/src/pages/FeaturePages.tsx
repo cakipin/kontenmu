@@ -3366,6 +3366,11 @@ export function RoleAccessSettings() {
   const { data, setData } = useAppData();
   const { session } = useAuth();
   
+  const roleAccessPermissions = data.roleAccessPermissions || {};
+  const [permissions, setPermissions] = useState<Record<string, string[]>>(roleAccessPermissions);
+  const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<'access' | 'deploy'>('access');
+
   if (session?.role !== 'superadmin') {
     return (
       <Page title="Akses Ditolak">
@@ -3373,11 +3378,6 @@ export function RoleAccessSettings() {
       </Page>
     );
   }
-
-  const roleAccessPermissions = data.roleAccessPermissions || {};
-  const [permissions, setPermissions] = useState<Record<string, string[]>>(roleAccessPermissions);
-  const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'access' | 'deploy'>('access');
 
   const availableRoles = ['superadmin', 'agen', 'sekolah', 'guru', 'siswa', 'uploader'];
   const menuList = [
