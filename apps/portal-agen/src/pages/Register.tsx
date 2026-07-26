@@ -46,7 +46,7 @@ export default function Register() {
           ...formData,
           nama: formData.username, // placeholder for now, will be updated in onboarding
           role: 'pending',
-          status: 'Menunggu Kelengkapan' // Indicates they need to complete data
+          status: 'Aktif' // User must be Aktif to login, onboarding blocks access instead
         })
       });
       
