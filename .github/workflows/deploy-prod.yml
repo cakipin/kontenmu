@@ -1,0 +1,47 @@
+name: Deploy Production
+
+on:
+  repository_dispatch:
+    types: [deploy-production]
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Application
+        run: |
+          echo "VITE_API_URL=https://kontenmu-prod-api.1912.workers.dev" > apps/portal-agen/.env.production
+          npm run build
+        env:
+          VITE_API_URL: https://kontenmu-prod-api.1912.workers.dev
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: kontenmu-prod
+          directory: apps/portal-agen/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy Backend Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env production
+          workingDirectory: workers/sales-api

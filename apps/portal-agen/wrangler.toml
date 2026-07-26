@@ -1,0 +1,16 @@
+name = "kontenmu"
+compatibility_date = "2024-05-29"
+pages_build_output_dir = "dist"
+
+[[kv_namespaces]]
+binding = "PUCK_DATA"
+id = "84149d824f0f45ef9898b527c3d6b1e7"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "KONTENMU_DB"
+database_id = "32b70d74-ed3d-4e0e-9d27-c5fb785cc374"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "kontenmu-media"

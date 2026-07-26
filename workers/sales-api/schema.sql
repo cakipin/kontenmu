@@ -1,0 +1,5 @@
+CREATE TABLE page_data (
+  id TEXT PRIMARY KEY,
+  content TEXT NOT NULL,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,0 +1,17 @@
+{
+  "name": "KontenMu",
+  "short_name": "KontenMu",
+  "description": "Portal konten pendidikan untuk sekolah, guru, dan siswa.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f6f8fc",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

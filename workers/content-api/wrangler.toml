@@ -1,0 +1,15 @@
+name = "content-api"
+main = "src/index.ts"
+compatibility_date = "2024-05-29"
+
+# KV Namespace – untuk caching metadata file R2 (ukuran, dll.)
+# Buat dengan: npx wrangler kv namespace create "CONTENT_CACHE"
+[[kv_namespaces]]
+binding = "CACHE"
+id = "84149d824f0f45ef9898b527c3d6b1e7"
+
+# R2 Bucket – penyimpanan file konten (PDF, MP4, ZIP, gambar)
+# Bucket yang sama dengan yang digunakan portal-agen untuk upload
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "kontenmu-media"

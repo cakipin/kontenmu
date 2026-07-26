@@ -1,0 +1,18 @@
+name = "sales-api"
+main = "src/index.ts"
+compatibility_date = "2024-05-29"
+
+[dev]
+port = 8787
+
+[[d1_databases]]
+binding = "DB"
+database_name = "KONTENMU_DB"
+database_id = "32b70d74-ed3d-4e0e-9d27-c5fb785cc374"
+
+[env.production]
+name = "kontenmu-prod-api"
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "KONTENMU_PROD_DB"
+database_id = "fed8248d-2ba2-4d68-8430-b5f64ad2f6bc"

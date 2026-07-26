@@ -1,0 +1,102 @@
+import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import {
+  clearSession,
+  getSession,
+  getSessionTimeLeft,
+  saveSession,
+  type AppId,
+  type Session,
+  type UserRole,
+} from './session';
+
+interface AuthContextValue {
+  session: Session | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (username: string, password: string) => Promise<string | null>;
+  logout: () => void;
+  switchRole: (role: UserRole) => void;
+  setCustomSession: (session: Omit<Session, 'expiresAt'>) => void;
+  sessionTimeLeft: string | null;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+interface AuthProviderProps {
+  appId: AppId;
+  allowedRoles?: UserRole[];
+  children: ReactNode;
+}
+
+export function AuthProvider({ appId, allowedRoles, children }: AuthProviderProps) {
+  const [session, setSession] = useState<Session | null>(() => getSession(appId));
+  const [isLoading] = useState(false);
+
+  const value = useMemo<AuthContextValue>(() => ({
+    session,
+    isAuthenticated: !!session,
+    isLoading,
+    sessionTimeLeft: session ? getSessionTimeLeft(session) : null,
+    login: async (username, password) => {
+      try {
+        const res = await fetch('https://sales-api.1912.workers.dev/api/users', { cache: 'no-store' });
+        const json = await res.json();
+        if (json.success && json.data) {
+          const user = json.data.find((u: any) => u.username === username.trim() && u.password === password);
+          if (user) {
+            if (user.status !== 'Aktif') return 'Akun belum aktif atau menunggu approval';
+            if (allowedRoles && !allowedRoles.includes(user.role)) return 'Akses ditolak untuk role ini';
+            
+            const now = Date.now();
+            const nextSession = {
+              id: user.id,
+              username: user.username,
+              role: user.role,
+              displayName: user.nama,
+              initial: (user.nama || user.username).substring(0, 2).toUpperCase(),
+              sekolahId: user.sekolah_id ? parseInt(user.sekolah_id) : undefined,
+              wilayah: user.wilayah || undefined,
+              picture: user.picture || undefined,
+              loginAt: now,
+              expiresAt: now + 24 * 60 * 60 * 1000,
+              isSso: !!user.sso_id
+            };
+            
+            saveSession(appId, nextSession as any);
+            setSession(nextSession as any);
+            return null;
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      return 'Username atau password salah.';
+    },
+    logout: () => {
+      clearSession(appId);
+      setSession(null);
+    },
+    switchRole: (role: UserRole) => {
+      alert(`Simulasi role ${role} dinonaktifkan. Silakan login dengan akun asli.`);
+    },
+    setCustomSession: (customSession: Omit<Session, 'expiresAt'>) => {
+      const nextSession = {
+        ...customSession,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      };
+      saveSession(appId, nextSession as any);
+      setSession(nextSession as any);
+    },
+  }), [appId, allowedRoles, isLoading, session]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth harus dipakai di dalam AuthProvider');
+  }
+  return context;
+}
