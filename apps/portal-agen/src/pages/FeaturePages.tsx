@@ -3444,7 +3444,7 @@ export function RoleAccessSettings() {
           }}>
           Akses User
         </button>
-        {!import.meta.env.VITE_API_URL?.includes('-prod') && (
+        {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
           <button 
             onClick={() => setActiveTab('deploy')}
             style={{
