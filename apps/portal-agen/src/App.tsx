@@ -41,6 +41,7 @@ const ROLE_LABELS: Record<string, string> = {
   agen: 'Agen',
   sekolah: 'Admin Sekolah',
   siswa: 'Siswa (MASA)',
+  guru: 'Guru',
   uploader: 'Uploader Konten',
   pending: 'Menunggu Persetujuan',
 };
@@ -442,7 +443,7 @@ function AppContent() {
                               </span>
                               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                 {user.status === 'Menunggu Approve' 
-                                  ? `Pengajuan: ${user.requestedRole === 'sekolah' ? 'Admin Sekolah' : 'Agen'}` 
+                                  ? `Pengajuan: ${ROLE_LABELS[user.requestedRole || user.role] || 'User'}` 
                                   : 'Menunggu approve'}
                               </span>
                               {user.status === 'Menunggu Approve' && (
@@ -456,7 +457,7 @@ function AppContent() {
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', flexDirection: 'column' }}>
                               <div style={{ display: 'flex', gap: '8px' }}>
                                 <select 
-                                  value={approvingRoles[user.id] || user.requestedRole || 'sekolah'}
+                                  value={approvingRoles[user.id] || user.requestedRole || user.role || 'sekolah'}
                                   onChange={(e) => setApprovingRoles({ ...approvingRoles, [user.id]: e.target.value })}
                                   style={{
                                     padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-subtle)',
@@ -467,6 +468,8 @@ function AppContent() {
                                   <option value="sekolah">Sekolah</option>
                                   <option value="agen">Agen</option>
                                   <option value="uploader">Uploader</option>
+                                  <option value="guru">Guru</option>
+                                  <option value="siswa">Siswa</option>
                                 </select>
                                 <button 
                                   style={{
@@ -474,7 +477,7 @@ function AppContent() {
                                     padding: '6px 12px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600
                                   }}
                                   onClick={async () => {
-                                    const roleToAssign = approvingRoles[user.id] || user.requestedRole || 'sekolah';
+                                    const roleToAssign = approvingRoles[user.id] || user.requestedRole || user.role || 'sekolah';
                                     
                                     // Optimistic UI update
                                     setData((prev: any) => ({
@@ -486,8 +489,8 @@ function AppContent() {
 
                                   // Persist to database
                                   try {
-                                    await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users`, {
-                                      method: 'POST',
+                                    await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/${user.id}`, {
+                                      method: 'PUT',
                                       headers: { 'Content-Type': 'application/json' },
                                       body: JSON.stringify({
                                         ...user,
