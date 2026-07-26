@@ -4,6 +4,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@repo/auth';
 
 import Login from './pages/Login';
+import Register from './pages/Register';
 import LandingPage from './pages/LandingPage';
 import OAuthCallback from './pages/OAuthCallback';
 import NotFound from './pages/NotFound';
@@ -679,6 +680,18 @@ function LoginRoute() {
   return <Login />;
 }
 
+function RegisterRoute() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+
+  return <Register />;
+}
+
 function EditorRoute() {
   const { isAuthenticated, session, isLoading } = useAuth();
 
@@ -713,6 +726,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginRoute />} />
+          <Route path="/register" element={<RegisterRoute />} />
           <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/editor" element={
             <Suspense fallback={<LoadingScreen />}>

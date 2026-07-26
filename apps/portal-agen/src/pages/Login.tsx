@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@repo/auth';
 import { Eye, EyeOff } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { GlassCard } from '../../../../packages/ui/src/GlassCard';
 
@@ -194,20 +195,22 @@ export default function Login() {
           )}
           
           <form onSubmit={handleLocalLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
+            <div style={{ textAlign: 'left' }}>
+              <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Username</label>
               <input 
                 type="text" 
-                placeholder="Username" 
+                placeholder="Masukkan username Anda" 
                 className="login-input" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={isLocalLoading || loading}
               />
             </div>
-            <div style={{ position: 'relative' }}>
+            <div style={{ textAlign: 'left', position: 'relative' }}>
+              <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Password</label>
               <input 
                 type={showPassword ? "text" : "password"} 
-                placeholder="Password" 
+                placeholder="••••••••" 
                 className="login-input" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -221,8 +224,7 @@ export default function Login() {
                 style={{
                   position: 'absolute',
                   right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
+                  top: '38px',
                   background: 'none',
                   border: 'none',
                   color: '#94a3b8',
@@ -235,10 +237,14 @@ export default function Login() {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            <button type="submit" className="login-btn" disabled={isLocalLoading || loading}>
+            <button type="submit" className="login-btn" disabled={isLocalLoading || loading} style={{ marginTop: '8px' }}>
               {isLocalLoading ? 'Masuk...' : 'Masuk'}
             </button>
           </form>
+
+          <div style={{ marginTop: '24px', color: '#64748b', fontSize: '0.9rem', textAlign: 'center' }}>
+            Belum punya akun? <Link to="/register" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>Daftar di sini</Link>
+          </div>
 
           <div className="divider">Atau masuk dengan</div>
 
