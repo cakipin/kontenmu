@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { GlassCard } from '../../../../packages/ui/src/GlassCard';
@@ -25,6 +25,11 @@ export default function Register() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  useEffect(() => {
+    // Memastikan scroll tidak macet jika ter-lock oleh halaman sebelumnya (seperti modal di Landing/Dashboard)
+    document.body.style.overflow = 'auto';
+  }, []);
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.username || !formData.password || !formData.nama) {
@@ -42,6 +47,7 @@ export default function Register() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          wilayah: formData.sekolah_nama, // Map sekolah_nama ke wilayah agar backend menyimpannya
           status: 'Menunggu Approve' // Default status for new sign ups
         })
       });
@@ -50,6 +56,7 @@ export default function Register() {
       
       if (result.success) {
         setSuccess(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll ke atas agar notifikasi terlihat
         setTimeout(() => {
           navigate('/login');
         }, 3000);
