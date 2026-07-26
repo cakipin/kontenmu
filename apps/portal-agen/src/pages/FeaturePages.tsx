@@ -3444,16 +3444,18 @@ export function RoleAccessSettings() {
           }}>
           Akses User
         </button>
-        <button 
-          onClick={() => setActiveTab('deploy')}
-          style={{
-            background: 'none', border: 'none', padding: '8px 16px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
-            color: activeTab === 'deploy' ? 'var(--primary)' : 'var(--text-secondary)',
-            borderBottom: activeTab === 'deploy' ? '2px solid var(--primary)' : '2px solid transparent',
-            marginBottom: '-13px'
-          }}>
-          Push & Setup
-        </button>
+        {!import.meta.env.VITE_API_URL?.includes('-prod') && (
+          <button 
+            onClick={() => setActiveTab('deploy')}
+            style={{
+              background: 'none', border: 'none', padding: '8px 16px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
+              color: activeTab === 'deploy' ? 'var(--primary)' : 'var(--text-secondary)',
+              borderBottom: activeTab === 'deploy' ? '2px solid var(--primary)' : '2px solid transparent',
+              marginBottom: '-13px'
+            }}>
+            Push & Setup
+          </button>
+        )}
       </div>
 
       {activeTab === 'access' && (

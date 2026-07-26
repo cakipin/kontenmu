@@ -29,12 +29,15 @@ jobs:
         env:
           VITE_API_URL: https://kontenmu-prod-api.1912.workers.dev
 
+      - name: Apply Production Bindings Configuration
+        run: cp apps/portal-agen/wrangler-prod.toml apps/portal-agen/wrangler.toml
+
       - name: Deploy Frontend to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name kontenmu-prod --branch main --config wrangler-prod.toml
+          command: pages deploy dist --project-name kontenmu-prod --branch main
           workingDirectory: apps/portal-agen
 
       - name: Deploy Backend Worker
