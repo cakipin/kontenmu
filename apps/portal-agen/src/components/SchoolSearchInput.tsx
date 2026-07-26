@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useAppData } from '../data/appData';
 
-export function SchoolSearchInput({ value, onChange, className }: { value: string, onChange: (val: string, id?: number) => void, className?: string }) {
+export function SchoolSearchInput({ value, onChange, className, subscribedOnly = false }: { value: string, onChange: (val: string, id?: number) => void, className?: string, subscribedOnly?: boolean }) {
   const [searchQuery, setSearchQuery] = useState(value || '');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  
+  const { data } = useAppData();
 
   useEffect(() => {
     setSearchQuery(value || '');
@@ -13,16 +16,31 @@ export function SchoolSearchInput({ value, onChange, className }: { value: strin
   useEffect(() => {
     if (searchQuery.length >= 3 && isOpen) {
       setIsSearching(true);
-      const timer = setTimeout(() => {
-        fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/sekolah?search=` + encodeURIComponent(searchQuery))
-          .then(res => res.json())
-          .then(resData => {
-            if (resData.success) setSearchResults(resData.data || []);
-          })
-          .catch(err => console.error(err))
-          .finally(() => setIsSearching(false));
-      }, 500);
-      return () => clearTimeout(timer);
+      
+      if (subscribedOnly && data && data.schools && data.sales) {
+        const timer = setTimeout(() => {
+          const lowerQuery = searchQuery.toLowerCase();
+          const subscribedSchools = data.schools.filter(school => 
+            data.sales.some(s => s.schoolId === school.id || data.schools.find(ds => ds.id === s.schoolId)?.npsn === school.npsn)
+          );
+          
+          const results = subscribedSchools.filter(s => s.nama.toLowerCase().includes(lowerQuery) || (s.npsn && s.npsn.includes(lowerQuery)));
+          setSearchResults(results.slice(0, 20));
+          setIsSearching(false);
+        }, 300);
+        return () => clearTimeout(timer);
+      } else {
+        const timer = setTimeout(() => {
+          fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/sekolah?search=` + encodeURIComponent(searchQuery))
+            .then(res => res.json())
+            .then(resData => {
+              if (resData.success) setSearchResults(resData.data || []);
+            })
+            .catch(err => console.error(err))
+            .finally(() => setIsSearching(false));
+        }, 500);
+        return () => clearTimeout(timer);
+      }
     } else {
       setSearchResults([]);
     }

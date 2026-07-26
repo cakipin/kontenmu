@@ -52,6 +52,11 @@ export default function Register() {
       setError('Nama Lengkap, Username, dan Password harus diisi');
       return;
     }
+
+    if ((formData.role === 'siswa' || formData.role === 'guru') && !formData.sekolah_id) {
+      setError('Silakan pilih sekolah dari daftar sekolah berlangganan yang tersedia.');
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -198,23 +203,25 @@ export default function Register() {
               <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Peran (Role)</label>
               <select name="role" value={formData.role} onChange={handleChange} className="login-input">
                 <option value="sekolah">Admin Sekolah</option>
+                <option value="guru">Guru</option>
                 <option value="siswa">Siswa</option>
                 <option value="agen">Agen</option>
               </select>
             </div>
 
-            {(formData.role === 'sekolah' || formData.role === 'siswa') && (
+            {(formData.role === 'sekolah' || formData.role === 'guru' || formData.role === 'siswa') && (
               <div style={{ textAlign: 'left' }}>
                 <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Asal Sekolah</label>
                 <SchoolSearchInput 
                   value={formData.sekolah_nama}
                   onChange={(val, id) => setFormData({ ...formData, sekolah_nama: val, sekolah_id: id })}
                   className="login-input"
+                  subscribedOnly={formData.role === 'guru' || formData.role === 'siswa'}
                 />
               </div>
             )}
 
-            {formData.role === 'siswa' && (
+            {(formData.role === 'siswa' || formData.role === 'guru') && (
               <>
                 <div style={{ textAlign: 'left' }}>
                   <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Kelas</label>
@@ -233,14 +240,14 @@ export default function Register() {
                 </div>
                 
                 <div style={{ textAlign: 'left' }}>
-                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>NISN</label>
+                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>NISN / NUPTK</label>
                   <input 
                     name="nisn"
                     type="text" 
                     value={formData.nisn} 
                     onChange={handleChange}
                     className="login-input" 
-                    placeholder="Masukkan NISN"
+                    placeholder={formData.role === 'guru' ? "Masukkan NUPTK / NIP" : "Masukkan NISN"}
                     required
                   />
                 </div>
