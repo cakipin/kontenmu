@@ -25,13 +25,13 @@ export default function Register() {
 
   const getKelasOptions = (sekolahNama: string) => {
     const name = (sekolahNama || '').toUpperCase();
-    if (name.includes('SMA') || name.includes('SMK') || name.includes('SLTA') || name.includes('MA') || name.includes('MAK')) {
+    if (/\b(SMA|SMK|SLTA|MA|MAK|SMAN|SMKN|MAN|MAS)\b/.test(name) || name.startsWith('SMA') || name.startsWith('SMK')) {
       return ['10', '11', '12'];
     }
-    if (name.includes('SMP') || name.includes('SLTP') || name.includes('MTS')) {
+    if (/\b(SMP|SLTP|MTS|SMPN|MTSN)\b/.test(name) || name.startsWith('SMP') || name.startsWith('MTS')) {
       return ['7', '8', '9'];
     }
-    if (name.includes('SD') || name.includes('MI')) {
+    if (/\b(SD|MI|SDN|MIN|MIS)\b/.test(name) || name.startsWith('SD') || name.startsWith('MI')) {
       return ['1', '2', '3', '4', '5', '6'];
     }
     return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
