@@ -5,7 +5,6 @@ import { AuthProvider, useAuth } from '@repo/auth';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
-import LandingPage from './pages/LandingPage';
 import OAuthCallback from './pages/OAuthCallback';
 import NotFound from './pages/NotFound';
 
@@ -724,7 +723,7 @@ function App() {
     <AuthProvider appId="portal-agen">
       <Router>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginRoute />} />
           <Route path="/register" element={<RegisterRoute />} />
           <Route path="/oauth/callback" element={<OAuthCallback />} />
