@@ -11,6 +11,7 @@ export function DeploymentManager() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isPushingGit, setIsPushingGit] = useState(false);
   const [isPushingProd, setIsPushingProd] = useState(false);
+  const [isRollingBack, setIsRollingBack] = useState(false);
   const [showToken, setShowToken] = useState(false);
 
   useEffect(() => {
@@ -103,6 +104,45 @@ export function DeploymentManager() {
       setMessage({ text: `Error: ${error.message}`, type: 'error' });
     } finally {
       setIsPushingProd(false);
+    }
+  };
+
+  const rollbackProduction = async () => {
+    if (!githubToken || !repoOwner || !repoName) {
+      setMessage({ text: 'Harap lengkapi Token PAT, Repo Owner, dan Repo Name untuk Rollback.', type: 'error' });
+      return;
+    }
+
+    if (!window.confirm('PERINGATAN: Aksi ini akan membatalkan (undo) 1 update terakhir dan mengembalikan sistem ke versi stabil sebelumnya. Lanjutkan?')) {
+      return;
+    }
+
+    setIsRollingBack(true);
+    setMessage({ text: 'Memulai Rollback Production (Membatalkan Update Terakhir)...', type: 'info' });
+
+    try {
+      const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/dispatches`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${githubToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_type: 'rollback-production'
+        })
+      });
+
+      if (response.ok || response.status === 204) {
+        setMessage({ text: 'Rollback berhasil dipicu! Silakan cek tab Actions di GitHub Anda.', type: 'success' });
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        setMessage({ text: `Gagal Rollback: ${errData.message || response.statusText}`, type: 'error' });
+      }
+    } catch (error: any) {
+      setMessage({ text: `Error: ${error.message}`, type: 'error' });
+    } finally {
+      setIsRollingBack(false);
     }
   };
 
@@ -200,29 +240,37 @@ export function DeploymentManager() {
 
         <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '8px 0' }} />
 
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <button 
-            type="button" 
-            className="btn btn-primary" 
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            onClick={pushGit}
-            disabled={isPushingGit}
-          >
-            <GitMerge size={18} />
-            {isPushingGit ? 'Memicu Git...' : 'Push Git (Staging)'}
-          </button>
-          
-          <button 
-            type="button" 
-            className="btn btn-primary" 
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--success)', borderColor: 'var(--success)' }}
-            onClick={pushProduction}
-            disabled={isPushingProd}
-          >
-            <Rocket size={18} />
-            {isPushingProd ? 'Mendeploy...' : 'Push Production'}
-          </button>
-        </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button 
+              type="button" 
+              className="action-button" 
+              onClick={pushGit} 
+              disabled={isPushingGit}
+            >
+              <GitMerge size={16} />
+              {isPushingGit ? 'Memicu Git...' : 'Push Git (Staging)'}
+            </button>
+            <button 
+              type="button" 
+              className="action-button" 
+              onClick={pushProduction} 
+              disabled={isPushingProd}
+              style={{ background: 'var(--success)', color: '#fff', border: 'none' }}
+            >
+              <Rocket size={16} />
+              {isPushingProd ? 'Mendeploy...' : 'Push Production'}
+            </button>
+            <button 
+              type="button" 
+              className="action-button" 
+              onClick={rollbackProduction} 
+              disabled={isRollingBack}
+              style={{ background: 'var(--danger, #ef4444)', color: '#fff', border: 'none' }}
+            >
+              <AlertCircle size={16} />
+              {isRollingBack ? 'Rollback...' : 'Rollback Update Terakhir'}
+            </button>
+          </div>
 
         <div style={{ display: 'flex', gap: '16px', marginTop: '16px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
           <a href="https://kontenmu.pages.dev" target="_blank" rel="noreferrer" style={{ fontSize: '14px', color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>

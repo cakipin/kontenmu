@@ -1,0 +1,61 @@
+name: Rollback Production
+
+on:
+  repository_dispatch:
+    types: [rollback-production]
+
+jobs:
+  rollback-prod:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      deployments: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Git Config
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Revert Last Commit
+        run: |
+          git revert HEAD --no-edit
+          git push origin main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Application
+        run: |
+          echo "VITE_API_URL=https://kontenmu-prod-api.1912.workers.dev" > apps/portal-agen/.env.production
+          npm run build
+        env:
+          VITE_API_URL: https://kontenmu-prod-api.1912.workers.dev
+
+      - name: Apply Production Bindings Configuration
+        run: cp apps/portal-agen/wrangler-prod.toml apps/portal-agen/wrangler.toml
+
+      - name: Deploy Frontend to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name kontenmu-prod --branch main
+          workingDirectory: apps/portal-agen
+
+      - name: Deploy Backend Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env production
+          workingDirectory: workers/sales-api
