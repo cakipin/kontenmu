@@ -14,7 +14,7 @@ export function SchoolSearchInput({ value, onChange, className }: { value: strin
     if (searchQuery.length >= 3 && isOpen) {
       setIsSearching(true);
       const timer = setTimeout(() => {
-        fetch((import.meta.env.VITE_API_URL || '') + '/api/schools?search=' + encodeURIComponent(searchQuery))
+        fetch('/api/schools?search=' + encodeURIComponent(searchQuery))
           .then(res => res.json())
           .then(resData => {
             if (resData.success) setSearchResults(resData.data || []);
