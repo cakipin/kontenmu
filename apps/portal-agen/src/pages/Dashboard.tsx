@@ -108,7 +108,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     });
     
     try {
-      await fetch('/api/users', {
+      await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedUser)

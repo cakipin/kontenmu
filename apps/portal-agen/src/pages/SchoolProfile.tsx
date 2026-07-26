@@ -26,7 +26,7 @@ export default function SchoolProfile() {
   
   useEffect(() => {
     if (hasAccess) {
-      fetch('/api/users', { cache: 'no-store' })
+      fetch(`${import.meta.env.VITE_API_URL || ''}/api/users`, { cache: 'no-store' })
         .then(res => res.json())
         .then(res => {
           if (res.users) setUsers(res.users);
@@ -83,7 +83,7 @@ export default function SchoolProfile() {
           sekolahId: selectedSchool.id,
           sekolah_id: selectedSchool.id
         };
-        const res = await fetch('/api/users', {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedUser)

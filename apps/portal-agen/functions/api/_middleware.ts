@@ -6,7 +6,7 @@ export const onRequest = async (context: any) => {
   if (url.pathname.startsWith('/api/auth/') || url.pathname.startsWith('/api/media/')) {
     return next();
   }
-  if ((url.pathname === '/api/puck-data' || url.pathname === '/api/schools') && request.method === 'GET') {
+  if ((url.pathname === '/api/puck-data' || url.pathname.startsWith('/api/schools')) && request.method === 'GET') {
     return next();
   }
   

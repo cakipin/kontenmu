@@ -217,7 +217,7 @@ function AppContent() {
 
     const syncPendingUsers = async () => {
       try {
-        const res = await fetch('/api/users', { cache: 'no-store' });
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users`, { cache: 'no-store' });
         if (!res.ok) return;
         const json = await res.json() as { users?: any[] };
         const remoteUsers: any[] = json.users ?? [];
@@ -486,7 +486,7 @@ function AppContent() {
 
                                   // Persist to database
                                   try {
-                                    await fetch('/api/users', {
+                                    await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users`, {
                                       method: 'POST',
                                       headers: { 'Content-Type': 'application/json' },
                                       body: JSON.stringify({
