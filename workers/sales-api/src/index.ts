@@ -25,9 +25,21 @@ export default {
 
     if (url.pathname === "/api/sekolah" && request.method === "GET") {
       try {
-        const { results } = await env.DB.prepare(
-          "SELECT id, nama, alamat_jalan, nomor_telepon, kabupaten, npsn FROM master_data_sekolah ORDER BY nama"
-        ).all();
+        const search = url.searchParams.get("search");
+        let query = "SELECT id, nama, alamat_jalan, nomor_telepon, kabupaten, npsn, provinsi FROM master_data_sekolah ";
+        let results;
+        
+        if (search) {
+          query += "WHERE nama LIKE ? ORDER BY nama LIMIT 20";
+          const stmt = await env.DB.prepare(query).bind(`%${search}%`);
+          const res = await stmt.all();
+          results = res.results;
+        } else {
+          query += "ORDER BY nama LIMIT 100";
+          const res = await env.DB.prepare(query).all();
+          results = res.results;
+        }
+
         // Map database columns to app interface expected fields
         const mappedResults = results.map((row: any) => ({
           id: row.id,
@@ -36,7 +48,8 @@ export default {
           telepon: row.nomor_telepon,
           kota: row.kabupaten,
           agen: '',
-          npsn: row.npsn
+          npsn: row.npsn,
+          provinsi: row.provinsi
         }));
         return json({ success: true, data: mappedResults });
       } catch (error: unknown) {

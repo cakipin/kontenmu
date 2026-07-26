@@ -37,8 +37,7 @@ export default function Register() {
     setSuccess(false);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev';
-      const response = await fetch(`${apiUrl}/api/users`, {
+      const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -66,11 +65,11 @@ export default function Register() {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      minHeight: '100vh', width: '100vw', 
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
+      minHeight: '100vh', width: '100%', boxSizing: 'border-box',
       background: 'radial-gradient(circle at 50% -20%, #1a365d 0%, #0f172a 50%, #020617 100%)',
       fontFamily: 'Inter, system-ui, sans-serif',
-      padding: '24px'
+      padding: '40px 24px'
     }}>
       <style>
         {`
