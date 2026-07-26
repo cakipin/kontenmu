@@ -18,8 +18,24 @@ export default function Register() {
     password: '',
     role: 'sekolah',
     sekolah_id: undefined as number | undefined,
-    sekolah_nama: ''
+    sekolah_nama: '',
+    kelas: '',
+    nisn: ''
   });
+
+  const getKelasOptions = (sekolahNama: string) => {
+    const name = (sekolahNama || '').toUpperCase();
+    if (name.includes('SMA') || name.includes('SMK') || name.includes('SLTA') || name.includes('MA') || name.includes('MAK')) {
+      return ['10', '11', '12'];
+    }
+    if (name.includes('SMP') || name.includes('SLTP') || name.includes('MTS')) {
+      return ['7', '8', '9'];
+    }
+    if (name.includes('SD') || name.includes('MI')) {
+      return ['1', '2', '3', '4', '5', '6'];
+    }
+    return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -47,6 +63,7 @@ export default function Register() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          nis: formData.nisn, // Map nisn ke nis untuk API
           wilayah: formData.sekolah_nama, // Map sekolah_nama ke wilayah agar backend menyimpannya
           status: 'Menunggu Approve' // Default status for new sign ups
         })
@@ -195,6 +212,39 @@ export default function Register() {
                   className="login-input"
                 />
               </div>
+            )}
+
+            {formData.role === 'siswa' && (
+              <>
+                <div style={{ textAlign: 'left' }}>
+                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Kelas</label>
+                  <select 
+                    name="kelas" 
+                    value={formData.kelas} 
+                    onChange={handleChange} 
+                    className="login-input"
+                    required
+                  >
+                    <option value="">Pilih Kelas</option>
+                    {getKelasOptions(formData.sekolah_nama).map(k => (
+                      <option key={k} value={k}>Kelas {k}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div style={{ textAlign: 'left' }}>
+                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>NISN</label>
+                  <input 
+                    name="nisn"
+                    type="text" 
+                    value={formData.nisn} 
+                    onChange={handleChange}
+                    className="login-input" 
+                    placeholder="Masukkan NISN"
+                    required
+                  />
+                </div>
+              </>
             )}
 
             <div style={{ textAlign: 'left' }}>

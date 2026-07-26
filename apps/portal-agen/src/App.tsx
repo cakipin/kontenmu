@@ -201,9 +201,9 @@ function AppContent() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const pendingUsers = data.users.filter(u => u.role === 'pending');
+  const pendingUsers = data.users.filter(u => u.status === 'Menunggu Approve' || u.role === 'pending');
   const newUsers = data.users.filter(
-    (user) => user.username !== session?.username && user.role !== 'pending' && (
+    (user) => user.username !== session?.username && user.role !== 'pending' && user.status !== 'Menunggu Approve' && (
       user.newUserSource === 'sso'
       || user.newUserSource === 'manual'
       || user.terakhirLogin === 'Belum pernah login'
