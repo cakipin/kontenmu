@@ -48,8 +48,8 @@ export default function Register() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.username || !formData.password || !formData.nama) {
-      setError('Nama Lengkap, Username, dan Password harus diisi');
+    if (!formData.username || !formData.password || !formData.nama || !formData.email) {
+      setError('Nama Lengkap, Username, Email, dan Password harus diisi');
       return;
     }
 
@@ -221,37 +221,37 @@ export default function Register() {
               </div>
             )}
 
+            {formData.role === 'siswa' && (
+              <div style={{ textAlign: 'left' }}>
+                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Kelas</label>
+                <select 
+                  name="kelas" 
+                  value={formData.kelas} 
+                  onChange={handleChange} 
+                  className="login-input"
+                  required
+                >
+                  <option value="">Pilih Kelas</option>
+                  {getKelasOptions(formData.sekolah_nama).map(k => (
+                    <option key={k} value={k}>Kelas {k}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
             {(formData.role === 'siswa' || formData.role === 'guru') && (
-              <>
-                <div style={{ textAlign: 'left' }}>
-                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Kelas</label>
-                  <select 
-                    name="kelas" 
-                    value={formData.kelas} 
-                    onChange={handleChange} 
-                    className="login-input"
-                    required
-                  >
-                    <option value="">Pilih Kelas</option>
-                    {getKelasOptions(formData.sekolah_nama).map(k => (
-                      <option key={k} value={k}>Kelas {k}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div style={{ textAlign: 'left' }}>
-                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>NISN / NUPTK</label>
-                  <input 
-                    name="nisn"
-                    type="text" 
-                    value={formData.nisn} 
-                    onChange={handleChange}
-                    className="login-input" 
-                    placeholder={formData.role === 'guru' ? "Masukkan NUPTK / NIP" : "Masukkan NISN"}
-                    required
-                  />
-                </div>
-              </>
+              <div style={{ textAlign: 'left' }}>
+                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>{formData.role === 'guru' ? 'NUPTK / NIP' : 'NISN'}</label>
+                <input 
+                  name="nisn"
+                  type="text" 
+                  value={formData.nisn} 
+                  onChange={handleChange}
+                  className="login-input" 
+                  placeholder={formData.role === 'guru' ? "Masukkan NUPTK / NIP" : "Masukkan NISN"}
+                  required
+                />
+              </div>
             )}
 
             <div style={{ textAlign: 'left' }}>
@@ -267,7 +267,7 @@ export default function Register() {
             </div>
 
             <div style={{ textAlign: 'left' }}>
-              <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Email (Opsional)</label>
+              <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Email</label>
               <input 
                 name="email"
                 type="email" 
@@ -275,6 +275,7 @@ export default function Register() {
                 onChange={handleChange}
                 className="login-input" 
                 placeholder="nama@email.com"
+                required
               />
             </div>
 
