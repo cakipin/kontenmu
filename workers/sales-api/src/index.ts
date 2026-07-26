@@ -25,8 +25,7 @@ export default {
 
     if (url.pathname === "/api/sekolah" && request.method === "GET") {
       try {
-        const { results } = console.log("INSERTING BODY:", JSON.stringify(body));
-        await env.DB.prepare(
+        const { results } = await env.DB.prepare(
           "SELECT id, nama, alamat_jalan, nomor_telepon, kabupaten, npsn FROM master_data_sekolah ORDER BY nama"
         ).all();
         // Map database columns to app interface expected fields
