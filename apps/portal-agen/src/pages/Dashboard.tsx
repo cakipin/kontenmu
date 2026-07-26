@@ -17,7 +17,7 @@ import {
 } from '../data/appData';
 
 export default function Dashboard({ currentRole }: { currentRole: string }) {
-  const { session } = useAuth();
+  const { session, setCustomSession } = useAuth();
   const { data, setData } = useAppData();
   
   const [users, setUsers] = useState<any[]>([]);
@@ -126,6 +126,17 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedUser)
       });
+      
+      if (session) {
+        setCustomSession({
+          ...session,
+          role: selectedRole as any,
+          displayName: namaLengkap || session.displayName,
+          sekolahId: sekolahId,
+          wilayah: sekolahNama
+        });
+      }
+      
       window.location.reload();
 
     } catch (err) {
