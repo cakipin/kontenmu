@@ -4,6 +4,7 @@ import { useAuth } from '@repo/auth';
 import { GlassCard } from '../../../../packages/ui/src/GlassCard';
 import { Chip } from '../../../../packages/ui/src/Chip';
 import { Package, Banknote, Building2, ShoppingCart, CreditCard, Users, BookOpen, TrendingUp, Clock, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Settings } from 'lucide-react';
+import { SchoolSearchInput } from '../components/SchoolSearchInput';
 import {
   allocatedLicenses,
   formatCurrency,
@@ -24,10 +25,12 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   const [suratTugas, setSuratTugas] = useState('');
   const [masaAktif, setMasaAktif] = useState('');
   
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [selectedSchool, setSelectedSchool] = useState<any>(null);
+  const [selectedRole, setSelectedRole] = useState('sekolah');
+  const [sekolahNama, setSekolahNama] = useState('');
+  const [sekolahId, setSekolahId] = useState<number | undefined>(undefined);
+  const [namaLengkap, setNamaLengkap] = useState(session?.displayName || '');
+  const [kelas, setKelas] = useState('');
+  const [nisn, setNisn] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWarning, setShowWarning] = useState(true);
@@ -52,23 +55,19 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     document.body.style.overflow = 'auto';
   }, [currentRole, users, session?.username]);
 
-  useEffect(() => {
-    if (searchQuery.length >= 3) {
-      setIsSearching(true);
-      const timer = setTimeout(() => {
-        fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/sekolah?search=` + encodeURIComponent(searchQuery))
-          .then(res => res.json())
-          .then(resData => {
-            if (resData.success) setSearchResults(resData.data || []);
-          })
-          .catch(err => console.error(err))
-          .finally(() => setIsSearching(false));
-      }, 500);
-      return () => clearTimeout(timer);
-    } else {
-      setSearchResults([]);
+  const getKelasOptions = (schoolName: string) => {
+    const name = (schoolName || '').toUpperCase();
+    if (/\b(SMA|SMK|SLTA|MA|MAK|SMAN|SMKN|MAN|MAS)\b/.test(name) || name.startsWith('SMA') || name.startsWith('SMK')) {
+      return ['10', '11', '12'];
     }
-  }, [searchQuery]);
+    if (/\b(SMP|SLTP|MTS|SMPN|MTSN)\b/.test(name) || name.startsWith('SMP') || name.startsWith('MTS')) {
+      return ['7', '8', '9'];
+    }
+    if (/\b(SD|MI|SDN|MIN|MIS)\b/.test(name) || name.startsWith('SD') || name.startsWith('MI')) {
+      return ['1', '2', '3', '4', '5', '6'];
+    }
+    return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+  };
 
   const handleSubmitRegistration = async (e: any) => {
     e.preventDefault();
@@ -88,15 +87,29 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       } as any;
     }
     
-    const wilayah = selectedSchool?.nama || '';
+    if (selectedRole === 'sekolah' && !sekolahId) {
+      alert('Silakan pilih sekolah dari senarai pencarian.');
+      setIsSubmitting(false);
+      return;
+    }
     
+    if ((selectedRole === 'siswa' || selectedRole === 'guru') && !sekolahId) {
+      alert('Silakan pilih sekolah berlangganan dari daftar.');
+      setIsSubmitting(false);
+      return;
+    }
+
     const updatedUser = {
       ...userToUpdate,
-      status: 'Menunggu Approve' as any, // Temporary status UI
-      requestedRole: 'sekolah',
-      suratTugas,
-      masaAktif,
-      wilayah
+      role: selectedRole,
+      status: selectedRole === 'sekolah' ? 'Menunggu Approve' : 'Aktif',
+      nama: namaLengkap || userToUpdate.nama,
+      sekolah_id: sekolahId || null,
+      wilayah: sekolahNama || '',
+      kelas: selectedRole === 'siswa' ? kelas : null,
+      nis: (selectedRole === 'siswa' || selectedRole === 'guru') ? nisn : null,
+      suratTugas: selectedRole === 'sekolah' ? suratTugas : null,
+      masaAktif: selectedRole === 'sekolah' ? masaAktif : null,
     } as any;
     
     setData(prev => {
@@ -108,11 +121,13 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     });
     
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users`, {
-        method: 'POST',
+      await fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/users/${userToUpdate.id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedUser)
       });
+      window.location.reload();
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -491,10 +506,10 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
               <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⚠️</div>
               <h2 style={{ fontSize: '1.5rem', marginBottom: '16px', color: 'var(--text-primary)' }}>Peringatan Akses</h2>
               <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '24px', fontSize: '1rem' }}>
-                Jika Anda <strong>bukan</strong> Admin Sekolah, akun Anda akan berstatus menunggu persetujuan Admin Dikdasmen dan tidak dapat mengakses fitur utama.
+                Akun Anda berstatus baru dan belum melengkapi data institusi. Anda tidak dapat mengakses fitur utama sebelum melengkapi profil.
               </p>
               <div style={{ padding: '16px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderRadius: '8px', marginBottom: '32px', textAlign: 'left', fontSize: '0.9rem' }}>
-                <strong>Catatan:</strong> Bagi Admin Sekolah, silakan lanjutkan untuk melengkapi data institusi dan dokumen pendukung Anda agar dapat diverifikasi oleh sistem.
+                <strong>Catatan:</strong> Silakan klik lanjutkan untuk melengkapi data Anda agar dapat diverifikasi oleh sistem.
               </div>
               <button 
                 onClick={() => setShowWarning(false)}
@@ -507,75 +522,112 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
           ) : (
             <GlassCard style={{ padding: '40px', maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
               <h2 style={{ fontSize: '1.5rem', marginBottom: '8px', textAlign: 'center' }}>Lengkapi Data Profil</h2>
-              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '32px' }}>Silakan lengkapi formulir di bawah ini untuk mengajukan permohonan akses sebagai Admin Sekolah.</p>
+              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '32px' }}>Silakan lengkapi formulir di bawah ini untuk mengakses aplikasi.</p>
               
               <form onSubmit={handleSubmitRegistration} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontWeight: 500 }}>Cari Nama Sekolah</span>
-                  <div style={{ position: 'relative' }}>
-                    <input 
-                      type="text" 
-                      className="input-control"
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setSelectedSchool(null);
-                      }}
-                      placeholder="Ketik minimal 3 huruf..."
-                      required={!selectedSchool}
-                    />
-                    {isSearching && <div style={{ position: 'absolute', right: '12px', top: '10px', fontSize: '0.8rem' }}>Mencari...</div>}
-                    {searchResults.length > 0 && !selectedSchool && (
-                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)', borderRadius: '8px', marginTop: '4px', zIndex: 50, maxHeight: '200px', overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                        {searchResults.map((res: any) => (
-                          <div 
-                            key={res.id} 
-                            style={{ padding: '10px', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer' }}
-                            onClick={() => {
-                              setSelectedSchool(res);
-                              setSearchQuery(res.nama);
-                              setSearchResults([]);
-                            }}
-                          >
-                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{res.nama}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>NPSN: {res.npsn || '-'}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <span style={{ fontWeight: 500 }}>Peran (Role)</span>
+                  <select 
+                    value={selectedRole} 
+                    onChange={(e) => setSelectedRole(e.target.value)} 
+                    className="input-control"
+                  >
+                    <option value="sekolah">Admin Sekolah</option>
+                    <option value="guru">Guru</option>
+                    <option value="siswa">Siswa</option>
+                    <option value="agen">Agen</option>
+                  </select>
                 </label>
+
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontWeight: 500 }}>Upload Surat Tugas</span>
-                  <input 
-                    type="file" 
-                    className="input-control" 
-                    onChange={(e) => {
-                      if (e.target.files?.length) setSuratTugas(e.target.files[0].name);
-                    }}
-                    required 
-                  />
-                  {suratTugas && <span style={{ fontSize: '0.8rem', color: 'var(--brand-primary)' }}>File: {suratTugas}</span>}
-                </label>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontWeight: 500 }}>Masa Aktif</span>
+                  <span style={{ fontWeight: 500 }}>Nama Lengkap</span>
                   <input 
                     type="text" 
                     className="input-control" 
-                    placeholder="Contoh: Tahun Ajaran 2024/2025"
-                    value={masaAktif}
-                    onChange={(e) => setMasaAktif(e.target.value)}
+                    value={namaLengkap}
+                    onChange={(e) => setNamaLengkap(e.target.value)}
                     required 
                   />
                 </label>
+
+                {(selectedRole === 'sekolah' || selectedRole === 'guru' || selectedRole === 'siswa') && (
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontWeight: 500 }}>Asal Sekolah</span>
+                    <SchoolSearchInput 
+                      value={sekolahNama}
+                      onChange={(val, id) => { setSekolahNama(val); setSekolahId(id); }}
+                      className="input-control"
+                      subscribedOnly={selectedRole === 'guru' || selectedRole === 'siswa'}
+                    />
+                  </label>
+                )}
+
+                {selectedRole === 'sekolah' && (
+                  <>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <span style={{ fontWeight: 500 }}>Upload Surat Tugas</span>
+                      <input 
+                        type="file" 
+                        className="input-control" 
+                        onChange={(e) => {
+                          if (e.target.files?.length) setSuratTugas(e.target.files[0].name);
+                        }}
+                        required 
+                      />
+                      {suratTugas && <span style={{ fontSize: '0.8rem', color: 'var(--brand-primary)' }}>File: {suratTugas}</span>}
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <span style={{ fontWeight: 500 }}>Masa Aktif</span>
+                      <input 
+                        type="text" 
+                        className="input-control" 
+                        placeholder="Contoh: Tahun Ajaran 2024/2025"
+                        value={masaAktif}
+                        onChange={(e) => setMasaAktif(e.target.value)}
+                        required 
+                      />
+                    </label>
+                  </>
+                )}
+
+                {selectedRole === 'siswa' && (
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontWeight: 500 }}>Kelas</span>
+                    <select 
+                      value={kelas} 
+                      onChange={(e) => setKelas(e.target.value)} 
+                      className="input-control"
+                      required
+                    >
+                      <option value="">Pilih Kelas</option>
+                      {getKelasOptions(sekolahNama).map(k => (
+                        <option key={k} value={k}>Kelas {k}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+
+                {(selectedRole === 'siswa' || selectedRole === 'guru') && (
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontWeight: 500 }}>{selectedRole === 'guru' ? 'NUPTK / NIP' : 'NISN'}</span>
+                    <input 
+                      type="text" 
+                      className="input-control" 
+                      value={nisn}
+                      onChange={(e) => setNisn(e.target.value)}
+                      placeholder={selectedRole === 'guru' ? "Masukkan NUPTK / NIP" : "Masukkan NISN"}
+                      required 
+                    />
+                  </label>
+                )}
                 
                 <button 
                   type="submit" 
                   className="action-button" 
-                  disabled={isSubmitting || !selectedSchool}
+                  disabled={isSubmitting || ((selectedRole === 'sekolah' || selectedRole === 'guru' || selectedRole === 'siswa') && !sekolahId)}
                   style={{ marginTop: '16px' }}
                 >
-                  {isSubmitting ? 'Mengirim...' : 'Kirim Pengajuan'}
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Profil'}
                 </button>
               </form>
             </GlassCard>

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { GlassCard } from '../../../../packages/ui/src/GlassCard';
-import { SchoolSearchInput } from '../components/SchoolSearchInput';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -12,30 +11,12 @@ export default function Register() {
   const [success, setSuccess] = useState<boolean>(false);
 
   const [formData, setFormData] = useState({
-    nama: '',
-    username: '',
     email: '',
-    password: '',
-    role: 'sekolah',
-    sekolah_id: undefined as number | undefined,
-    sekolah_nama: '',
-    kelas: '',
-    nisn: ''
+    username: '',
+    password: ''
   });
 
-  const getKelasOptions = (sekolahNama: string) => {
-    const name = (sekolahNama || '').toUpperCase();
-    if (/\b(SMA|SMK|SLTA|MA|MAK|SMAN|SMKN|MAN|MAS)\b/.test(name) || name.startsWith('SMA') || name.startsWith('SMK')) {
-      return ['10', '11', '12'];
-    }
-    if (/\b(SMP|SLTP|MTS|SMPN|MTSN)\b/.test(name) || name.startsWith('SMP') || name.startsWith('MTS')) {
-      return ['7', '8', '9'];
-    }
-    if (/\b(SD|MI|SDN|MIN|MIS)\b/.test(name) || name.startsWith('SD') || name.startsWith('MI')) {
-      return ['1', '2', '3', '4', '5', '6'];
-    }
-    return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-  };
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -48,13 +29,8 @@ export default function Register() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.username || !formData.password || !formData.nama || !formData.email) {
-      setError('Nama Lengkap, Username, Email, dan Password harus diisi');
-      return;
-    }
-
-    if ((formData.role === 'siswa' || formData.role === 'guru') && !formData.sekolah_id) {
-      setError('Silakan pilih sekolah dari daftar sekolah berlangganan yang tersedia.');
+    if (!formData.username || !formData.password || !formData.email) {
+      setError('Email, Username, dan Password harus diisi');
       return;
     }
     
@@ -68,9 +44,9 @@ export default function Register() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          nis: formData.nisn, // Map nisn ke nis untuk API
-          wilayah: formData.sekolah_nama, // Map sekolah_nama ke wilayah agar backend menyimpannya
-          status: 'Menunggu Approve' // Default status for new sign ups
+          nama: formData.username, // placeholder for now, will be updated in onboarding
+          role: 'pending',
+          status: 'Menunggu Kelengkapan' // Indicates they need to complete data
         })
       });
       
@@ -199,72 +175,7 @@ export default function Register() {
         ) : (
           <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             
-            <div style={{ textAlign: 'left' }}>
-              <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Peran (Role)</label>
-              <select name="role" value={formData.role} onChange={handleChange} className="login-input">
-                <option value="sekolah">Admin Sekolah</option>
-                <option value="guru">Guru</option>
-                <option value="siswa">Siswa</option>
-                <option value="agen">Agen</option>
-              </select>
-            </div>
 
-            {(formData.role === 'sekolah' || formData.role === 'guru' || formData.role === 'siswa') && (
-              <div style={{ textAlign: 'left' }}>
-                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Asal Sekolah</label>
-                <SchoolSearchInput 
-                  value={formData.sekolah_nama}
-                  onChange={(val, id) => setFormData({ ...formData, sekolah_nama: val, sekolah_id: id })}
-                  className="login-input"
-                  subscribedOnly={formData.role === 'guru' || formData.role === 'siswa'}
-                />
-              </div>
-            )}
-
-            {formData.role === 'siswa' && (
-              <div style={{ textAlign: 'left' }}>
-                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Kelas</label>
-                <select 
-                  name="kelas" 
-                  value={formData.kelas} 
-                  onChange={handleChange} 
-                  className="login-input"
-                  required
-                >
-                  <option value="">Pilih Kelas</option>
-                  {getKelasOptions(formData.sekolah_nama).map(k => (
-                    <option key={k} value={k}>Kelas {k}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            
-            {(formData.role === 'siswa' || formData.role === 'guru') && (
-              <div style={{ textAlign: 'left' }}>
-                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>{formData.role === 'guru' ? 'NUPTK / NIP' : 'NISN'}</label>
-                <input 
-                  name="nisn"
-                  type="text" 
-                  value={formData.nisn} 
-                  onChange={handleChange}
-                  className="login-input" 
-                  placeholder={formData.role === 'guru' ? "Masukkan NUPTK / NIP" : "Masukkan NISN"}
-                  required
-                />
-              </div>
-            )}
-
-            <div style={{ textAlign: 'left' }}>
-              <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Nama Lengkap</label>
-              <input 
-                name="nama"
-                type="text" 
-                value={formData.nama} 
-                onChange={handleChange}
-                className="login-input" 
-                placeholder="Masukkan nama lengkap"
-              />
-            </div>
 
             <div style={{ textAlign: 'left' }}>
               <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Email</label>
