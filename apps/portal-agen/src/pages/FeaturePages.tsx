@@ -3444,7 +3444,6 @@ export function RoleAccessSettings() {
           }}>
           Akses User
         </button>
-        {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
           <button 
             onClick={() => setActiveTab('deploy')}
             style={{
@@ -3455,7 +3454,6 @@ export function RoleAccessSettings() {
             }}>
             Push & Setup
           </button>
-        )}
       </div>
 
       {activeTab === 'access' && (
