@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { GlassCard } from '../../../../packages/ui/src/GlassCard';
-import { Rocket, GitMerge, CheckCircle2, AlertCircle, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { Rocket, GitMerge, CheckCircle2, AlertCircle, Eye, EyeOff, ExternalLink, Activity, Clock, RefreshCw, XCircle } from 'lucide-react';
 
 export function DeploymentManager() {
   const [githubToken, setGithubToken] = useState('');
@@ -13,6 +13,45 @@ export function DeploymentManager() {
   const [isPushingProd, setIsPushingProd] = useState(false);
   const [isRollingBack, setIsRollingBack] = useState(false);
   const [showToken, setShowToken] = useState(false);
+
+  const [activeTab, setActiveTab] = useState<'config' | 'logs'>('config');
+  const [logs, setLogs] = useState<any[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [logsError, setLogsError] = useState('');
+
+  const fetchLogs = async () => {
+    if (!githubToken || !repoOwner || !repoName) {
+      setLogsError('Konfigurasi GitHub belum lengkap');
+      return;
+    }
+    setIsLoadingLogs(true);
+    setLogsError('');
+    try {
+      const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/actions/runs?per_page=5`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${githubToken}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setLogs(data.workflow_runs || []);
+      } else {
+        const err = await response.json().catch(() => ({}));
+        setLogsError(err.message || 'Gagal mengambil log');
+      }
+    } catch (e: any) {
+      setLogsError(e.message || 'Terjadi kesalahan jaringan');
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'logs') {
+      fetchLogs();
+    }
+  }, [activeTab, githubToken, repoOwner, repoName]);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('deploy_githubToken') || '';
@@ -149,15 +188,35 @@ export function DeploymentManager() {
   return (
     <GlassCard>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-           <Rocket size={20} color="var(--primary)" />
-           <div>
-             <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Manajemen Deployment</h2>
-             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Setup koneksi Git dan trigger deployment dari Dashboard</p>
-           </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+             <Rocket size={20} color="var(--primary)" />
+             <div>
+               <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Manajemen Deployment</h2>
+               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Setup koneksi Git dan trigger deployment dari Dashboard</p>
+             </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '8px' }}>
+            <button 
+              type="button"
+              onClick={() => setActiveTab('config')} 
+              style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: activeTab === 'config' ? 'var(--primary)' : 'transparent', color: activeTab === 'config' ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, transition: 'all 0.2s' }}
+            >
+              Konfigurasi
+            </button>
+            <button 
+              type="button"
+              onClick={() => setActiveTab('logs')} 
+              style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: activeTab === 'logs' ? 'var(--primary)' : 'transparent', color: activeTab === 'logs' ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }}
+            >
+              <Activity size={14} /> Log & Report
+            </button>
+          </div>
         </div>
         
-        {message.text && (
+        {activeTab === 'config' ? (
+          <>
+            {message.text && (
           <div style={{ 
             padding: '12px 16px', 
             borderRadius: '8px', 
@@ -281,6 +340,66 @@ export function DeploymentManager() {
             <ExternalLink size={16} /> Buka Web Production
           </a>
         </div>
+          </>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0 }}>Riwayat Deployment</h3>
+              <button 
+                type="button" 
+                onClick={fetchLogs} 
+                disabled={isLoadingLogs}
+                style={{ background: 'none', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem' }}
+              >
+                <RefreshCw size={14} />
+                Refresh
+              </button>
+            </div>
+            
+            {logsError && (
+              <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', fontSize: '14px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                {logsError}
+              </div>
+            )}
+            
+            {!isLoadingLogs && logs.length === 0 && !logsError && (
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                Belum ada riwayat deployment atau log tidak dapat diambil.
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {logs.map((log: any) => (
+                <div key={log.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ marginTop: '2px' }}>
+                      {log.status === 'completed' ? (
+                        log.conclusion === 'success' ? <CheckCircle2 size={18} color="#10b981" /> : <XCircle size={18} color="#ef4444" />
+                      ) : (
+                        <RefreshCw size={18} color="#3b82f6" />
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {log.name} 
+                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>
+                          #{log.run_number}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={12} /> {new Date(log.created_at).toLocaleString('id-ID')}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><GitMerge size={12} /> {log.head_branch}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <a href={log.html_url} target="_blank" rel="noreferrer" style={{ padding: '6px 12px', background: 'var(--primary)', color: 'white', textDecoration: 'none', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    Buka Log <ExternalLink size={14} />
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </GlassCard>
   );
