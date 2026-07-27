@@ -198,11 +198,27 @@ function AppContent() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [approvingRoles, setApprovingRoles] = useState<Record<string, string>>({});
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
+  // pendingApiUsers: diambil langsung dari /api/users agar user registrasi baru selalu muncul
+  const [pendingApiUsers, setPendingApiUsers] = useState<any[]>([]);
 
-  const pendingUsers = data.users.filter(u => u.status === 'Menunggu Approve' || u.role === 'pending');
+  const fetchPendingApiUsers = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/users`, { cache: 'no-store' });
+      if (!res.ok) return;
+      const json = await res.json() as { success?: boolean; data?: any[] };
+      const allUsers: any[] = json.data ?? [];
+      // Tampilkan user pending (role=pending) atau menunggu approve
+      const pending = allUsers.filter(u =>
+        u.role === 'pending' || u.status === 'Menunggu Approve'
+      );
+      setPendingApiUsers(pending);
+    } catch {
+      // jaringan error – abaikan
+    }
+  };
+
+  // newUsers tetap dari data.users (sso/manual source) untuk backward compat
   const newUsers = data.users.filter(
     (user) => user.username !== session?.username && user.role !== 'pending' && user.status !== 'Menunggu Approve' && (
       user.newUserSource === 'sso'
@@ -210,38 +226,23 @@ function AppContent() {
       || user.terakhirLogin === 'Belum pernah login'
     ),
   );
-  const notificationCount = pendingUsers.length + newUsers.length;
+  const notificationCount = pendingApiUsers.length + newUsers.length;
 
-  // --- Polling notifikasi: ambil user pending dari server setiap 45 detik ---
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [approvingRoles, setApprovingRoles] = useState<Record<string, string>>({});
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // --- Polling: ambil user pending langsung dari /api/users setiap 45 detik ---
   useEffect(() => {
     if (session?.role !== 'superadmin') return;
 
-    const syncPendingUsers = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users`, { cache: 'no-store' });
-        if (!res.ok) return;
-        const json = await res.json() as { users?: any[] };
-        const remoteUsers: any[] = json.users ?? [];
-        if (!remoteUsers.length) return;
-
-        // Gunakan dispatch event agar komponen lain mengambil state ini, tanpa melakukan PUT /api/app-data (yang akan menimpa data global)
-        // Jika ada user baru, trigger refresh global untuk menghindari race condition state lokal
-        const existingUsernames = new Set(data.users.map((u) => u.username));
-        const incoming = remoteUsers.filter((u) => !existingUsernames.has(u.username));
-        if (incoming.length > 0) {
-          window.dispatchEvent(new Event('kontenmu-appdata-updated'));
-        }
-      } catch {
-        // jaringan error – abaikan
-      }
-    };
-
-    void syncPendingUsers(); // jalankan sekali saat mount
-    pollingRef.current = setInterval(syncPendingUsers, 45_000);
+    void fetchPendingApiUsers(); // jalankan sekali saat mount
+    pollingRef.current = setInterval(fetchPendingApiUsers, 45_000);
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [session?.role, setData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.role]);
 
   const toggleMenu = (id: string) => {
     setOpenMenuId(openMenuId === id ? null : id);
@@ -435,15 +436,15 @@ function AppContent() {
                             </Link>
                           </div>
                         ))}
-                        {pendingUsers.map(user => (
+                        {pendingApiUsers.map(user => (
                           <div key={user.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                               <span style={{ fontSize: '0.9rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
                                 {user.nama || user.username}
                               </span>
                               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                {user.status === 'Menunggu Approve' 
-                                  ? `Pengajuan: ${ROLE_LABELS[user.requestedRole || user.role] || 'User'}` 
+                                {user.status === 'Menunggu Approve'
+                                  ? `Pengajuan: ${ROLE_LABELS[user.requestedRole || user.role] || 'User'}`
                                   : 'Menunggu approve'}
                               </span>
                               {user.status === 'Menunggu Approve' && (
@@ -456,8 +457,8 @@ function AppContent() {
                             </div>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', flexDirection: 'column' }}>
                               <div style={{ display: 'flex', gap: '8px' }}>
-                                <select 
-                                  value={approvingRoles[user.id] || user.requestedRole || user.role || 'sekolah'}
+                                <select
+                                  value={approvingRoles[user.id] || user.requestedRole || (user.role !== 'pending' ? user.role : 'sekolah')}
                                   onChange={(e) => setApprovingRoles({ ...approvingRoles, [user.id]: e.target.value })}
                                   style={{
                                     padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-subtle)',
@@ -471,44 +472,51 @@ function AppContent() {
                                   <option value="guru">Guru</option>
                                   <option value="siswa">Siswa</option>
                                 </select>
-                                <button 
+                                <button
+                                  disabled={approvingIds.has(user.id)}
                                   style={{
-                                    background: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '6px',
-                                    padding: '6px 12px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600
+                                    background: approvingIds.has(user.id) ? '#94a3b8' : 'var(--accent-primary)',
+                                    color: 'white', border: 'none', borderRadius: '6px',
+                                    padding: '6px 12px', fontSize: '0.8rem',
+                                    cursor: approvingIds.has(user.id) ? 'not-allowed' : 'pointer',
+                                    fontWeight: 600, minWidth: '72px'
                                   }}
                                   onClick={async () => {
-                                    const roleToAssign = approvingRoles[user.id] || user.requestedRole || user.role || 'sekolah';
-                                    
-                                    // Optimistic UI update
-                                    setData((prev: any) => ({
-                                      ...prev,
-                                      users: prev.users.map((u: any) => u.id === user.id
-                                        ? { ...u, role: roleToAssign, newUserSource: undefined, status: 'Aktif' }
-                                        : u)
-                                    }));
+                                    const roleToAssign = approvingRoles[user.id] || user.requestedRole || (user.role !== 'pending' ? user.role : 'sekolah');
 
-                                  // Persist to database
-                                  try {
-                                    await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/${user.id}`, {
-                                      method: 'PUT',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({
-                                        ...user,
-                                        role: roleToAssign,
-                                        status: 'Aktif',
-                                        newUserSource: null // Clear the new user flag in DB
-                                      })
-                                    });
-                                  } catch (err) {
-                                    console.error('Failed to approve user', err);
-                                  }
-                                }}
-                              >
-                                Approve
-                              </button>
+                                    // Tandai sedang loading
+                                    setApprovingIds(prev => new Set([...prev, user.id]));
+
+                                    // Hapus dari list lokal segera (optimistic)
+                                    setPendingApiUsers(prev => prev.filter(u => u.id !== user.id));
+
+                                    try {
+                                      await fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/users/${user.id}`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                          ...user,
+                                          role: roleToAssign,
+                                          status: 'Aktif',
+                                          newUserSource: null
+                                        })
+                                      });
+                                      // Refresh list setelah approve berhasil
+                                      await fetchPendingApiUsers();
+                                    } catch (err) {
+                                      console.error('Failed to approve user', err);
+                                      // Kembalikan ke list jika gagal
+                                      await fetchPendingApiUsers();
+                                    } finally {
+                                      setApprovingIds(prev => { const s = new Set(prev); s.delete(user.id); return s; });
+                                    }
+                                  }}
+                                >
+                                  {approvingIds.has(user.id) ? '...' : 'Approve'}
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
                         ))}
                       </div>
                     )}

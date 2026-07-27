@@ -376,7 +376,7 @@ export default function Users() {
           </div>
         </div>
 
-        <div className="table-scroll desktop-only">
+        <div className="table-scroll pwa-desktop-only">
           <table className="table-promax">
             <thead>
               <tr>
@@ -444,7 +444,7 @@ export default function Users() {
           </table>
         </div>
 
-        <div className="mobile-only" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+        <div className="pwa-mobile-only" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
           {visibleUsers.map((user) => (
             <div key={user.id} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setViewingUser(user); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#f9fafb', borderRadius: '12px', cursor: 'pointer' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
