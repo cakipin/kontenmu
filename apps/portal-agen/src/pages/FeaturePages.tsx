@@ -1675,7 +1675,8 @@ export function SchoolUsers() {
         resPayload = await res.json().catch(() => ({}));
         if (!res.ok || resPayload.error) throw new Error(resPayload.error || 'Gagal mengupdate user');
       } else {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/users`, {
+        const apiUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev');
+        const res = await fetch(`${apiUrl}/api/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)

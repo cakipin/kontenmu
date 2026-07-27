@@ -107,6 +107,9 @@ export default {
         const aktifRes = await env.DB.prepare("SELECT COUNT(DISTINCT m.id) as total FROM master_data_sekolah m INNER JOIN users u ON m.id = u.sekolah_id WHERE u.role_slug = 'sekolah' AND u.status = 'Aktif'").first();
         const totalSekolahRes = await env.DB.prepare("SELECT COUNT(*) as total FROM master_data_sekolah").first();
         
+        const guruAktifRes = await env.DB.prepare("SELECT COUNT(*) as total FROM users WHERE role_slug = 'guru' AND status = 'Aktif'").first();
+        const siswaAktifRes = await env.DB.prepare("SELECT COUNT(*) as total FROM users WHERE role_slug = 'siswa' AND status = 'Aktif'").first();
+        
         return json({ 
           success: true, 
           data: {
@@ -114,7 +117,9 @@ export default {
             totalGuru: (guruRes as any)?.total || 0,
             totalSiswa: (siswaRes as any)?.total || 0,
             sekolahAktif: (aktifRes as any)?.total || 0,
-            totalSekolah: (totalSekolahRes as any)?.total || 0
+            totalSekolah: (totalSekolahRes as any)?.total || 0,
+            guruAktif: (guruAktifRes as any)?.total || 0,
+            siswaAktif: (siswaAktifRes as any)?.total || 0
           } 
         });
       } catch (error: unknown) {

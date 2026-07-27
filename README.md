@@ -76,3 +76,21 @@ Skema ada di `schema.sql`. Tabel utama:
 - `Sekolah`, `Buku`, `Penjualan`, `Alokasi_Siswa`
 
 Seed data sudah termasuk 3 sekolah, 3 buku, dan contoh transaksi.
+
+## Environments & Deployment
+
+Proyek ini memiliki dua _environment_ utama di Cloudflare Pages yang dikonfigurasi melalui GitHub Actions. Keduanya sangat terpisah dan tidak saling menyinkronkan data.
+
+### 1. Staging Environment (`kontenmu`)
+- **Domain**: `kontenmu.labmu.dev`
+- **Cloudflare Pages Project**: `kontenmu`
+- **Cloudflare Worker/D1**: `sales-api` (`KONTENMU_DB`) 
+- **API URL**: `https://sales-api.1912.workers.dev`
+- **Deployment**: Di-*trigger* melalui _event_ `manual-push-from-dashboard` menggunakan script `.github/workflows/deploy-staging.yml`. Kode pada *branch* `main` **TIDAK otomatis** di-_deploy_ ke staging kecuali di-*trigger* manual.
+
+### 2. Production Environment (`kontenmu-prod`)
+- **Domain**: *Tidak diketahui secara spesifik (kemungkinan `kontenmu-prod.pages.dev`)*
+- **Cloudflare Pages Project**: `kontenmu-prod`
+- **Cloudflare Worker/D1**: Menggunakan *binding* spesifik produksi (contoh: `KONTENMU_PROD_DB`)
+- **API URL**: `https://kontenmu-prod-api.1912.workers.dev`
+- **Deployment**: Di-*trigger* melalui _event_ `deploy-production` menggunakan script `.github/workflows/deploy-prod.yml`. Ini merupakan environment kritis yang tidak boleh diubah atau di-_deploy_ sembarangan untuk keperluan _testing_.

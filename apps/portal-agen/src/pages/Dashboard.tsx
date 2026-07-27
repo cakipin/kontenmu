@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useAuth } from '@repo/auth';
 import { GlassCard } from '../../../../packages/ui/src/GlassCard';
 import { Chip } from '../../../../packages/ui/src/Chip';
-import { Package, Banknote, Building2, ShoppingCart, CreditCard, Users, BookOpen, TrendingUp, Clock, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Settings } from 'lucide-react';
+import { Package, Banknote, Building2, ShoppingCart, CreditCard, Users, BookOpen, TrendingUp, Clock, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Settings, Maximize, Minimize } from 'lucide-react';
 import { SchoolSearchInput } from '../components/SchoolSearchInput';
 import {
   allocatedLicenses,
@@ -35,6 +35,26 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWarning, setShowWarning] = useState(true);
+  const dashboardRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    if (!document.fullscreenElement) {
+      if (dashboardRef.current) {
+        await dashboardRef.current.requestFullscreen().catch(console.error);
+      }
+    } else {
+      await document.exitFullscreen().catch(console.error);
+    }
+  };
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/users`)
@@ -165,6 +185,11 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     infografi: (data.contents || []).filter((content) => content.kategori === 'Infografi').length,
     games: (data.contents || []).filter((content) => content.kategori === 'Games HTML5').length,
   };
+  const jenjangStats = {
+    sd: (data.contents || []).filter((c) => /SD|MI/i.test(c.target)).length,
+    smp: (data.contents || []).filter((c) => /SMP|MTS/i.test(c.target)).length,
+    sma: (data.contents || []).filter((c) => /SMA|SMK|MA/i.test(c.target)).length,
+  };
 
   const agentRows = (users || [])
     .filter((user) => user.role === 'agen')
@@ -240,7 +265,25 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
 
   }
   return (
-    <div className="page-shell" style={{ textAlign: 'left' }}>
+    <div ref={dashboardRef} className="page-shell" style={{ 
+      background: isFullscreen ? '#f8fafc' : 'transparent',
+      padding: isFullscreen ? '32px' : '0', 
+      overflowY: 'auto', 
+      textAlign: 'left',
+      minHeight: isFullscreen ? '100vh' : 'auto'
+    }}>
+      {currentRole === 'superadmin' && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+          <button 
+            onClick={toggleFullscreen}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.875rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+          >
+            {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+            {isFullscreen ? 'Perkecil' : 'Layar Penuh'}
+          </button>
+        </div>
+      )}
+      
       {currentRole === 'superadmin' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '16px', paddingBottom: '12px' }}>
           <StatCard 
@@ -262,40 +305,75 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       )}
 
       {currentRole === 'superadmin' && masterStats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '16px', paddingBottom: '12px' }}>
-          <StatCard 
-            icon={<Building2 size={20} />} 
-            colorStart="#F59E0B" colorEnd="#D97706" shadowColor="rgba(245, 158, 11, 0.2)"
-            title="Muhammadiyah" value={formatNumber(masterStats.sekolahMuhammadiyah)} subtitle="Sekolah di Master Data" 
-          />
-          <StatCard 
-            icon={<Users size={20} />} 
-            colorStart="#8B5CF6" colorEnd="#7C3AED" shadowColor="rgba(139, 92, 246, 0.2)"
-            title="Total Guru (PTK)" value={formatNumber(masterStats.totalGuru)} subtitle="Data Nasional" 
-          />
-          <StatCard 
-            icon={<Users size={20} />} 
-            colorStart="#EC4899" colorEnd="#DB2777" shadowColor="rgba(236, 72, 153, 0.2)"
-            title="Total Siswa (PD)" value={formatNumber(masterStats.totalSiswa)} subtitle="Data Nasional" 
-          />
-        </div>
-      )}
-
-      {currentRole === 'superadmin' && masterStats && (
         <div style={{ background: '#fff', margin: '8px 0 24px', borderRadius: '24px', padding: '24px', border: '1px solid var(--border-subtle)', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-          <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>Status Aktivasi Sekolah</h2>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>Proporsi sekolah yang sudah menggunakan KontenMu.</p>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>Statistik Master Data Sekolah</h2>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>Data agregasi sekolah dan status aktivasi KontenMu.</p>
           
-          <SimpleDonut 
-            total={masterStats.totalSekolah} 
-            data={[
-              { label: 'Sudah Aktif', value: masterStats.sekolahAktif, color: '#10B981' },
-              { label: 'Belum Aktif', value: Math.max(0, masterStats.totalSekolah - masterStats.sekolahAktif), color: '#EF4444' }
-            ]}
-          />
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '8px', fontSize: '10px', fontWeight: 500, color: 'var(--text-secondary)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#10B981' }}></span> Sudah Aktif</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#EF4444' }}></span> Belum Aktif</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'center', justifyContent: 'space-around' }}>
+            <div style={{ textAlign: 'center' }}>
+              <SimpleDonut 
+                total={masterStats.totalSekolah} 
+                data={[
+                  { label: 'Sudah Aktif', value: masterStats.sekolahAktif, color: '#10B981' },
+                  { label: 'Belum Aktif', value: Math.max(0, masterStats.totalSekolah - masterStats.sekolahAktif), color: '#EF4444' }
+                ]}
+              />
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '16px', fontSize: '10px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#10B981' }}></span> Sudah Aktif</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#EF4444' }}></span> Belum Aktif</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: '1', minWidth: '250px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Building2 size={24} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(masterStats.sekolahMuhammadiyah || 0)}</div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Sekolah Muhammadiyah</div>
+                  <div style={{ marginTop: '8px', width: '100%', height: '4px', background: '#EF4444', borderRadius: '2px', overflow: 'hidden', display: 'flex' }}>
+                    <div style={{ height: '100%', background: '#10B981', width: `${masterStats.totalSekolah ? ((masterStats.sekolahAktif || 0) / masterStats.totalSekolah * 100) : 0}%` }} />
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{formatNumber(masterStats.sekolahAktif || 0)} Aktif</span>
+                    <span>{formatNumber(Math.max(0, (masterStats.totalSekolah || 0) - (masterStats.sekolahAktif || 0)))} Belum</span>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Users size={24} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(masterStats.totalGuru || 0)}</div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Total Guru (PTK)</div>
+                  <div style={{ marginTop: '8px', width: '100%', height: '4px', background: '#EF4444', borderRadius: '2px', overflow: 'hidden', display: 'flex' }}>
+                    <div style={{ height: '100%', background: '#10B981', width: `${masterStats.totalGuru ? ((masterStats.guruAktif || 0) / masterStats.totalGuru * 100) : 0}%` }} />
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{formatNumber(masterStats.guruAktif || 0)} Aktif</span>
+                    <span>{formatNumber(Math.max(0, (masterStats.totalGuru || 0) - (masterStats.guruAktif || 0)))} Belum</span>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(236, 72, 153, 0.1)', color: '#EC4899', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Users size={24} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(masterStats.totalSiswa || 0)}</div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Total Siswa (PD)</div>
+                  <div style={{ marginTop: '8px', width: '100%', height: '4px', background: '#EF4444', borderRadius: '2px', overflow: 'hidden', display: 'flex' }}>
+                    <div style={{ height: '100%', background: '#10B981', width: `${masterStats.totalSiswa ? ((masterStats.siswaAktif || 0) / masterStats.totalSiswa * 100) : 0}%` }} />
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{formatNumber(masterStats.siswaAktif || 0)} Aktif</span>
+                    <span>{formatNumber(Math.max(0, (masterStats.totalSiswa || 0) - (masterStats.siswaAktif || 0)))} Belum</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -305,22 +383,57 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
           <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>Statistik Konten Digital</h2>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>Pantau jumlah konten digital berdasarkan kategorinya.</p>
           
-          <SimpleDonut 
-            total={contentStats.total} 
-            data={[
-              { label: 'Video', value: contentStats.video, color: '#3B82F6' },
-              { label: 'E-book', value: contentStats.infografi, color: '#10B981' },
-              { label: 'Audio', value: contentStats.games, color: '#F59E0B' },
-              { label: 'Exercises', value: contentStats.total - contentStats.video - contentStats.infografi - contentStats.games, color: '#8B5CF6' }
-            ]}
-          />
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '24px', fontSize: '10px', fontWeight: 500, color: 'var(--text-secondary)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#3B82F6' }}></span> Video</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#10B981' }}></span> E-book</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#F59E0B' }}></span> Audio</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#8B5CF6' }}></span> Exercises</div>
+          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1', minWidth: '250px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <SimpleDonut 
+                total={contentStats.total} 
+                data={[
+                  { label: 'Video', value: contentStats.video, color: '#3B82F6' },
+                  { label: 'E-book', value: contentStats.infografi, color: '#10B981' },
+                  { label: 'Audio', value: contentStats.games, color: '#F59E0B' },
+                  { label: 'Exercises', value: contentStats.total - contentStats.video - contentStats.infografi - contentStats.games, color: '#8B5CF6' }
+                ]}
+              />
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '24px', fontSize: '10px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#3B82F6' }}></span> Video</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#10B981' }}></span> E-book</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#F59E0B' }}></span> Audio</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#8B5CF6' }}></span> Exercises</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: '1', minWidth: '250px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <BookOpen size={24} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(jenjangStats.sd)}</div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Konten SD/MI</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <BookOpen size={24} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(jenjangStats.smp)}</div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Konten SMP/MTS</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <BookOpen size={24} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(jenjangStats.sma)}</div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Konten SMA/MA/SMK</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <Link to="/play-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#40AEF0', color: 'white', padding: '14px', borderRadius: '16px', fontWeight: 600, textDecoration: 'none', fontSize: '14px', boxShadow: '0 4px 14px rgba(64, 174, 240, 0.4)' }}>
+          
+          <Link to="/play-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#40AEF0', color: 'white', padding: '14px', borderRadius: '16px', fontWeight: 600, textDecoration: 'none', fontSize: '14px', boxShadow: '0 4px 14px rgba(64, 174, 240, 0.4)', marginTop: '24px' }}>
             <Settings size={18} /> Kelola Konten
           </Link>
         </div>

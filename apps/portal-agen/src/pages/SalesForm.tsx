@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState, useEffect, type FormEvent } from 'react';
 import { GlassCard } from '../../../../packages/ui/src/GlassCard';
 import { ButtonPromax } from '../../../../packages/ui/src/ButtonPromax';
 import {
@@ -40,6 +40,36 @@ export default function SalesForm() {
   const [diskonPersen, setDiskonPersen] = useState('10');
   const [komisiPersen, setKomisiPersen] = useState('8');
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchRequiredData = async () => {
+      try {
+        const p1 = data.schools.length === 0 ? fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/sekolah?limit=1000`).then(r => r.json()) : Promise.resolve(null);
+        const p2 = data.books.length === 0 ? fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/books`).then(r => r.json()) : Promise.resolve(null);
+        
+        const [schoolsRes, booksRes] = await Promise.all([p1, p2]);
+        
+        if (mounted && (schoolsRes?.success || booksRes?.success)) {
+          setData(prev => {
+            const next = { ...prev };
+            if (schoolsRes?.success && schoolsRes.data) {
+              next.schools = schoolsRes.data;
+            }
+            if (booksRes?.success && booksRes.data) {
+              next.books = booksRes.data;
+            }
+            return next;
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch initial data for SalesForm:', err);
+      }
+    };
+    
+    fetchRequiredData();
+    return () => { mounted = false; };
+  }, [data.schools.length, data.books.length, setData]);
 
   const schoolOptions = data.schools.map((school) => ({ value: String(school.id), label: `${school.nama} - ${school.kota}` }));
   const bookOptions = data.books.map((book) => ({ value: book.isbn, label: book.judul }));

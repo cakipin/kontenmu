@@ -238,7 +238,8 @@ export default function Users() {
           body: JSON.stringify({ ...form, sekolah_id: form.sekolahId })
         });
       } else {
-        await fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/users`, {
+        const apiUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev');
+        await fetch(`${apiUrl}/api/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...form, newUserSource: null, sekolah_id: form.sekolahId })

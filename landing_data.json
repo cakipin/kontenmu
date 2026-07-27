@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/pwa-icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>KontenMu - Portal Pendidikan</title>
+    <script type="module" crossorigin src="/assets/index-qYvApaj_.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-DmaltCKy.js">
+    <link rel="modulepreload" crossorigin href="/assets/floating-ui.dom-DA5zqMwo.js">
+    <link rel="modulepreload" crossorigin href="/assets/preload-helper-CZgWQFsJ.js">
+    <link rel="modulepreload" crossorigin href="/assets/chunk-Y2EFNT5P-PDkCnf7Z.js">
+    <link rel="modulepreload" crossorigin href="/assets/chunk-H635BA2V-DOIV7rxj.js">
+    <link rel="modulepreload" crossorigin href="/assets/chunk-XQHCQEAF-ChH9zcj1.js">
+    <link rel="modulepreload" crossorigin href="/assets/chunk-M5GPDW62-nzcYsjp3.js">
+    <link rel="modulepreload" crossorigin href="/assets/chunk-3RQGAM3Z-DAFYzqMu.js">
+    <link rel="modulepreload" crossorigin href="/assets/chunk-XIGSFEU7-ShXaT7Xx.js">
+    <link rel="modulepreload" crossorigin href="/assets/chunk-4US666EQ-T9fanVVt.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-AuISbvnR.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

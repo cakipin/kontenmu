@@ -424,6 +424,12 @@ function normalizeAppData(data: AppData): AppData {
 }
 
 export function loadAppData(): AppData {
+  try {
+    const local = localStorage.getItem('kontenmu-appdata');
+    if (local) return normalizeAppData(JSON.parse(local));
+  } catch (err) {
+    console.warn('Error reading from localStorage:', err);
+  }
   return normalizeAppData(seedAppData);
 }
 
@@ -449,6 +455,7 @@ export async function loadRemoteAppData(): Promise<AppData | null> {
 
 export async function saveAppData(data: AppData) {
   try {
+    localStorage.setItem('kontenmu-appdata', JSON.stringify(data));
     const res = await fetch('/api/app-data', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -456,11 +463,10 @@ export async function saveAppData(data: AppData) {
     });
     if (!res.ok) {
       const errText = await res.text();
-      throw new Error(`Sistem gagal menyimpan perubahan data (Error ${res.status}): ${errText}`);
+      console.warn(`Sistem gagal menyimpan perubahan data (Error ${res.status}): ${errText}`);
     }
   } catch (err) {
-    console.error('Error saving app data:', err);
-    throw err;
+    console.warn('Error saving app data:', err);
   }
 }
 
