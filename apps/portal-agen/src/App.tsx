@@ -525,12 +525,12 @@ function AppContent() {
               </div>
             )}
 
-            <div className="topbar-divider pwa-desktop-only" />
+            <div className="topbar-divider desktop-only" />
 
             <div className="user-menu" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               {/* Role Switcher hanya tampil di mode development */}
               {IS_DEV && session.role !== 'pending' && (
-                <div className="pwa-desktop-only">
+                <div className="desktop-only">
                   <select 
                     value={session.role}
                     onChange={(e) => switchRole(e.target.value as any)}
@@ -563,7 +563,7 @@ function AppContent() {
                       session.initial
                     )}
                   </div>
-                  <div className="user-copy pwa-desktop-only">
+                  <div className="user-copy desktop-only">
                     <span>{session.displayName}</span>
                     <small>{ROLE_LABELS[session.role]}</small>
                   </div>
@@ -576,7 +576,7 @@ function AppContent() {
                     borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', zIndex: 9999,
                     minWidth: '200px', display: 'flex', flexDirection: 'column', overflow: 'hidden'
                   }}>
-                    <div className="pwa-mobile-only" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div className="mobile-only" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
                       <strong style={{ display: 'block', fontSize: '0.9rem' }}>{session.displayName}</strong>
                       <small style={{ color: 'var(--text-secondary)' }}>{ROLE_LABELS[session.role]}</small>
                     </div>

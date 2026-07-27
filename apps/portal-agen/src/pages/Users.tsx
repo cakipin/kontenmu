@@ -376,14 +376,16 @@ export default function Users() {
           </div>
         </div>
 
-        <div className="table-scroll pwa-desktop-only">
+        <div className="table-scroll desktop-only">
           <table className="table-promax">
             <thead>
               <tr>
                 <th style={{ textAlign: 'left' }}>User</th>
                 <th style={{ textAlign: 'left' }}>Username</th>
                 <th style={{ textAlign: 'left' }}>Role</th>
-                {(activeFilter === 'all' || activeFilter === 'siswa') && <th style={{ textAlign: 'center' }}>Kelas / NIS</th>}
+                <th style={{ textAlign: 'center' }}>
+                  {activeFilter === 'sekolah' ? 'NPSN' : activeFilter === 'guru' ? 'NUPTK / NIP' : activeFilter === 'siswa' ? 'Kelas / NIS' : 'Info Khusus'}
+                </th>
                 <th style={{ textAlign: 'left' }}>Institusi</th>
                 <th style={{ textAlign: 'center' }}>Terakhir Login</th>
                 <th style={{ textAlign: 'center' }}>Status</th>
@@ -417,16 +419,21 @@ export default function Users() {
                       {ROLE_LABELS[user.role]}
                     </span>
                   </td>
-                  {(activeFilter === 'all' || activeFilter === 'siswa') && (
-                    <td style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-                      {user.kelas || user.nis ? (
-                        <>
-                          {user.kelas && <div>{user.kelas}</div>}
-                          {user.nis && <div>{user.nis}</div>}
-                        </>
-                      ) : '-'}
-                    </td>
-                  )}
+                  <td style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    {user.role === 'sekolah' && user.npsn ? user.npsn :
+                     user.role === 'guru' && (user.nuptk || user.nip) ? (
+                       <>
+                         {user.nuptk && <div>{user.nuptk}</div>}
+                         {user.nip && <div>{user.nip}</div>}
+                       </>
+                     ) :
+                     user.role === 'siswa' && (user.kelas || user.nis) ? (
+                       <>
+                         {user.kelas && <div>{user.kelas}</div>}
+                         {user.nis && <div>{user.nis}</div>}
+                       </>
+                     ) : '-'}
+                  </td>
                   <td style={{ color: 'var(--text-secondary)', maxWidth: '150px' }}>
                     <div style={{
                       overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box',
@@ -456,7 +463,7 @@ export default function Users() {
           </table>
         </div>
 
-        <div className="pwa-mobile-only" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+        <div className="mobile-only" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
           {visibleUsers.map((user) => (
             <div key={user.id} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setViewingUser(user); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#f9fafb', borderRadius: '12px', cursor: 'pointer' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
