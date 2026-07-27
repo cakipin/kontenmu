@@ -98,31 +98,6 @@ export default {
       }
     }
 
-    if (url.pathname === "/api/master/stats" && request.method === "GET") {
-      try {
-        const muhammadiyahRes = await env.DB.prepare("SELECT COUNT(*) as total FROM master_data_sekolah WHERE nama LIKE '%muhammadiyah%'").first();
-        const guruRes = await env.DB.prepare("SELECT SUM(ptk_total) as total FROM master_data_sekolah").first();
-        const siswaRes = await env.DB.prepare("SELECT SUM(pd_total) as total FROM master_data_sekolah").first();
-        
-        const aktifRes = await env.DB.prepare("SELECT COUNT(DISTINCT m.id) as total FROM master_data_sekolah m INNER JOIN users u ON m.id = u.sekolah_id WHERE u.role_slug = 'sekolah' AND u.status = 'Aktif'").first();
-        const totalSekolahRes = await env.DB.prepare("SELECT COUNT(*) as total FROM master_data_sekolah").first();
-        
-        return json({ 
-          success: true, 
-          data: {
-            sekolahMuhammadiyah: (muhammadiyahRes as any)?.total || 0,
-            totalGuru: (guruRes as any)?.total || 0,
-            totalSiswa: (siswaRes as any)?.total || 0,
-            sekolahAktif: (aktifRes as any)?.total || 0,
-            totalSekolah: (totalSekolahRes as any)?.total || 0
-          } 
-        });
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
-        return json({ success: false, error: message }, 500);
-      }
-    }
-
     if (url.pathname === "/api/users" && request.method === "GET") {
       try {
         const { results } = await env.DB.prepare("SELECT * FROM users ORDER BY created_at DESC").all();
