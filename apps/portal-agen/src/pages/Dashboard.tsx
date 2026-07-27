@@ -24,6 +24,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   const currentUser = users.find(u => u.username === session?.username);
   const [suratTugas, setSuratTugas] = useState('');
   const [masaAktif, setMasaAktif] = useState('');
+  const [masterStats, setMasterStats] = useState<any>(null);
   
   const [selectedRole, setSelectedRole] = useState('sekolah');
   const [sekolahNama, setSekolahNama] = useState('');
@@ -40,6 +41,13 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       .then(res => res.json())
       .then(res => {
         if (res.success && res.data) setUsers(res.data);
+      })
+      .catch(console.error);
+      
+    fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/master/stats`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && res.data) setMasterStats(res.data);
       })
       .catch(console.error);
   }, []);
@@ -250,6 +258,45 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
             colorStart="#4ADE80" colorEnd="#16A34A" shadowColor="rgba(22, 163, 74, 0.2)"
             title="Sekolah Aktif" value={formatNumber(activeSchools)} subtitle="Unit terdaftar" 
           />
+        </div>
+      )}
+
+      {currentRole === 'superadmin' && masterStats && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '16px', paddingBottom: '12px' }}>
+          <StatCard 
+            icon={<Building2 size={20} />} 
+            colorStart="#F59E0B" colorEnd="#D97706" shadowColor="rgba(245, 158, 11, 0.2)"
+            title="Muhammadiyah" value={formatNumber(masterStats.sekolahMuhammadiyah)} subtitle="Sekolah di Master Data" 
+          />
+          <StatCard 
+            icon={<Users size={20} />} 
+            colorStart="#8B5CF6" colorEnd="#7C3AED" shadowColor="rgba(139, 92, 246, 0.2)"
+            title="Total Guru (PTK)" value={formatNumber(masterStats.totalGuru)} subtitle="Data Nasional" 
+          />
+          <StatCard 
+            icon={<Users size={20} />} 
+            colorStart="#EC4899" colorEnd="#DB2777" shadowColor="rgba(236, 72, 153, 0.2)"
+            title="Total Siswa (PD)" value={formatNumber(masterStats.totalSiswa)} subtitle="Data Nasional" 
+          />
+        </div>
+      )}
+
+      {currentRole === 'superadmin' && masterStats && (
+        <div style={{ background: '#fff', margin: '8px 0 24px', borderRadius: '24px', padding: '24px', border: '1px solid var(--border-subtle)', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>Status Aktivasi Sekolah</h2>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>Proporsi sekolah yang sudah menggunakan KontenMu.</p>
+          
+          <SimpleDonut 
+            total={masterStats.totalSekolah} 
+            data={[
+              { label: 'Sudah Aktif', value: masterStats.sekolahAktif, color: '#10B981' },
+              { label: 'Belum Aktif', value: Math.max(0, masterStats.totalSekolah - masterStats.sekolahAktif), color: '#EF4444' }
+            ]}
+          />
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '8px', fontSize: '10px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#10B981' }}></span> Sudah Aktif</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#EF4444' }}></span> Belum Aktif</div>
+          </div>
         </div>
       )}
       
