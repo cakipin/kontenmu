@@ -119,6 +119,9 @@ const emptyForm: Omit<SimUser, 'id' | 'initial' | 'color' | 'terakhirLogin'> = {
   status: 'Aktif',
   kelas: '',
   nis: '',
+  npsn: '',
+  nuptk: '',
+  nip: '',
   sekolahId: undefined,
 };
 
@@ -217,6 +220,9 @@ export default function Users() {
       status: user.status,
       kelas: user.kelas ?? '',
       nis: user.nis ?? '',
+      npsn: user.npsn ?? '',
+      nuptk: user.nuptk ?? '',
+      nip: user.nip ?? '',
       sekolahId: user.sekolah_id ?? user.sekolahId ?? undefined,
     });
     setFormOpen(true);
@@ -335,6 +341,24 @@ export default function Users() {
                     <input className="input-control" value={form.nis ?? ''} onChange={(e) => setForm({ ...form, nis: e.target.value })} placeholder="23010011" required />
                   </label>
                 </>
+              )}
+              {form.role === 'guru' && (
+                <>
+                  <label>
+                    NUPTK
+                    <input className="input-control" value={form.nuptk ?? ''} onChange={(e) => setForm({ ...form, nuptk: e.target.value })} placeholder="Opsional" />
+                  </label>
+                  <label>
+                    NIP
+                    <input className="input-control" value={form.nip ?? ''} onChange={(e) => setForm({ ...form, nip: e.target.value })} placeholder="Opsional" />
+                  </label>
+                </>
+              )}
+              {form.role === 'sekolah' && (
+                <label>
+                  NPSN
+                  <input className="input-control" value={form.npsn ?? ''} onChange={(e) => setForm({ ...form, npsn: e.target.value })} placeholder="NPSN Sekolah" required />
+                </label>
               )}
               <label>
                 Status
