@@ -383,7 +383,7 @@ export default function Users() {
                 <th style={{ textAlign: 'left' }}>User</th>
                 <th style={{ textAlign: 'left' }}>Username</th>
                 <th style={{ textAlign: 'left' }}>Role</th>
-                <th style={{ textAlign: 'center' }}>Kelas / NIS</th>
+                {(activeFilter === 'all' || activeFilter === 'siswa') && <th style={{ textAlign: 'center' }}>Kelas / NIS</th>}
                 <th style={{ textAlign: 'left' }}>Institusi</th>
                 <th style={{ textAlign: 'center' }}>Terakhir Login</th>
                 <th style={{ textAlign: 'center' }}>Status</th>
@@ -412,16 +412,29 @@ export default function Users() {
                     <span style={{
                       fontSize: '0.75rem', fontWeight: 700, padding: '5px 12px',
                       borderRadius: '20px', background: 'rgba(59, 130, 246, 0.12)', color: 'var(--accent-primary)',
+                      border: '1px solid rgba(59, 130, 246, 0.2)'
                     }}>
                       {ROLE_LABELS[user.role]}
                     </span>
                   </td>
-                  <td style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>
-                    {user.role === 'siswa'
-                      ? `${user.kelas ?? '-'} / ${user.nis ?? '-'}`
-                      : '-'}
+                  {(activeFilter === 'all' || activeFilter === 'siswa') && (
+                    <td style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                      {user.kelas || user.nis ? (
+                        <>
+                          {user.kelas && <div>{user.kelas}</div>}
+                          {user.nis && <div>{user.nis}</div>}
+                        </>
+                      ) : '-'}
+                    </td>
+                  )}
+                  <td style={{ color: 'var(--text-secondary)', maxWidth: '150px' }}>
+                    <div style={{
+                      overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box',
+                      WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.4'
+                    }}>
+                      {user.wilayah || '-'}
+                    </div>
                   </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{user.wilayah}</td>
                   <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>{user.terakhirLogin}</td>
                   <td style={{ textAlign: 'center' }}><Chip type={user.status === 'Aktif' ? 'success' : 'warning'} label={user.status} /></td>
                   <td style={{ textAlign: 'center' }}>
