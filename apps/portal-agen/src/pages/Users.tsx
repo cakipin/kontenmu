@@ -404,7 +404,6 @@ export default function Users() {
                       </div>
                       <div>
                         <div style={{ color: 'var(--text-primary)' }}>{user.nama}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{user.id}</div>
                       </div>
                     </div>
                   </td>
