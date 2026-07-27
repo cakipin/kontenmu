@@ -117,11 +117,11 @@ export default {
         const body = (await request.json()) as any;
         console.log("USERS POST BODY:", JSON.stringify(body));
         const id = crypto.randomUUID();
-        const { username, nama, role, wilayah, status, kelas, nis, email, password, sekolah_id } = body;
+        const { username, nama, role, wilayah, status, kelas, nis, npsn, nuptk, nip, email, password, sekolah_id } = body;
         
         const result = await env.DB.prepare(
-          "INSERT INTO users (id, username, nama, role_slug, wilayah, status, kelas, nis, email, password, sekolah_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        ).bind(id, username, nama, role, wilayah || '', status || 'Aktif', kelas || null, nis || null, email || null, password || null, sekolah_id || null).run();
+          "INSERT INTO users (id, username, nama, role_slug, wilayah, status, kelas, nis, npsn, nuptk, nip, email, password, sekolah_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        ).bind(id, username, nama, role, wilayah || '', status || 'Aktif', kelas || null, nis || null, npsn || null, nuptk || null, nip || null, email || null, password || null, sekolah_id || null).run();
         console.log("INSERT RESULT:", JSON.stringify(result));
         if (!result.success) throw new Error("Insert failed silently");
         
@@ -136,11 +136,11 @@ export default {
       try {
         const id = url.pathname.split("/").pop();
         const body = (await request.json()) as any;
-        const { username, nama, role, wilayah, status, kelas, nis, email, password, sekolah_id } = body;
+        const { username, nama, role, wilayah, status, kelas, nis, npsn, nuptk, nip, email, password, sekolah_id } = body;
         
         await env.DB.prepare(
-          "UPDATE users SET username = ?, nama = ?, role_slug = ?, wilayah = ?, status = ?, kelas = ?, nis = ?, email = ?, password = ?, sekolah_id = ? WHERE id = ?"
-        ).bind(username, nama, role, wilayah || '', status || 'Aktif', kelas || null, nis || null, email || null, password || null, sekolah_id || null, id).run();
+          "UPDATE users SET username = ?, nama = ?, role_slug = ?, wilayah = ?, status = ?, kelas = ?, nis = ?, npsn = ?, nuptk = ?, nip = ?, email = ?, password = ?, sekolah_id = ? WHERE id = ?"
+        ).bind(username, nama, role, wilayah || '', status || 'Aktif', kelas || null, nis || null, npsn || null, nuptk || null, nip || null, email || null, password || null, sekolah_id || null, id).run();
         
         return json({ success: true, message: "User berhasil diupdate" });
       } catch (error: unknown) {
