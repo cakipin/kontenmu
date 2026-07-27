@@ -191,7 +191,7 @@ function Icon({ name }: { name: NavIcon | 'bell' | 'brand' | 'menu' | 'close' | 
 function AppContent() {
   const { session, logout, sessionTimeLeft, switchRole } = useAuth();
   const IS_DEV = import.meta.env.DEV;
-  const { data, setData } = useAppData();
+  const { data } = useAppData();
   const location = useLocation();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
