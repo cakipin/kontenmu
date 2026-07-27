@@ -24,7 +24,6 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   const currentUser = users.find(u => u.username === session?.username);
   const [suratTugas, setSuratTugas] = useState('');
   const [masaAktif, setMasaAktif] = useState('');
-  const [masterStats, setMasterStats] = useState<any>(null);
   
   const [selectedRole, setSelectedRole] = useState('sekolah');
   const [sekolahNama, setSekolahNama] = useState('');
@@ -61,13 +60,6 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       .then(res => res.json())
       .then(res => {
         if (res.success && res.data) setUsers(res.data);
-      })
-      .catch(console.error);
-      
-    fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/master/stats`)
-      .then(res => res.json())
-      .then(res => {
-        if (res.success && res.data) setMasterStats(res.data);
       })
       .catch(console.error);
   }, []);
@@ -377,6 +369,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
           </div>
         </div>
       )}
+
       
       {currentRole === 'superadmin' && (
         <div style={{ background: '#fff', margin: '8px 0 24px', borderRadius: '24px', padding: '24px', border: '1px solid var(--border-subtle)', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>

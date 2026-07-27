@@ -128,6 +128,7 @@ export default {
       }
     }
 
+
     if (url.pathname === "/api/users" && request.method === "GET") {
       try {
         const { results } = await env.DB.prepare("SELECT * FROM users ORDER BY created_at DESC").all();
