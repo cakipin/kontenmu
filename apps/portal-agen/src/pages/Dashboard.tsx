@@ -400,16 +400,16 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                 total={contentStats.total} 
                 data={[
                   { label: 'Video', value: contentStats.video, color: '#3B82F6' },
-                  { label: 'E-book', value: contentStats.infografi, color: '#10B981' },
-                  { label: 'Audio', value: contentStats.games, color: '#F59E0B' },
-                  { label: 'Exercises', value: contentStats.total - contentStats.video - contentStats.infografi - contentStats.games, color: '#8B5CF6' }
+                  { label: 'Infografis', value: contentStats.infografi, color: '#10B981' },
+                  { label: 'Games', value: contentStats.games, color: '#F59E0B' },
+                  { label: 'Lainnya', value: contentStats.total - contentStats.video - contentStats.infografi - contentStats.games, color: '#8B5CF6' }
                 ]}
               />
               <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '24px', fontSize: '10px', fontWeight: 500, color: 'var(--text-secondary)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#3B82F6' }}></span> Video</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#10B981' }}></span> E-book</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#F59E0B' }}></span> Audio</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#8B5CF6' }}></span> Exercises</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#10B981' }}></span> Infografis</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#F59E0B' }}></span> Games</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#8B5CF6' }}></span> Lainnya</div>
               </div>
             </div>
 
