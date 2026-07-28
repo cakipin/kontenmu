@@ -236,10 +236,10 @@ export default {
         const sekolahMuhammadiyah = await env.DB.prepare("SELECT COUNT(*) as count FROM master_data_sekolah WHERE nama LIKE '%Muhammadiyah%'").first('count');
         const sekolahAktif = await env.DB.prepare("SELECT COUNT(DISTINCT sekolah_id) as count FROM users WHERE role_slug = 'sekolah' AND status = 'Aktif'").first('count');
         
-        const totalGuru = await env.DB.prepare("SELECT COUNT(*) as count FROM users WHERE role_slug = 'guru'").first('count');
+        const totalGuru = await env.DB.prepare("SELECT SUM(ptk_total) as count FROM master_data_sekolah").first('count');
         const guruAktif = await env.DB.prepare("SELECT COUNT(*) as count FROM users WHERE role_slug = 'guru' AND status = 'Aktif'").first('count');
 
-        const totalSiswa = await env.DB.prepare("SELECT COUNT(*) as count FROM users WHERE role_slug = 'siswa'").first('count');
+        const totalSiswa = await env.DB.prepare("SELECT SUM(pd_total) as count FROM master_data_sekolah").first('count');
         const siswaAktif = await env.DB.prepare("SELECT COUNT(*) as count FROM users WHERE role_slug = 'siswa' AND status = 'Aktif'").first('count');
 
         return json({
