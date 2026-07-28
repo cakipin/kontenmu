@@ -128,7 +128,7 @@ export default function History() {
               <div style={{ marginBottom: '32px' }}>
                 <h4 style={{ margin: '0 0 12px 0', color: '#64748b', fontSize: '0.875rem', textTransform: 'uppercase' }}>Informasi Pelanggan</h4>
                 <p style={{ margin: '0 0 4px 0', fontWeight: 600, fontSize: '1.125rem' }}>{getSchool(data, previewRow.schoolId)?.nama ?? '-'}</p>
-                <p style={{ margin: 0, color: '#64748b' }}>{getSchool(data, previewRow.schoolId)?.alamat ?? '-'}</p>
+                <p style={{ margin: 0, color: '#64748b' }}>{getSchool(data, previewRow.schoolId)?.kota ?? '-'}</p>
               </div>
 
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '32px' }}>
