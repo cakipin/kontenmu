@@ -167,6 +167,12 @@ export interface SimContent {
   sourceUrl?: string;
 }
 
+export interface DeployConfig {
+  githubToken: string;
+  repoOwner: string;
+  repoName: string;
+}
+
 export interface AppData {
   users: SimUser[];
   schools: SimSchool[];
@@ -189,6 +195,7 @@ export interface AppData {
   aiAutoContext: string;
   aiIndexedChunks: number;
   roleAccessPermissions: Record<string, string[]>;
+  deployConfig?: DeployConfig;
 }
 
 const colors = ['#6366f1', '#4f46e5', '#10b981', '#f59e0b', '#0ea5e9', '#ec4899', '#8b5cf6', '#14b8a6'];
@@ -365,6 +372,11 @@ export const seedAppData: AppData = {
     learning: ['siswa', 'guru'],
     school: ['superadmin']
   },
+  deployConfig: {
+    githubToken: '',
+    repoOwner: '',
+    repoName: ''
+  }
 };
 
 function cloneData(data: AppData): AppData {
