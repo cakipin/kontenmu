@@ -24,8 +24,16 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   const currentUser = users.find(u => u.username === session?.username);
   const [suratTugas, setSuratTugas] = useState('');
   const [masaAktif, setMasaAktif] = useState('');
+  const [dbStats, setDbStats] = useState<any>(null);
+
+  useEffect(() => {
+    if (currentRole === 'superadmin') {
+      const baseUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev');
+      fetch(`${baseUrl}/api/stats`).then(res => res.json()).then(res => { if (res.success) setDbStats(res.data); }).catch(console.error);
+    }
+  }, [currentRole]);
   
-  const masterStats = {
+  const masterStats = dbStats || {
     totalSekolah: 1500,
     sekolahAktif: 850,
     sekolahMuhammadiyah: 420,
