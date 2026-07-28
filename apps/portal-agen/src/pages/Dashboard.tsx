@@ -731,7 +731,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                       value={sekolahNama}
                       onChange={(val, id) => { setSekolahNama(val); setSekolahId(id); }}
                       className="input-control"
-                      subscribedOnly={selectedRole === 'guru' || selectedRole === 'siswa'}
+                      subscribedOnly={false}
                     />
                   </label>
                 )}
