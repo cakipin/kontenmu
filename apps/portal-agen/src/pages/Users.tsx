@@ -119,7 +119,6 @@ const emptyForm: Omit<SimUser, 'id' | 'initial' | 'color' | 'terakhirLogin'> = {
   status: 'Aktif',
   kelas: '',
   nis: '',
-  npsn: '',
   nuptk: '',
   nip: '',
   sekolahId: undefined,
@@ -131,6 +130,7 @@ export default function Users() {
   const [form, setForm] = useState(emptyForm);
   const [isFormOpen, setFormOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedBentukPendidikan, setSelectedBentukPendidikan] = useState<string>('');
   const [activeFilter, setActiveFilter] = useState<UserFilter>('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -147,9 +147,11 @@ export default function Users() {
     setShowPassword(true);
   };
 
+  const getApiUrl = () => import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev');
+
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/users`, { cache: 'no-store' });
+      const res = await fetch(`${getApiUrl()}/api/users`, { cache: 'no-store' });
       const json = await res.json();
       if (json.success) {
         setUsers(json.data);
@@ -207,11 +209,13 @@ export default function Users() {
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
+    setSelectedBentukPendidikan('');
     setFormOpen(true);
   };
 
   const openEdit = (user: SimUser) => {
     setEditingId(user.id);
+    setSelectedBentukPendidikan('');
     setForm({
       username: user.username,
       nama: user.nama,
@@ -220,7 +224,6 @@ export default function Users() {
       status: user.status,
       kelas: user.kelas ?? '',
       nis: user.nis ?? '',
-      npsn: user.npsn ?? '',
       nuptk: user.nuptk ?? '',
       nip: user.nip ?? '',
       sekolahId: user.sekolah_id ?? user.sekolahId ?? undefined,
@@ -230,20 +233,21 @@ export default function Users() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    const payload = { ...form, sekolah_id: form.sekolahId };
     try {
-      if (editingId) {
-        await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}`}/api/users/${editingId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...form, sekolah_id: form.sekolahId })
-        });
-      } else {
-        const apiUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev');
-        await fetch(`${apiUrl}/api/users`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...form, newUserSource: null, sekolah_id: form.sekolahId })
-        });
+      const method = editingId ? 'PUT' : 'POST';
+      const endpoint = editingId
+        ? `${getApiUrl()}/api/users/${editingId}`
+        : `${getApiUrl()}/api/users`;
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Gagal menyimpan data');
       }
       await fetchUsers();
       setForm(emptyForm);
@@ -256,17 +260,21 @@ export default function Users() {
   };
 
   const removeUser = async (id: string) => {
+    if (!confirm('Yakin ingin menghapus pengguna ini?')) return;
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}`}/api/users/${id}`, {
+      const res = await fetch(`${getApiUrl()}/api/users/${id}`, {
         method: 'DELETE'
       });
-      await fetchUsers();
+      const data = await res.json();
+      if (data.success) {
+        await fetchUsers();
+      } else {
+        alert(data.error || 'Gagal menghapus');
+      }
     } catch (e) {
       console.error(e);
     }
   };
-
-
 
   return (
     <div className="page-shell">
@@ -326,7 +334,10 @@ export default function Users() {
               <label>
                 Institusi
                 {['siswa', 'sekolah', 'guru'].includes(form.role) ? (
-                  <SchoolSearchInput value={form.wilayah} onChange={(val, id) => setForm({ ...form, wilayah: val, sekolahId: id })} />
+                  <SchoolSearchInput value={form.wilayah} onChange={(val, id, school) => {
+                    setForm({ ...form, wilayah: val, sekolahId: id });
+                    setSelectedBentukPendidikan(school?.bentuk_pendidikan || '');
+                  }} />
                 ) : (
                   <input className="input-control" value={form.wilayah} onChange={(e) => setForm({ ...form, wilayah: e.target.value, sekolahId: undefined })} required />
                 )}
@@ -335,7 +346,18 @@ export default function Users() {
                 <>
                   <label>
                     Kelas
-                    <input className="input-control" value={form.kelas ?? ''} onChange={(e) => setForm({ ...form, kelas: e.target.value })} placeholder="XI A" required />
+                    <select className="input-control" value={form.kelas ?? ''} onChange={(e) => setForm({ ...form, kelas: e.target.value })} required>
+                      <option value="">Pilih Kelas</option>
+                      {(() => {
+                        const bp = selectedBentukPendidikan?.toLowerCase() || '';
+                        let opts = [];
+                        if (bp.includes('sd') || bp.includes('mi')) opts = [1,2,3,4,5,6];
+                        else if (bp.includes('smp') || bp.includes('mts')) opts = [7,8,9];
+                        else if (bp.includes('sma') || bp.includes('smk') || bp.includes('ma')) opts = [10,11,12];
+                        else opts = [1,2,3,4,5,6,7,8,9,10,11,12];
+                        return opts.map(c => <option key={c} value={String(c)}>Kelas {c}</option>);
+                      })()}
+                    </select>
                   </label>
                   <label>
                     NIS
@@ -354,12 +376,6 @@ export default function Users() {
                     <input className="input-control" value={form.nip ?? ''} onChange={(e) => setForm({ ...form, nip: e.target.value })} placeholder="Opsional" />
                   </label>
                 </>
-              )}
-              {form.role === 'sekolah' && (
-                <label>
-                  NPSN
-                  <input className="input-control" value={form.npsn ?? ''} onChange={(e) => setForm({ ...form, npsn: e.target.value })} placeholder="NPSN Sekolah" required />
-                </label>
               )}
               <label>
                 Status
@@ -409,7 +425,7 @@ export default function Users() {
                 <th style={{ textAlign: 'left' }}>Username</th>
                 <th style={{ textAlign: 'left' }}>Role</th>
                 <th style={{ textAlign: 'center' }}>
-                  {activeFilter === 'sekolah' ? 'NPSN' : activeFilter === 'guru' ? 'NUPTK / NIP' : activeFilter === 'siswa' ? 'Kelas / NIS' : 'Info Khusus'}
+                  {activeFilter === 'guru' ? 'NUPTK / NIP' : activeFilter === 'siswa' ? 'Kelas / NIS' : 'Info Khusus'}
                 </th>
                 <th style={{ textAlign: 'left' }}>Institusi</th>
                 <th style={{ textAlign: 'center' }}>Terakhir Login</th>
@@ -445,8 +461,7 @@ export default function Users() {
                     </span>
                   </td>
                   <td style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    {user.role === 'sekolah' && user.npsn ? user.npsn :
-                     user.role === 'guru' && (user.nuptk || user.nip) ? (
+                    {user.role === 'guru' && (user.nuptk || user.nip) ? (
                        <>
                          {user.nuptk && <div>{user.nuptk}</div>}
                          {user.nip && <div>{user.nip}</div>}

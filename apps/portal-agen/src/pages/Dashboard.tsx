@@ -25,6 +25,16 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   const [suratTugas, setSuratTugas] = useState('');
   const [masaAktif, setMasaAktif] = useState('');
   
+  const masterStats = {
+    totalSekolah: 1500,
+    sekolahAktif: 850,
+    sekolahMuhammadiyah: 420,
+    totalGuru: 12500,
+    guruAktif: 8200,
+    totalSiswa: 350000,
+    siswaAktif: 210000
+  };
+  
   const [selectedRole, setSelectedRole] = useState('sekolah');
   const [sekolahNama, setSekolahNama] = useState('');
   const [sekolahId, setSekolahId] = useState<number | undefined>(undefined);

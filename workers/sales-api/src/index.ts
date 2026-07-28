@@ -1,3 +1,5 @@
+import bcrypt from 'bcryptjs';
+
 export interface Env {
   DB: D1Database;
 }
@@ -26,7 +28,7 @@ export default {
     if (url.pathname === "/api/sekolah" && request.method === "GET") {
       try {
         const search = url.searchParams.get("search");
-        let query = "SELECT id, nama, alamat_jalan, nomor_telepon, kabupaten, npsn, provinsi FROM master_data_sekolah ";
+        let query = "SELECT id, nama, alamat_jalan, nomor_telepon, kabupaten, npsn, provinsi, bentuk_pendidikan FROM master_data_sekolah ";
         let results;
         
         if (search) {
@@ -49,7 +51,8 @@ export default {
           kota: row.kabupaten,
           agen: '',
           npsn: row.npsn,
-          provinsi: row.provinsi
+          provinsi: row.provinsi,
+          bentuk_pendidikan: row.bentuk_pendidikan
         }));
         return json({ success: true, data: mappedResults });
       } catch (error: unknown) {
@@ -149,7 +152,7 @@ export default {
         console.log("USERS POST BODY:", JSON.stringify(body));
         const id = crypto.randomUUID();
         const { username, nama, role, wilayah, status, kelas, nis, npsn, nuptk, nip, email, password, sekolah_id } = body;
-        
+
         const result = await env.DB.prepare(
           "INSERT INTO users (id, username, nama, role_slug, wilayah, status, kelas, nis, npsn, nuptk, nip, email, password, sekolah_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         ).bind(id, username, nama, role, wilayah || '', status || 'Aktif', kelas || null, nis || null, npsn || null, nuptk || null, nip || null, email || null, password || null, sekolah_id || null).run();
@@ -187,7 +190,7 @@ export default {
         const { newPassword } = body;
         
         await env.DB.prepare(
-          "UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+          "UPDATE users SET password = ? WHERE id = ?"
         ).bind(newPassword, id).run();
         
         return json({ success: true, message: "Password berhasil diubah" });

@@ -39,7 +39,8 @@ export function AuthProvider({ appId, allowedRoles, children }: AuthProviderProp
     sessionTimeLeft: session ? getSessionTimeLeft(session) : null,
     login: async (username, password) => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/users`, { cache: 'no-store' });
+        const apiUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev');
+        const res = await fetch(`${apiUrl}/api/users`, { cache: 'no-store' });
         const json = await res.json();
         if (json.success && json.data) {
           const user = json.data.find((u: any) => u.username === username.trim() && u.password === password);

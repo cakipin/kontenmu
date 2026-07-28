@@ -14,20 +14,7 @@ export default defineConfig({
     },
   },
   plugins: [
-    react(),
-    {
-      name: 'mock-users-api',
-      configureServer(server) {
-        server.middlewares.use((req, res, next) => {
-          if (req.url === '/api/users' && req.method === 'POST') {
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ success: true, message: 'User berhasil ditambahkan (Mock)', id: 'mock-' + Date.now() }));
-            return;
-          }
-          next();
-        });
-      }
-    }
+    react()
   ],
   server: {
     port: 5173,
@@ -35,12 +22,18 @@ export default defineConfig({
       allow: [rootDir],
     },
     proxy: {
-      '/api/sales': 'http://localhost:8787',
-      '/api/sekolah': 'http://localhost:8787',
-      '/api/buku': 'http://localhost:8787',
-      '/api/inventory': 'http://localhost:8788',
-      '/api/allocate': 'http://localhost:8788',
-      '/api/allocations': 'http://localhost:8788',
+      '/api/auth/sso': {
+        target: 'https://kontenmu.pages.dev',
+        changeOrigin: true,
+      },
+      '/api/sales': 'http://127.0.0.1:8787',
+      '/api/sekolah': 'http://127.0.0.1:8787',
+      '/api/buku': 'http://127.0.0.1:8787',
+      '/api/users': 'http://127.0.0.1:8787',
+      '/api/auth': 'http://127.0.0.1:8787',
+      '/api/inventory': 'http://127.0.0.1:8788',
+      '/api/allocate': 'http://127.0.0.1:8788',
+      '/api/allocations': 'http://127.0.0.1:8788',
     },
   },
 })

@@ -23,7 +23,6 @@ export interface SimUser {
   newUserSource?: 'sso' | 'manual';
   kelas?: string;
   nis?: string;
-  npsn?: string;
   nuptk?: string;
   nip?: string;
   ssoId?: string;

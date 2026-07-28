@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAppData } from '../data/appData';
 
-export function SchoolSearchInput({ value, onChange, className, subscribedOnly = false }: { value: string, onChange: (val: string, id?: number) => void, className?: string, subscribedOnly?: boolean }) {
+export function SchoolSearchInput({ value, onChange, className, subscribedOnly = false }: { value: string, onChange: (val: string, id?: number, school?: any) => void, className?: string, subscribedOnly?: boolean }) {
   const [searchQuery, setSearchQuery] = useState(value || '');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -31,7 +31,8 @@ export function SchoolSearchInput({ value, onChange, className, subscribedOnly =
         return () => clearTimeout(timer);
       } else {
         const timer = setTimeout(() => {
-          fetch(`${import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev'}/api/sekolah?search=` + encodeURIComponent(searchQuery))
+          const baseUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'https://sales-api.1912.workers.dev');
+          fetch(`${baseUrl}/api/sekolah?search=` + encodeURIComponent(searchQuery))
             .then(res => res.json())
             .then(resData => {
               if (resData.success) setSearchResults(resData.data || []);
@@ -83,7 +84,7 @@ export function SchoolSearchInput({ value, onChange, className, subscribedOnly =
               style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-subtle, #e2e8f0)', cursor: 'pointer', fontSize: '0.85rem' }}
               onClick={() => {
                 setSearchQuery(res.nama);
-                onChange(res.nama, res.id);
+                onChange(res.nama, res.id, res);
                 setIsOpen(false);
               }}
             >
