@@ -346,8 +346,8 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                     <div style={{ height: '100%', background: '#10B981', width: `${masterStats.totalSekolah ? ((masterStats.sekolahAktif || 0) / masterStats.totalSekolah * 100) : 0}%` }} />
                   </div>
                   <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{formatNumber(masterStats.totalSekolah || 0)} Total</span>
                     <span>{formatNumber(masterStats.sekolahAktif || 0)} Aktif</span>
-                    <span>{formatNumber(Math.max(0, (masterStats.totalSekolah || 0) - (masterStats.sekolahAktif || 0)))} Belum</span>
                   </div>
                 </div>
               </div>
@@ -362,8 +362,8 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                     <div style={{ height: '100%', background: '#10B981', width: `${masterStats.totalGuru ? ((masterStats.guruAktif || 0) / masterStats.totalGuru * 100) : 0}%` }} />
                   </div>
                   <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{formatNumber(masterStats.totalGuru || 0)} Total</span>
                     <span>{formatNumber(masterStats.guruAktif || 0)} Aktif</span>
-                    <span>{formatNumber(Math.max(0, (masterStats.totalGuru || 0) - (masterStats.guruAktif || 0)))} Belum</span>
                   </div>
                 </div>
               </div>
@@ -378,8 +378,8 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                     <div style={{ height: '100%', background: '#10B981', width: `${masterStats.totalSiswa ? ((masterStats.siswaAktif || 0) / masterStats.totalSiswa * 100) : 0}%` }} />
                   </div>
                   <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{formatNumber(masterStats.totalSiswa || 0)} Total</span>
                     <span>{formatNumber(masterStats.siswaAktif || 0)} Aktif</span>
-                    <span>{formatNumber(Math.max(0, (masterStats.totalSiswa || 0) - (masterStats.siswaAktif || 0)))} Belum</span>
                   </div>
                 </div>
               </div>
