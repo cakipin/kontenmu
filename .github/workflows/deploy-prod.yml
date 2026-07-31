@@ -89,6 +89,80 @@ jobs:
           command: d1 execute KONTENMU_PROD_DB --remote --command "CREATE TABLE IF NOT EXISTS app_data (id TEXT PRIMARY KEY, value TEXT); INSERT OR IGNORE INTO app_data (id, value) VALUES ('app_state', '{}');"
         continue-on-error: true
 
+
+      - name: Migrate Database Schema - email
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN email TEXT;"
+        continue-on-error: true
+
+
+      - name: Migrate Database Schema - kelas
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN kelas TEXT;"
+        continue-on-error: true
+
+      - name: Migrate Database Schema - nis
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN nis TEXT;"
+        continue-on-error: true
+
+      - name: Migrate Database Schema - new_user_source
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN new_user_source TEXT;"
+        continue-on-error: true
+
+      - name: Migrate Database Schema - sso_id
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN sso_id TEXT;"
+        continue-on-error: true
+
+      - name: Migrate Database Schema - requested_role
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN requested_role TEXT;"
+        continue-on-error: true
+
+      - name: Migrate Database Schema - surat_tugas
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN surat_tugas TEXT;"
+        continue-on-error: true
+
+      - name: Migrate Database Schema - masa_aktif
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN masa_aktif TEXT;"
+        continue-on-error: true
+
+      - name: Migrate Database Schema - picture
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN picture TEXT;"
+        continue-on-error: true
+
       - name: Deploy Backend Worker
         uses: cloudflare/wrangler-action@v3
         with:
