@@ -41,6 +41,14 @@ jobs:
           command: pages deploy dist --project-name kontenmu-prod --branch main
           workingDirectory: apps/portal-agen
 
+      - name: Migrate Database Schema
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN npsn TEXT; ALTER TABLE users ADD COLUMN nuptk TEXT; ALTER TABLE users ADD COLUMN nip TEXT; ALTER TABLE users ADD COLUMN password TEXT; CREATE TABLE IF NOT EXISTS app_data (id TEXT PRIMARY KEY, value TEXT); INSERT OR IGNORE INTO app_data (id, value) VALUES ('app_state', '{}');"
+        continue-on-error: true
+
       - name: Deploy Backend Worker
         uses: cloudflare/wrangler-action@v3
         with:
