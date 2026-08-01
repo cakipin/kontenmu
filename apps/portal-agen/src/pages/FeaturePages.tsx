@@ -1222,7 +1222,10 @@ export function PlayKonten() {
               <div><span className="preview-kicker">Player Konten</span><h2>{playingContent.judul}</h2></div>
               <button type="button" className="icon-action-button" onClick={() => setPlayingContent(null)} aria-label="Tutup player">&times;</button>
             </div>
-            <ContentPlayerStage content={playingContent} />
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+              <ContentPlayerStage content={playingContent} />
+              <RelatedContents currentContent={playingContent} allContents={data.contents} onPlay={setPlayingContent} />
+            </div>
           </div>
         </div>
       )}
@@ -2075,7 +2078,10 @@ export function Inventory() {
               <div><span className="preview-kicker">Player Konten</span><h2>{playingContent.judul}</h2></div>
               <button type="button" className="icon-action-button" onClick={() => setPlayingContent(null)} aria-label="Tutup player">&times;</button>
             </div>
-            <ContentPlayerStage content={playingContent} />
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+              <ContentPlayerStage content={playingContent} />
+              <RelatedContents currentContent={playingContent} allContents={data.contents} onPlay={setPlayingContent} />
+            </div>
           </div>
         </div>
       )}
@@ -2880,7 +2886,10 @@ export function Library() {
               <div><span className="preview-kicker">Player Konten</span><h2>{playingContent.judul}</h2></div>
               <button type="button" className="icon-action-button" onClick={() => setPlayingContent(null)} aria-label="Tutup player">&times;</button>
             </div>
-            <ContentPlayerStage content={playingContent} />
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+              <ContentPlayerStage content={playingContent} />
+              <RelatedContents currentContent={playingContent} allContents={data.contents} onPlay={setPlayingContent} />
+            </div>
           </div>
         </div>
       )}
@@ -3163,6 +3172,68 @@ function Page({ title, subtitle, children, hideHeader = false }: { title: string
         )}
         {children}
       </GlassCard>
+    </div>
+  );
+}
+
+function RelatedContents({ currentContent, allContents, onPlay }: { currentContent: SimContent; allContents: SimContent[]; onPlay: (c: SimContent) => void }) {
+  if (!currentContent.isbn) return null;
+
+  const related = allContents.filter(c => c.isbn === currentContent.isbn && c.id !== currentContent.id && c.status === 'Terbit');
+  
+  if (related.length === 0) return null;
+
+  const infografis = related.filter(c => c.kategori === 'Infografi');
+  const videos = related.filter(c => c.kategori === 'Video');
+  const games = related.filter(c => c.kategori === 'Games HTML5');
+
+  if (infografis.length === 0 && videos.length === 0 && games.length === 0) return null;
+
+  return (
+    <div className="related-contents-section" style={{ marginTop: '24px', padding: '16px', borderTop: '1px solid var(--border-color, #e5e7eb)', backgroundColor: 'var(--bg-surface, #f9fafb)', borderRadius: '0 0 12px 12px', flexShrink: 0 }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 12px' }}>Materi Terkait Buku Ini</h3>
+      
+      {infografis.length > 0 && (
+        <div style={{ marginBottom: '16px' }}>
+          <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary, #666)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Info Grafis</h4>
+          <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'thin' }}>
+            {infografis.map(c => (
+              <div key={c.id} style={{ width: '160px', flexShrink: 0 }}>
+                <ContentThumbnail content={c} onPlay={() => onPlay(c)} />
+                <div style={{ fontSize: '0.8rem', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }} title={c.judul}>{c.judul}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {videos.length > 0 && (
+        <div style={{ marginBottom: '16px' }}>
+          <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary, #666)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Video</h4>
+          <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'thin' }}>
+            {videos.map(c => (
+              <div key={c.id} style={{ width: '160px', flexShrink: 0 }}>
+                <ContentThumbnail content={c} onPlay={() => onPlay(c)} />
+                <div style={{ fontSize: '0.8rem', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }} title={c.judul}>{c.judul}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {games.length > 0 && (
+        <div style={{ marginBottom: '16px' }}>
+          <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary, #666)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Games</h4>
+          <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'thin' }}>
+            {games.map(c => (
+              <div key={c.id} style={{ width: '160px', flexShrink: 0 }}>
+                <ContentThumbnail content={c} onPlay={() => onPlay(c)} />
+                <div style={{ fontSize: '0.8rem', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }} title={c.judul}>{c.judul}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
