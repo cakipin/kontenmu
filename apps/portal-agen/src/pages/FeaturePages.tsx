@@ -466,6 +466,8 @@ export function UploadContent() {
   const { data, setData } = useAppData();
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [masterBooks, setMasterBooks] = useState<any[]>([]);
+  const [selectedKelas, setSelectedKelas] = useState('');
+  const availableKelas = Array.from(new Set(masterBooks.map(b => b.kelas).filter(Boolean))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
   const [isbn, setIsbn] = useState('');
   const [judul, setJudul] = useState('');
   const [kategori, setKategori] = useState<ContentCategory>('Teks');
@@ -802,11 +804,18 @@ export function UploadContent() {
                   </select>
                 </label>
                 <label style={{ gridColumn: '1 / -1' }}>
+                  Kelas
+                  <select className="input-control" value={selectedKelas} onChange={(e) => { setSelectedKelas(e.target.value); setIsbn(''); setMapel(''); setTarget(''); }}>
+                    <option value="">Semua Kelas</option>
+                    {availableKelas.map(k => <option key={k} value={k}>{k}</option>)}
+                  </select>
+                </label>
+                <label style={{ gridColumn: '1 / -1' }}>
                   Buku Induk
                   <Select
                     className="react-select-container"
                     classNamePrefix="react-select"
-                    options={masterBooks.map(b => ({ value: b.isbn, label: `${b.judul} (${b.mapel} - ${b.jenjang || b.peruntukan || '-'})` }))}
+                    options={masterBooks.filter(b => !selectedKelas || b.kelas === selectedKelas).map(b => ({ value: b.isbn, label: `${b.judul} (${b.mapel} - ${b.jenjang || b.peruntukan || '-'})` }))}
                     value={isbn ? { value: isbn, label: masterBooks.find(b => b.isbn === isbn) ? `${masterBooks.find(b => b.isbn === isbn)?.judul} (${masterBooks.find(b => b.isbn === isbn)?.mapel} - ${masterBooks.find(b => b.isbn === isbn)?.jenjang || masterBooks.find(b => b.isbn === isbn)?.peruntukan || '-'})` : isbn } : null}
                     onChange={(sel) => {
                       const val = sel?.value || '';
@@ -882,6 +891,8 @@ export function PlayKonten() {
   const [editDeskripsi, setEditDeskripsi] = useState('');
   const [editThumbnailFile, setEditThumbnailFile] = useState<File | null>(null);
   const [masterBooks, setMasterBooks] = useState<any[]>([]);
+  const [editSelectedKelas, setEditSelectedKelas] = useState('');
+  const editAvailableKelas = Array.from(new Set(masterBooks.map(b => b.kelas).filter(Boolean))).sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
 
   useEffect(() => {
     let active = true;
@@ -969,6 +980,8 @@ export function PlayKonten() {
     setEditMapel(content.mapel);
     setEditTarget(content.target);
     setEditIsbn(content.isbn || '');
+    const bookForEdit = masterBooks.find(b => b.isbn === content.isbn);
+    setEditSelectedKelas(bookForEdit?.kelas || '');
     setEditDeskripsi(content.deskripsi || '');
     setEditThumbnailFile(null);
     setEditThumbnailPreview(content.thumbnailUrl || '');
@@ -1225,11 +1238,18 @@ export function PlayKonten() {
               <label>Judul Konten<input className="input-control" value={editTitle} onChange={(event) => setEditTitle(event.target.value)} required disabled={isSaving} /></label>
               <label>Kategori<select className="input-control" value={editCategory} onChange={(event) => setEditCategory(event.target.value as ContentCategory)} disabled={isSaving}>{contentCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
               <label>
+                Kelas
+                <select className="input-control" value={editSelectedKelas} onChange={(e) => { setEditSelectedKelas(e.target.value); setEditIsbn(''); setEditMapel(''); setEditTarget(''); }} disabled={isSaving}>
+                  <option value="">Semua Kelas</option>
+                  {editAvailableKelas.map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
+              </label>
+              <label>
                 Buku Induk
                 <Select
                   className="react-select-container"
                   classNamePrefix="react-select"
-                  options={masterBooks.map(b => ({ value: b.isbn, label: `${b.judul} (${b.mapel} - ${b.jenjang || b.peruntukan || '-'})` }))}
+                  options={masterBooks.filter(b => !editSelectedKelas || b.kelas === editSelectedKelas).map(b => ({ value: b.isbn, label: `${b.judul} (${b.mapel} - ${b.jenjang || b.peruntukan || '-'})` }))}
                   value={editIsbn ? { value: editIsbn, label: masterBooks.find(b => b.isbn === editIsbn) ? `${masterBooks.find(b => b.isbn === editIsbn)?.judul} (${masterBooks.find(b => b.isbn === editIsbn)?.mapel} - ${masterBooks.find(b => b.isbn === editIsbn)?.jenjang || masterBooks.find(b => b.isbn === editIsbn)?.peruntukan || '-'})` : editIsbn } : null}
                   onChange={(sel) => {
                     const val = sel?.value || '';
