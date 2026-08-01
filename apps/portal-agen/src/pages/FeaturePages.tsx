@@ -3179,7 +3179,7 @@ function Page({ title, subtitle, children, hideHeader = false }: { title: string
 function RelatedContents({ currentContent, allContents, onPlay }: { currentContent: SimContent; allContents: SimContent[]; onPlay: (c: SimContent) => void }) {
   if (!currentContent.isbn) return null;
 
-  const related = allContents.filter(c => c.isbn === currentContent.isbn && c.id !== currentContent.id && c.status === 'Terbit');
+  const related = allContents.filter(c => c.isbn === currentContent.isbn && c.id !== currentContent.id);
   
   if (related.length === 0) return null;
 
