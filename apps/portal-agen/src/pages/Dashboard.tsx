@@ -14,6 +14,10 @@ import {
   inventoryRows,
   saleInvoiceTotal,
   useAppData,
+  type SalesPackage,
+  type SubscriptionDuration,
+  type SimSubscription,
+  subscriptionEndDate,
 } from '../data/appData';
 
 export default function Dashboard({ currentRole }: { currentRole: string }) {
@@ -23,6 +27,56 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   const [users, setUsers] = useState<any[]>([]);
   const currentUser = users.find(u => u.username === session?.username);
   const [suratTugas, setSuratTugas] = useState('');
+  
+  // Add Subscription State
+  const [isAddSubscriptionModalOpen, setIsAddSubscriptionModalOpen] = useState(false);
+  const [newSubSchoolId, setNewSubSchoolId] = useState<number | ''>('');
+  const [newSubPaket, setNewSubPaket] = useState<SalesPackage>('Konten Digital + Buku');
+  const [newSubDurasi, setNewSubDurasi] = useState<SubscriptionDuration>('3 Bulan');
+  const [newSubNominal, setNewSubNominal] = useState<number>(1500000);
+
+  const handleAddSubscriptionSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSubSchoolId) return alert('Pilih sekolah rekanan Anda');
+
+    const school = data.schools.find((s: any) => s.id === newSubSchoolId);
+    if (!school) return alert('Sekolah tidak valid');
+
+    const startDate = new Date().toISOString().slice(0, 10);
+    const endDate = subscriptionEndDate(startDate, newSubDurasi);
+
+    const newSub: SimSubscription = {
+      id: `SUB-${Math.floor(Math.random() * 100000)}`,
+      invoiceNo: `INV-SUB-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(Math.random() * 1000)}`,
+      schoolId: newSubSchoolId,
+      paket: newSubPaket,
+      durasi: newSubDurasi,
+      mulai: startDate,
+      selesai: endDate,
+      nominal: newSubNominal,
+      diskonPersen: 0,
+      diskonNominal: 0,
+      komisiPersen: 10,
+      komisiNominal: newSubNominal * 0.1,
+      status: 'Menunggu Approve Agen',
+      requestAt: startDate,
+      agentDeadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), // 3 days deadline
+    };
+
+    setData((current: any) => ({
+      ...current,
+      subscriptions: [...(current.subscriptions || []), newSub],
+    }));
+
+    setIsAddSubscriptionModalOpen(false);
+    setNewSubSchoolId('');
+    setNewSubPaket('Konten Digital + Buku');
+    setNewSubDurasi('3 Bulan');
+    setNewSubNominal(1500000);
+    
+    // Switch to payments tab if we want to show it, or just let them see it in Dashboard or /payments.
+    // We stay on dashboard so they can see the school is added to their list.
+  };
   const [masaAktif, setMasaAktif] = useState('');
   const [dbStats, setDbStats] = useState<any>(null);
 
@@ -563,7 +617,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                 </Link>
               )}
               {currentRole === 'agen' && (
-                <button type="button" className="btn-promax" style={{ background: 'var(--primary)', color: 'white', border: 'none' }} onClick={() => window.alert('Fitur tambah berlangganan sedang dalam pengembangan')}>
+                <button type="button" className="btn-promax" style={{ background: 'var(--primary)', color: 'white', border: 'none' }} onClick={() => setIsAddSubscriptionModalOpen(true)}>
                   Add Berlangganan
                 </button>
               )}
@@ -893,6 +947,74 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
               </form>
             </GlassCard>
           )}
+        </div>
+      )}
+
+      {isAddSubscriptionModalOpen && (
+        <div className="modal-backdrop" style={{ zIndex: 99999, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsAddSubscriptionModalOpen(false)}>
+          <div className="modal-content" style={{ background: 'white', padding: '24px', borderRadius: '8px', width: '400px', maxWidth: '90%' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0, marginBottom: '16px' }}>Tambah Berlangganan</h3>
+            <form onSubmit={handleAddSubscriptionSubmit}>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Sekolah Rekanan</label>
+                <select 
+                  className="input-control" 
+                  style={{ width: '100%', padding: '8px' }}
+                  value={newSubSchoolId} 
+                  onChange={(e) => setNewSubSchoolId(Number(e.target.value))}
+                  required
+                >
+                  <option value="">-- Pilih Sekolah --</option>
+                  {(data.schools || [])
+                    .filter((s: any) => s.agen === session?.displayName)
+                    .map((school: any) => (
+                      <option key={school.id} value={school.id}>{school.nama}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Paket Penjualan</label>
+                <select 
+                  className="input-control" 
+                  style={{ width: '100%', padding: '8px' }}
+                  value={newSubPaket} 
+                  onChange={(e) => setNewSubPaket(e.target.value as SalesPackage)}
+                >
+                  <option value="Konten Digital">Konten Digital</option>
+                  <option value="Konten Digital + Buku">Konten Digital + Buku</option>
+                  <option value="Buku Cetak">Buku Cetak</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Durasi</label>
+                <select 
+                  className="input-control" 
+                  style={{ width: '100%', padding: '8px' }}
+                  value={newSubDurasi} 
+                  onChange={(e) => setNewSubDurasi(e.target.value as SubscriptionDuration)}
+                >
+                  <option value="3 Bulan">3 Bulan</option>
+                  <option value="6 Bulan">6 Bulan</option>
+                  <option value="1 Tahun">1 Tahun</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Nominal (Rp)</label>
+                <input 
+                  type="number" 
+                  className="input-control" 
+                  style={{ width: '100%', padding: '8px' }}
+                  value={newSubNominal} 
+                  onChange={(e) => setNewSubNominal(Number(e.target.value))}
+                  required
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button type="button" className="btn-secondary" onClick={() => setIsAddSubscriptionModalOpen(false)} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #ccc', background: 'transparent', cursor: 'pointer' }}>Batal</button>
+                <button type="submit" className="btn-primary" style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: 'var(--primary)', color: 'white', cursor: 'pointer' }}>Simpan</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
