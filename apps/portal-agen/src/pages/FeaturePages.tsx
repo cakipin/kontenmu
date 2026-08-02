@@ -2560,7 +2560,7 @@ export function TeacherAccess() {
 
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
   const [selectedMapel, setSelectedMapel] = useState<string>('');
-  const [selectedBuku, setSelectedBuku] = useState<string>('');
+  const [selectedBuku, setSelectedBuku] = useState<any[]>([]);
   const [message, setMessage] = useState('');
 
   const removeAllocation = (allocationId: string) => {
@@ -2573,7 +2573,7 @@ export function TeacherAccess() {
   const handleEdit = (teacher: any) => {
     setEditingTeacher(teacher);
     setSelectedMapel(teacher.kelas || '');
-    setSelectedBuku('');
+    setSelectedBuku([]);
     setMessage('');
   };
 
@@ -2593,19 +2593,24 @@ export function TeacherAccess() {
       });
       const json = await res.json();
       if (json.success) {
-        if (selectedBuku) {
+        if (selectedBuku && selectedBuku.length > 0) {
           setData(current => {
-             const duplicate = current.allocations.some(a => a.studentUsername === editingTeacher.username && a.isbn === selectedBuku);
-             if (duplicate) return current;
+             const newAllocations = [...current.allocations];
+             selectedBuku.forEach((b: any) => {
+               const duplicate = newAllocations.some(a => a.studentUsername === editingTeacher.username && a.isbn === b.value);
+               if (!duplicate) {
+                 newAllocations.unshift({
+                    id: 'ALC' + Date.now() + Math.random(),
+                    studentUsername: editingTeacher.username,
+                    isbn: b.value,
+                    schoolId: current.allocations[0]?.schoolId || 1,
+                    tanggal: new Date().toISOString().slice(0, 10),
+                 });
+               }
+             });
              return {
                 ...current,
-                allocations: [{
-                   id: 'ALC' + Date.now(),
-                   studentUsername: editingTeacher.username,
-                   isbn: selectedBuku,
-                   schoolId: current.allocations[0]?.schoolId || 1,
-                   tanggal: new Date().toISOString().slice(0, 10),
-                }, ...current.allocations]
+                allocations: newAllocations
              };
           });
         }
@@ -2647,16 +2652,20 @@ export function TeacherAccess() {
                   </label>
                   <label>
                     Buku Spesifik (Opsional)
-                    <select className="input-control" value={selectedBuku} onChange={(e) => setSelectedBuku(e.target.value)}>
-                      <option value="">-- Pilih Buku Spesifik --</option>
-                      {allBooks
+                    <Select
+                      isMulti
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                      placeholder="-- Pilih Buku Spesifik --"
+                      value={selectedBuku}
+                      onChange={(selected: any) => setSelectedBuku(selected || [])}
+                      options={allBooks
                         .filter(b => !selectedMapel || b.mapel === selectedMapel)
-                        .map(b => (
-                            <option key={b.isbn} value={b.isbn}>
-                              {b.mapel ? `[${b.mapel}] ` : ''}{b.judul} {b.kelas ? `(Kelas ${b.kelas})` : ''} {b.jilid && String(b.jilid).toLowerCase() !== 'no.jil.lengkap' && String(b.jilid).toLowerCase() !== 'null' ? `[${b.jilid}]` : ''}
-                            </option>
-                        ))}
-                    </select>
+                        .map(b => ({
+                          value: b.isbn,
+                          label: `${b.mapel ? `[${b.mapel}] ` : ''}${b.judul} ${b.kelas ? `(Kelas ${b.kelas})` : ''} ${b.jilid && String(b.jilid).toLowerCase() !== 'no.jil.lengkap' && String(b.jilid).toLowerCase() !== 'null' ? `[${b.jilid}]` : ''}`
+                        }))}
+                    />
                   </label>
                 </div>
               </div>
