@@ -23,6 +23,7 @@ const packageMultipliers: Record<SalesPackage, number> = {
 
 const packageOptions = Object.keys(packageMultipliers) as SalesPackage[];
 const durationMultipliers: Record<SubscriptionDuration, number> = {
+  'Trial 1 Bulan': 0.33,
   '3 Bulan': 1,
   '6 Bulan': 1.8,
   '1 Tahun': 3.2,
