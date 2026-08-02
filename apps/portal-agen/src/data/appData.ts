@@ -6,7 +6,7 @@ export type PaymentStatus = 'Lunas' | 'Menunggu' | 'Terlambat';
 export type BookStatus = 'Aktif' | 'Draft';
 export type ContentCategory = 'Teks' | 'Infografi' | 'Video' | 'Games HTML5';
 export type SalesPackage = 'Konten Digital' | 'Konten Digital + Buku' | 'Buku Cetak';
-export type SubscriptionDuration = '3 Bulan' | '6 Bulan' | '1 Tahun';
+export type SubscriptionDuration = 'Trial 1 Bulan' | '3 Bulan' | '6 Bulan' | '1 Tahun';
 export type SubscriptionStatus = 'Menunggu Approve Agen' | 'Disetujui Agen' | 'Menunggu Super Admin' | 'Disetujui Super Admin' | 'Aktif' | 'Kadaluarsa';
 export type SchoolStaffRole = 'admin' | 'guru' | 'siswa';
 
@@ -201,6 +201,7 @@ export interface AppData {
 const colors = ['#6366f1', '#4f46e5', '#10b981', '#f59e0b', '#0ea5e9', '#ec4899', '#8b5cf6', '#14b8a6'];
 
 const subscriptionMonthMap: Record<SubscriptionDuration, number> = {
+  'Trial 1 Bulan': 1,
   '3 Bulan': 3,
   '6 Bulan': 6,
   '1 Tahun': 12,

@@ -17,7 +17,9 @@ import {
   type SalesPackage,
   type SubscriptionDuration,
   type SimSubscription,
+  type SimSale,
   subscriptionEndDate,
+  subscriptionDurationMonths,
 } from '../data/appData';
 
 export default function Dashboard({ currentRole }: { currentRole: string }) {
@@ -63,9 +65,24 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       agentDeadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10), // 3 days deadline
     };
 
+    const studentsCount = users.filter(u => u.role === 'siswa' && u.sekolahId === newSubSchoolId).length || 1;
+
+    const newSale: SimSale = {
+      id: Date.now(),
+      schoolId: newSubSchoolId,
+      isbn: 'ALL',
+      jumlah: studentsCount,
+      tanggal: startDate,
+      agen: session?.displayName || 'Agen',
+      paket: newSubPaket,
+      durasiBulan: subscriptionDurationMonths(newSubDurasi),
+      hargaSatuan: Math.floor(newSubNominal / studentsCount),
+    };
+
     setData((current: any) => ({
       ...current,
       subscriptions: [...(current.subscriptions || []), newSub],
+      sales: [...(current.sales || []), newSale],
     }));
 
     setIsAddSubscriptionModalOpen(false);
@@ -617,7 +634,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                 </Link>
               )}
               {currentRole === 'agen' && (
-                <button type="button" className="btn-promax" style={{ background: 'var(--primary)', color: 'white', border: 'none' }} onClick={() => setIsAddSubscriptionModalOpen(true)}>
+                <button type="button" className="btn-promax" style={{ background: '#3b82f6', color: 'white', border: 'none' }} onClick={() => setIsAddSubscriptionModalOpen(true)}>
                   Add Berlangganan
                 </button>
               )}
@@ -993,13 +1010,20 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                   value={newSubDurasi} 
                   onChange={(e) => setNewSubDurasi(e.target.value as SubscriptionDuration)}
                 >
+                  <option value="Trial 1 Bulan">Trial 1 Bulan</option>
                   <option value="3 Bulan">3 Bulan</option>
                   <option value="6 Bulan">6 Bulan</option>
                   <option value="1 Tahun">1 Tahun</option>
                 </select>
               </div>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Jumlah Lisensi (Berdasarkan Siswa)</label>
+                <div style={{ padding: '8px', background: '#f3f4f6', borderRadius: '4px', border: '1px solid #d1d5db' }}>
+                  {newSubSchoolId ? users.filter(u => u.role === 'siswa' && u.sekolahId === newSubSchoolId).length : 0} Lisensi
+                </div>
+              </div>
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Nominal (Rp)</label>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Total Tagihan/Nominal (Rp)</label>
                 <input 
                   type="number" 
                   className="input-control" 
