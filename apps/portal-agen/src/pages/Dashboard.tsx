@@ -978,11 +978,18 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                 <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Sekolah Rekanan</label>
                 <SchoolSearchInput 
                   value={newSubSchoolName}
-                  onChange={(val, id) => {
+                  onChange={(val, id, schoolObj) => {
                     setNewSubSchoolName(val);
                     const schoolId = id || '';
                     setNewSubSchoolId(schoolId);
+                    
                     if (schoolId) {
+                      if (schoolObj && !data.schools.find((s: any) => s.id === schoolId)) {
+                        setData((current: any) => ({
+                          ...current,
+                          schools: [...(current.schools || []), { ...schoolObj, agen: session?.displayName }]
+                        }));
+                      }
                       const defaultLisensi = users.filter(u => u.role === 'siswa' && u.sekolahId === schoolId).length;
                       setNewSubLisensi(defaultLisensi);
                     } else {
@@ -990,7 +997,6 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                     }
                   }}
                   className="input-control"
-                  agentFilter={session?.displayName}
                 />
               </div>
               <div style={{ marginBottom: '12px' }}>
