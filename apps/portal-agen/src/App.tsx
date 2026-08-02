@@ -221,7 +221,7 @@ function AppContent() {
 
   // newUsers tetap dari data.users (sso/manual source) untuk backward compat
   const newUsers = data.users.filter(
-    (user) => user.username !== session?.username && user.role !== 'pending' && user.status !== 'Menunggu Approve' && (
+    (user) => user.username !== session?.username && user.role !== 'pending' && user.status !== 'Menunggu Approve' && user.status !== 'Aktif' && (
       user.newUserSource === 'sso'
       || user.newUserSource === 'manual'
       || user.terakhirLogin === 'Belum pernah login'
