@@ -695,7 +695,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                   onClick={() => setAgentSchoolPage(p => Math.max(1, p - 1))}
                   aria-label="Halaman sebelumnya"
                 >
-                  <ActionSvg name="chevron-left" />
+                  <ChevronLeft size={18} />
                 </button>
                 <button
                   type="button"
@@ -704,7 +704,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                   onClick={() => setAgentSchoolPage(p => Math.min(agentSchoolTotalPages, p + 1))}
                   aria-label="Halaman selanjutnya"
                 >
-                  <ActionSvg name="chevron-right" />
+                  <ChevronRight size={18} />
                 </button>
               </div>
             </div>
