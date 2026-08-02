@@ -211,11 +211,39 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       return { ...agent, revenue };
     });
 
-  const schoolRows = (data.schools || []).map((school) => ({
-    ...school,
-    lisensi: (data.sales || []).filter((sale) => sale.schoolId === school.id).reduce((sum, sale) => sum + sale.jumlah, 0),
-    payment: (data.payments || []).find((payment) => payment.schoolId === school.id)?.status ?? 'Menunggu',
-  }));
+  const schoolRows = (data.schools || [])
+    .filter(school => {
+      if (currentRole !== 'agen') return true;
+      const isAgentSchool = school.agen === session?.displayName;
+      const hasSubscription = (data.subscriptions || []).some(sub => sub.schoolId === school.id);
+      return isAgentSchool && hasSubscription;
+    })
+    .map((school) => ({
+      ...school,
+      lisensi: (data.sales || []).filter((sale) => sale.schoolId === school.id).reduce((sum, sale) => sum + sale.jumlah, 0),
+      payment: (data.payments || []).find((payment) => payment.schoolId === school.id)?.status ?? 'Menunggu',
+    }));
+
+  const [agentSchoolSearch, setAgentSchoolSearch] = useState('');
+  const [agentSchoolPage, setAgentSchoolPage] = useState(1);
+  const agentSchoolPageSize = 10;
+  
+  const filteredAgentSchoolRows = useMemo(() => {
+    const query = agentSchoolSearch.trim().toLowerCase();
+    if (!query) return schoolRows;
+    return schoolRows.filter((school) => [
+      school.nama,
+      school.kota,
+      school.npsn?.toString() ?? '',
+      school.payment
+    ].some((value) => value.toLowerCase().includes(query)));
+  }, [schoolRows, agentSchoolSearch]);
+  
+  const agentSchoolTotalPages = Math.max(1, Math.ceil(filteredAgentSchoolRows.length / agentSchoolPageSize));
+  const agentSchoolCurrentPage = Math.min(agentSchoolPage, agentSchoolTotalPages);
+  const visibleAgentSchoolRows = filteredAgentSchoolRows.slice((agentSchoolCurrentPage - 1) * agentSchoolPageSize, agentSchoolCurrentPage * agentSchoolPageSize);
+  const agentSchoolFirstRow = filteredAgentSchoolRows.length === 0 ? 0 : (agentSchoolCurrentPage - 1) * agentSchoolPageSize + 1;
+  const agentSchoolLastRow = Math.min(agentSchoolCurrentPage * agentSchoolPageSize, filteredAgentSchoolRows.length);
 
   const schoolId = session?.sekolahId;
   const currentSchool = schoolId ? getSchool(data, schoolId) : data.schools?.find((s: any) => s.nama?.toLowerCase() === (session as any)?.wilayah?.toLowerCase());
@@ -534,12 +562,37 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                   Upload Konten
                 </Link>
               )}
+              {currentRole === 'agen' && (
+                <button type="button" className="btn-promax" style={{ background: 'var(--primary)', color: 'white', border: 'none' }} onClick={() => window.alert('Fitur tambah berlangganan sedang dalam pengembangan')}>
+                  Add Berlangganan
+                </button>
+              )}
               <Link to={currentRole === 'agen' ? '/payments' : currentRole === 'sekolah' ? '/allocation' : currentRole === 'uploader' ? '/catalog' : '/library'} className="btn-promax" style={{ textDecoration: 'none' }}>
                 Lihat Semua
               </Link>
             </div>
           )}
         </div>
+
+        {currentRole === 'agen' && (
+          <div className="table-toolbar">
+            <label className="search-field">
+              <span>Cari sekolah</span>
+              <input
+                className="input-control"
+                value={agentSchoolSearch}
+                onChange={(event) => {
+                  setAgentSchoolSearch(event.target.value);
+                  setAgentSchoolPage(1);
+                }}
+                placeholder="Cari nama sekolah, kota, atau NPSN..."
+              />
+            </label>
+            <div className="table-summary">
+              Menampilkan {agentSchoolFirstRow}-{agentSchoolLastRow} dari {filteredAgentSchoolRows.length} sekolah
+            </div>
+          </div>
+        )}
 
         {currentRole === 'sekolah' && (
           <div className="table-toolbar">
@@ -580,7 +633,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                 </tr>
               ))}
 
-              {currentRole === 'agen' && schoolRows.map((school) => (
+              {currentRole === 'agen' && visibleAgentSchoolRows.map((school) => (
                 <tr key={school.id}>
                   <td><Identity initial={`S${school.id}`} color="#0ea5e9" title={school.nama} subtitle={`NPSN: ${school.npsn}`} /></td>
                   <td style={{ color: 'var(--text-secondary)' }}>{school.kota}</td>
@@ -630,6 +683,32 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
             </tbody>
           </table>
         </div>
+
+        {currentRole === 'agen' && (
+            <div className="pagination-bar">
+              <div className="table-summary">Halaman {agentSchoolCurrentPage} dari {agentSchoolTotalPages}</div>
+              <div className="pagination-actions">
+                <button
+                  type="button"
+                  className="icon-action-button"
+                  disabled={agentSchoolCurrentPage <= 1}
+                  onClick={() => setAgentSchoolPage(p => Math.max(1, p - 1))}
+                  aria-label="Halaman sebelumnya"
+                >
+                  <ActionSvg name="chevron-left" />
+                </button>
+                <button
+                  type="button"
+                  className="icon-action-button"
+                  disabled={agentSchoolCurrentPage >= agentSchoolTotalPages}
+                  onClick={() => setAgentSchoolPage(p => Math.min(agentSchoolTotalPages, p + 1))}
+                  aria-label="Halaman selanjutnya"
+                >
+                  <ActionSvg name="chevron-right" />
+                </button>
+              </div>
+            </div>
+        )}
 
         {currentRole === 'sekolah' && (
             <div className="pagination-bar">
