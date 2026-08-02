@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAppData } from '../data/appData';
 
-export function SchoolSearchInput({ value, onChange, className, subscribedOnly = false }: { value: string, onChange: (val: string, id?: number, school?: any) => void, className?: string, subscribedOnly?: boolean }) {
+export function SchoolSearchInput({ value, onChange, className, subscribedOnly = false, agentFilter }: { value: string, onChange: (val: string, id?: number, school?: any) => void, className?: string, subscribedOnly?: boolean, agentFilter?: string }) {
   const [searchQuery, setSearchQuery] = useState(value || '');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -17,7 +17,16 @@ export function SchoolSearchInput({ value, onChange, className, subscribedOnly =
     if (searchQuery.length >= 3 && isOpen) {
       setIsSearching(true);
       
-      if (subscribedOnly && data && data.schools && data.sales) {
+      if (agentFilter && data && data.schools) {
+        const timer = setTimeout(() => {
+          const lowerQuery = searchQuery.toLowerCase();
+          const agentSchools = data.schools.filter(school => school.agen === agentFilter);
+          const results = agentSchools.filter(s => s.nama.toLowerCase().includes(lowerQuery) || (s.npsn && s.npsn.includes(lowerQuery)));
+          setSearchResults(results.slice(0, 20));
+          setIsSearching(false);
+        }, 300);
+        return () => clearTimeout(timer);
+      } else if (subscribedOnly && data && data.schools && data.sales) {
         const timer = setTimeout(() => {
           const lowerQuery = searchQuery.toLowerCase();
           const subscribedSchools = data.schools.filter(school => 

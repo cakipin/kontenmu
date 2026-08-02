@@ -33,9 +33,11 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   // Add Subscription State
   const [isAddSubscriptionModalOpen, setIsAddSubscriptionModalOpen] = useState(false);
   const [newSubSchoolId, setNewSubSchoolId] = useState<number | ''>('');
+  const [newSubSchoolName, setNewSubSchoolName] = useState('');
   const [newSubPaket, setNewSubPaket] = useState<SalesPackage>('Konten Digital + Buku');
   const [newSubDurasi, setNewSubDurasi] = useState<SubscriptionDuration>('3 Bulan');
   const [newSubNominal, setNewSubNominal] = useState<number>(1500000);
+  const [newSubLisensi, setNewSubLisensi] = useState<number>(0);
 
   const handleAddSubscriptionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,12 +73,12 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       id: Date.now(),
       schoolId: newSubSchoolId,
       isbn: 'ALL',
-      jumlah: studentsCount,
+      jumlah: newSubLisensi || studentsCount,
       tanggal: startDate,
       agen: session?.displayName || 'Agen',
       paket: newSubPaket,
       durasiBulan: subscriptionDurationMonths(newSubDurasi),
-      hargaSatuan: Math.floor(newSubNominal / studentsCount),
+      hargaSatuan: Math.floor(newSubNominal / (newSubLisensi || studentsCount || 1)),
     };
 
     setData((current: any) => ({
@@ -974,20 +976,22 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
             <form onSubmit={handleAddSubscriptionSubmit}>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Sekolah Rekanan</label>
-                <select 
-                  className="input-control" 
-                  style={{ width: '100%', padding: '8px' }}
-                  value={newSubSchoolId} 
-                  onChange={(e) => setNewSubSchoolId(Number(e.target.value))}
-                  required
-                >
-                  <option value="">-- Pilih Sekolah --</option>
-                  {(data.schools || [])
-                    .filter((s: any) => s.agen === session?.displayName)
-                    .map((school: any) => (
-                      <option key={school.id} value={school.id}>{school.nama}</option>
-                  ))}
-                </select>
+                <SchoolSearchInput 
+                  value={newSubSchoolName}
+                  onChange={(val, id) => {
+                    setNewSubSchoolName(val);
+                    const schoolId = id || '';
+                    setNewSubSchoolId(schoolId);
+                    if (schoolId) {
+                      const defaultLisensi = users.filter(u => u.role === 'siswa' && u.sekolahId === schoolId).length;
+                      setNewSubLisensi(defaultLisensi);
+                    } else {
+                      setNewSubLisensi(0);
+                    }
+                  }}
+                  className="input-control"
+                  agentFilter={session?.displayName}
+                />
               </div>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Paket Penjualan</label>
@@ -1017,10 +1021,15 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                 </select>
               </div>
               <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Jumlah Lisensi (Berdasarkan Siswa)</label>
-                <div style={{ padding: '8px', background: '#f3f4f6', borderRadius: '4px', border: '1px solid #d1d5db' }}>
-                  {newSubSchoolId ? users.filter(u => u.role === 'siswa' && u.sekolahId === newSubSchoolId).length : 0} Lisensi
-                </div>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Jumlah Lisensi</label>
+                <input 
+                  type="number" 
+                  className="input-control" 
+                  style={{ width: '100%', padding: '8px' }}
+                  value={newSubLisensi} 
+                  onChange={(e) => setNewSubLisensi(Number(e.target.value))}
+                  required
+                />
               </div>
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 500 }}>Total Tagihan/Nominal (Rp)</label>
