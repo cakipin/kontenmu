@@ -27,12 +27,21 @@ export const onRequest = async (context: any) => {
 
   if (cookieHeader) {
     const cookies = cookieHeader.split(';').reduce((acc: any, cookieString: string) => {
-      const [key, val] = cookieString.trim().split('=');
-      if (key && val) acc[key] = decodeURIComponent(val);
+      const trimmed = cookieString.trim();
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx === -1) return acc;
+      const key = trimmed.substring(0, eqIdx).trim();
+      const val = trimmed.substring(eqIdx + 1);
+      if (key) {
+        try { acc[key] = decodeURIComponent(val); } catch { acc[key] = val; }
+        try { acc[decodeURIComponent(key)] = acc[key]; } catch {}
+      }
       return acc;
     }, {});
 
-    const sessionRaw = cookies['kontenmu_session_portal_agen'];
+    // Try both possible cookie key formats
+    const sessionRaw = cookies['kontenmu_session_portal_agen'] 
+      || cookies['kontenmu_session_portal-agen'];
     if (sessionRaw) {
       try {
         const session = JSON.parse(sessionRaw);
