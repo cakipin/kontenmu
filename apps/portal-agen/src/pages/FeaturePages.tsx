@@ -619,16 +619,22 @@ export function UploadContent() {
       let finalThumbnailUrl = thumbnailUrl || editingContent?.thumbnailUrl || '';
       if (thumbnailFile) {
         setUploadStatus({ type: 'uploading', message: 'Mengunggah thumbnail ke R2...' });
-        const thumbForm = new FormData();
-        thumbForm.append('file', thumbnailFile);
-        const uploadRes = await fetch(`/api/upload/presign`, {
+        const psRes = await fetch(`/api/upload/presign`, {
           method: 'POST',
           credentials: 'same-origin',
-          body: thumbForm
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentType: thumbnailFile.type, fileName: thumbnailFile.name })
         });
-        const uploadJson = await uploadRes.json();
-        if (!uploadRes.ok || uploadJson.error) throw new Error(`Gagal mengunggah thumbnail: ${uploadJson.error ?? uploadRes.statusText}`);
-        finalThumbnailUrl = uploadJson.mediaPath;
+        const psJson = await psRes.json();
+        if (!psRes.ok || psJson.error) throw new Error(`Gagal menyiapkan thumbnail: ${psJson.error ?? psRes.statusText}`);
+
+        const uploadRes = await fetch(psJson.url, {
+          method: 'PUT',
+          headers: { 'Content-Type': thumbnailFile.type },
+          body: thumbnailFile
+        });
+        if (!uploadRes.ok) throw new Error(`Gagal mengunggah thumbnail: ${uploadRes.status} ${uploadRes.statusText}`);
+        finalThumbnailUrl = psJson.mediaPath;
       }
 
       let finalSourceUrl = editingContent?.sourceUrl || '';
@@ -641,18 +647,24 @@ export function UploadContent() {
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '') + (contentFile.name.match(/\.[^.]+$/)?.[0].toLowerCase() ?? '');
         setUploadStatus({ type: 'uploading', message: `Mengunggah ${kategori.toLowerCase()} ke R2...` });
-        const contentForm = new FormData();
-        contentForm.append('file', contentFile);
-        const uploadRes = await fetch(`/api/upload/presign`, {
+        const psRes = await fetch(`/api/upload/presign`, {
           method: 'POST',
           credentials: 'same-origin',
-          body: contentForm
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentType, fileName: finalFileName })
         });
-        const uploadJson = await uploadRes.json();
-        if (!uploadRes.ok || uploadJson.error) throw new Error(`Gagal mengunggah file: ${uploadJson.error ?? uploadRes.statusText}`);
+        const psJson = await psRes.json();
+        if (!psRes.ok || psJson.error) throw new Error(`Gagal menyiapkan file: ${psJson.error ?? psRes.statusText}`);
 
-        finalSourceUrl = uploadJson.mediaPath;
-        finalFileName = finalFileName || uploadJson.filename;
+        const uploadRes = await fetch(psJson.url, {
+          method: 'PUT',
+          headers: { 'Content-Type': contentType },
+          body: contentFile
+        });
+        if (!uploadRes.ok) throw new Error(`Gagal mengunggah file: ${uploadRes.status} ${uploadRes.statusText}`);
+        
+        finalSourceUrl = psJson.mediaPath;
+        finalFileName = finalFileName || psJson.filename;
       }
 
       setUploadStatus({ type: 'uploading', message: 'Menyimpan metadata konten ke D1...' });
@@ -984,16 +996,22 @@ export function PlayKonten() {
     try {
       let finalThumbnailUrl = editingContent.thumbnailUrl || '';
       if (editThumbnailFile) {
-        const thumbForm = new FormData();
-        thumbForm.append('file', editThumbnailFile);
-        const uploadRes = await fetch(`/api/upload/presign`, {
+        const psRes = await fetch(`/api/upload/presign`, {
           method: 'POST',
           credentials: 'same-origin',
-          body: thumbForm
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentType: editThumbnailFile.type, fileName: editThumbnailFile.name })
         });
-        const uploadJson = await uploadRes.json();
-        if (!uploadRes.ok || uploadJson.error) throw new Error(`Gagal mengunggah thumbnail: ${uploadJson.error ?? uploadRes.statusText}`);
-        finalThumbnailUrl = uploadJson.mediaPath;
+        const psJson = await psRes.json();
+        if (!psRes.ok || psJson.error) throw new Error(`Gagal menyiapkan thumbnail: ${psJson.error ?? psRes.statusText}`);
+
+        const uploadRes = await fetch(psJson.url, {
+          method: 'PUT',
+          headers: { 'Content-Type': editThumbnailFile.type },
+          body: editThumbnailFile
+        });
+        if (!uploadRes.ok) throw new Error(`Gagal mengunggah thumbnail: ${uploadRes.status} ${uploadRes.statusText}`);
+        finalThumbnailUrl = psJson.mediaPath;
       }
 
 
