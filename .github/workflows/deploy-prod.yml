@@ -26,6 +26,7 @@ jobs:
         run: |
           echo "VITE_API_URL=https://kontenmu-prod-api.1912.workers.dev" > apps/portal-agen/.env.production
           echo "VITE_CLIENT_ID=client_svRBFbrf9AK7GMPAAOMZrXRa" >> apps/portal-agen/.env.production
+          echo "VITE_UPLOAD_API_URL=https://kontenmu.pages.dev" >> apps/portal-agen/.env.production
           npm run build
         env:
           VITE_API_URL: https://kontenmu-prod-api.1912.workers.dev
