@@ -41,6 +41,24 @@ jobs:
           command: pages deploy dist --project-name kontenmu-prod --branch main
           workingDirectory: apps/portal-agen
 
+      - name: Set R2 Secrets on Cloudflare Pages (Production)
+        run: |
+          curl -s -X PATCH "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/kontenmu-prod" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "deployment_configs": {
+                "production": {
+                  "env_vars": {
+                    "R2_ACCESS_KEY_ID": {"value": "${{ secrets.R2_ACCESS_KEY_ID }}", "type": "secret_text"},
+                    "R2_SECRET_ACCESS_KEY": {"value": "${{ secrets.R2_SECRET_ACCESS_KEY }}", "type": "secret_text"},
+                    "R2_ACCOUNT_ID": {"value": "${{ secrets.R2_ACCOUNT_ID }}", "type": "secret_text"}
+                  }
+                }
+              }
+            }' | python3 -c "import sys,json; r=json.load(sys.stdin); print('OK' if r.get('success') else r)"
+        continue-on-error: true
+
       - name: Migrate Database Schema - npsn
         uses: cloudflare/wrangler-action@v3
         with:
