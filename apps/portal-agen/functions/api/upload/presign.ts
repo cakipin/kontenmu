@@ -1,6 +1,6 @@
-import { AwsClient } from 'aws4fetch';
+// Upload langsung via R2 binding - tidak perlu AWS/S3 credentials
+// MEDIA binding sudah dikonfigurasi di wrangler.toml
 
-// Ekstensi yang sesuai dengan MIME type yang diperbolehkan
 const EXTENSION_MAP: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -30,70 +30,85 @@ function safeFilename(mimeType: string): string {
 }
 
 export const onRequestPost = async (context: any) => {
-  const { R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_ACCOUNT_ID } = context.env;
-  
-  // Karena ini direct upload, nama bucket harus sesuai dengan yang dibuat di Cloudflare
-  const BUCKET_NAME = 'kontenmu-media'; 
+  const { MEDIA } = context.env;
 
-  if (!R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_ACCOUNT_ID) {
+  if (!MEDIA) {
     return new Response(
-      JSON.stringify({ error: 'R2 S3 credentials belum dikonfigurasi di environment variables.' }),
+      JSON.stringify({ error: 'R2 MEDIA binding tidak ditemukan. Periksa konfigurasi wrangler.toml.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
   try {
-    const data = await context.request.json();
-    const { contentType, fileName } = data;
-
-    if (!contentType) {
+    const contentType = context.request.headers.get('Content-Type') || 'application/octet-stream';
+    
+    // Jika multipart/form-data, ambil file dari form
+    let fileBody: ReadableStream | ArrayBuffer;
+    let fileMimeType = contentType;
+    
+    if (contentType.startsWith('multipart/form-data')) {
+      const formData = await context.request.formData();
+      const file = formData.get('file') as File | null;
+      if (!file) {
+        return new Response(
+          JSON.stringify({ error: 'Field "file" tidak ditemukan dalam form data.' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      fileMimeType = file.type || 'application/octet-stream';
+      fileBody = await file.arrayBuffer();
+    } else {
+      // Jika bukan multipart, cek apakah JSON (request presign lama)
+      const body = await context.request.json().catch(() => null);
+      if (body && body.contentType) {
+        // Mode presign lama: kembalikan URL upload sementara
+        // Gunakan workaround: generate nama file dan minta client upload lewat endpoint baru
+        const filename = safeFilename(body.contentType);
+        return new Response(
+          JSON.stringify({
+            // uploadUrl: endpoint upload baru yang menerima file langsung
+            url: `/api/upload/file?key=${filename}&type=${encodeURIComponent(body.contentType)}`,
+            filename,
+            mediaPath: `/api/media/${filename}`,
+            method: 'POST',
+            useFormData: true,
+          }),
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            },
+          }
+        );
+      }
       return new Response(
-        JSON.stringify({ error: 'contentType harus disertakan.' }),
+        JSON.stringify({ error: 'Format request tidak didukung.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const s3Url = new URL(
-      `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${BUCKET_NAME}`
-    );
-
-    const client = new AwsClient({
-      accessKeyId: R2_ACCESS_KEY_ID,
-      secretAccessKey: R2_SECRET_ACCESS_KEY,
-      service: 's3',
-      region: 'auto',
-    });
-
-    const generatedFilename = safeFilename(contentType);
-    const objectUrl = new URL(`${s3Url.href}/${generatedFilename}`);
-
-    // Presign a PUT request (must expire relatively quickly for security)
-    const presignedRequest = await client.sign(objectUrl, {
-      method: 'PUT',
-      aws: { signQuery: true },
-      headers: {
-        'Content-Type': contentType,
-      },
+    const filename = safeFilename(fileMimeType);
+    await MEDIA.put(filename, fileBody, {
+      httpMetadata: { contentType: fileMimeType },
     });
 
     return new Response(
       JSON.stringify({
-        url: presignedRequest.url,
-        filename: generatedFilename,
-        mediaPath: `/api/media/${generatedFilename}`, // ini URL yang akan disimpan ke database
+        filename,
+        mediaPath: `/api/media/${filename}`,
       }),
-      { 
-        status: 200, 
-        headers: { 
+      {
+        status: 200,
+        headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        } 
+          'Access-Control-Allow-Origin': '*',
+        },
       }
     );
-
   } catch (error: any) {
     return new Response(
-      JSON.stringify({ error: `Gagal generate presigned URL: ${error.message}` }),
+      JSON.stringify({ error: `Gagal upload: ${error.message}` }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
