@@ -37,8 +37,7 @@ const ImageUploadField = ({ value, onChange }: { value: any, onChange: (val: any
             try {
               const formData = new FormData();
               formData.append('file', file);
-              const uploadApiUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_UPLOAD_API_URL || 'https://kontenmu.pages.dev');
-              const res = await fetch(`${uploadApiUrl}/api/upload`, {
+              const res = await fetch(`/api/upload`, {
                 method: 'POST',
                 body: formData
               });

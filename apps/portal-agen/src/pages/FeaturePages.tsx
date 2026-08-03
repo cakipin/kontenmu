@@ -619,8 +619,7 @@ export function UploadContent() {
       let finalThumbnailUrl = thumbnailUrl || editingContent?.thumbnailUrl || '';
       if (thumbnailFile) {
         setUploadStatus({ type: 'uploading', message: 'Mengunggah thumbnail ke R2...' });
-        const uploadApiUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_UPLOAD_API_URL || 'https://kontenmu.pages.dev');
-        const psRes = await fetch(`${uploadApiUrl}/api/upload/presign`, {
+        const psRes = await fetch(`/api/upload/presign`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentType: thumbnailFile.type, fileName: thumbnailFile.name })
@@ -647,8 +646,7 @@ export function UploadContent() {
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '') + (contentFile.name.match(/\.[^.]+$/)?.[0].toLowerCase() ?? '');
         setUploadStatus({ type: 'uploading', message: `Mengunggah ${kategori.toLowerCase()} ke R2...` });
-        const uploadApiUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_UPLOAD_API_URL || 'https://kontenmu.pages.dev');
-        const psRes = await fetch(`${uploadApiUrl}/api/upload/presign`, {
+        const psRes = await fetch(`/api/upload/presign`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentType, fileName: finalFileName })
@@ -996,8 +994,7 @@ export function PlayKonten() {
     try {
       let finalThumbnailUrl = editingContent.thumbnailUrl || '';
       if (editThumbnailFile) {
-        const uploadApiUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_UPLOAD_API_URL || 'https://kontenmu.pages.dev');
-        const psRes = await fetch(`${uploadApiUrl}/api/upload/presign`, {
+        const psRes = await fetch(`/api/upload/presign`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentType: editThumbnailFile.type, fileName: editThumbnailFile.name })
