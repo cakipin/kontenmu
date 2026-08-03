@@ -621,6 +621,7 @@ export function UploadContent() {
         setUploadStatus({ type: 'uploading', message: 'Mengunggah thumbnail ke R2...' });
         const psRes = await fetch(`/api/upload/presign`, {
           method: 'POST',
+          credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentType: thumbnailFile.type, fileName: thumbnailFile.name })
         });
@@ -648,6 +649,7 @@ export function UploadContent() {
         setUploadStatus({ type: 'uploading', message: `Mengunggah ${kategori.toLowerCase()} ke R2...` });
         const psRes = await fetch(`/api/upload/presign`, {
           method: 'POST',
+          credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentType, fileName: finalFileName })
         });
@@ -996,6 +998,7 @@ export function PlayKonten() {
       if (editThumbnailFile) {
         const psRes = await fetch(`/api/upload/presign`, {
           method: 'POST',
+          credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentType: editThumbnailFile.type, fileName: editThumbnailFile.name })
         });
