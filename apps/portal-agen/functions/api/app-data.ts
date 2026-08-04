@@ -69,20 +69,23 @@ function userStatements(data: any, db: any) {
   });
 }
 
+
+import { drizzle } from 'drizzle-orm/d1';
+import { eq, desc, sql } from 'drizzle-orm';
+import { appState, contents, users } from '../../src/db/schema';
+
 export const onRequestGet = async (context: any) => {
   try {
-    const db = context.env.DB;
-    const row = await db
-      .prepare('SELECT content FROM app_state WHERE id = ?1')
-      .bind(STATE_ID)
-      .first();
+    const rawDb = context.env.DB;
+    const db = drizzle(rawDb);
+    const row = await db.select({ content: appState.content }).from(appState).where(eq(appState.id, STATE_ID)).get();
 
     const data = row?.content ? JSON.parse(row.content) : {};
 
     // Ambil data fresh dari tabel contents
     try {
-      const contentRows = await db.prepare('SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC').all();
-      data.contents = (contentRows.results ?? []).map((item: any) => ({
+      const contentRows = await db.select().from(contents).orderBy(desc(contents.updatedAt), desc(contents.createdAt));
+      data.contents = contentRows.map((item: any) => ({
         id: item.id,
         judul: item.judul,
         kategori: item.kategori,
@@ -104,13 +107,14 @@ export const onRequestGet = async (context: any) => {
     }
 
     const userRows = await db
-      .prepare(`SELECT id, username, nama, role_slug, wilayah, status, initial, color,
-        terakhir_login, kelas, nis, new_user_source, sso_id, email, sekolah_id
-        FROM users ORDER BY updated_at DESC, created_at DESC`)
-      .all();
+      .select({
+        id: users.id, username: users.username, nama: users.nama, role_slug: users.roleSlug, wilayah: users.wilayah, status: users.status, initial: users.initial, color: users.color,
+        terakhir_login: users.terakhirLogin, kelas: users.kelas, nis: users.nis, new_user_source: users.newUserSource, sso_id: users.ssoId, email: users.email, sekolah_id: users.sekolahId
+      })
+      .from(users).orderBy(desc(users.updatedAt), desc(users.createdAt));
 
-    if (userRows.results?.length) {
-      data.users = userRows.results.map(mapUserRow);
+    if (userRows.length > 0) {
+      data.users = userRows.map(mapUserRow);
     }
 
     // Selalu return found: true dengan data yang ada
@@ -131,13 +135,17 @@ export const onRequestPut = async (context: any) => {
     const payload = await context.request.json();
     // Save everything as JSON in app_state
     const content = JSON.stringify(payload);
-    const db = context.env.DB;
+    const rawDb = context.env.DB;
+    const db = drizzle(rawDb);
     
-    await db.prepare(`
-      INSERT INTO app_state (id, content, updated_at) 
-      VALUES (?1, ?2, CURRENT_TIMESTAMP)
-      ON CONFLICT(id) DO UPDATE SET content = ?2, updated_at = CURRENT_TIMESTAMP
-    `).bind(STATE_ID, content).run();
+    await db.insert(appState).values({
+      id: STATE_ID,
+      content: content,
+      updatedAt: sql`CURRENT_TIMESTAMP`
+    }).onConflictDoUpdate({
+      target: appState.id,
+      set: { content: content, updatedAt: sql`CURRENT_TIMESTAMP` }
+    });
 
     // Sync users table - DISABLED because sales-api handles users directly and this causes data loss when frontend has stale users
     /*

@@ -1,20 +1,24 @@
 const jsonHeaders = { 'Content-Type': 'application/json' };
 
+import { drizzle } from 'drizzle-orm/d1';
+import { count, like, asc, eq, sql } from 'drizzle-orm';
+import { masterDataSekolah } from '../../src/db/schema';
+
 export const onRequestGet = async (context: any) => {
   try {
     const url = new URL(context.request.url);
     const nama = url.searchParams.get('nama');
     const search = url.searchParams.get('search');
     
-    const db = context.env.DB;
+    const rawDb = context.env.DB;
+    const db = drizzle(rawDb);
 
     const page = parseInt(url.searchParams.get('page') || '1', 10);
     const limit = parseInt(url.searchParams.get('limit') || '15', 10);
     const offset = (page - 1) * limit;
 
     if (nama) {
-      const stmt = await db.prepare('SELECT * FROM master_data_sekolah WHERE nama = ? COLLATE NOCASE').bind(nama);
-      const result = await stmt.first();
+      const result = await db.select().from(masterDataSekolah).where(sql`nama = ${nama} COLLATE NOCASE`).get();
       
       if (result) {
         return new Response(JSON.stringify({ success: true, data: result }), { headers: jsonHeaders });
@@ -25,24 +29,35 @@ export const onRequestGet = async (context: any) => {
     
     if (search) {
       // Pagination for search
-      const countStmt = await db.prepare('SELECT COUNT(*) as total FROM master_data_sekolah WHERE nama LIKE ?').bind(`%${search}%`);
-      const countResult = await countStmt.first();
-      const total = countResult ? countResult.total : 0;
+      const totalResult = await db.select({ value: count() }).from(masterDataSekolah).where(like(masterDataSekolah.nama, `%${search}%`));
+      const total = totalResult[0].value;
       
-      const stmt = await db.prepare('SELECT id, nama, npsn, kecamatan, kabupaten, provinsi FROM master_data_sekolah WHERE nama LIKE ? ORDER BY nama ASC LIMIT ? OFFSET ?').bind(`%${search}%`, limit, offset);
-      const result = await stmt.all();
-      return new Response(JSON.stringify({ success: true, data: result.results || [], total, page, limit }), { headers: jsonHeaders });
+      const result = await db.select({
+        id: masterDataSekolah.id,
+        nama: masterDataSekolah.nama,
+        npsn: masterDataSekolah.npsn,
+        kecamatan: masterDataSekolah.kecamatan,
+        kabupaten: masterDataSekolah.kabupaten,
+        provinsi: masterDataSekolah.provinsi
+      }).from(masterDataSekolah).where(like(masterDataSekolah.nama, `%${search}%`)).orderBy(asc(masterDataSekolah.nama)).limit(limit).offset(offset);
+      
+      return new Response(JSON.stringify({ success: true, data: result || [], total, page, limit }), { headers: jsonHeaders });
     }
 
     // Default: List all schools with pagination
-    const countStmt = await db.prepare('SELECT COUNT(*) as total FROM master_data_sekolah');
-    const countResult = await countStmt.first();
-    const total = countResult ? countResult.total : 0;
+    const totalResult = await db.select({ value: count() }).from(masterDataSekolah);
+    const total = totalResult[0].value;
     
-    const stmt = await db.prepare('SELECT id, nama, npsn, kecamatan, kabupaten, provinsi FROM master_data_sekolah ORDER BY nama ASC LIMIT ? OFFSET ?').bind(limit, offset);
-    const result = await stmt.all();
+    const result = await db.select({
+      id: masterDataSekolah.id,
+      nama: masterDataSekolah.nama,
+      npsn: masterDataSekolah.npsn,
+      kecamatan: masterDataSekolah.kecamatan,
+      kabupaten: masterDataSekolah.kabupaten,
+      provinsi: masterDataSekolah.provinsi
+    }).from(masterDataSekolah).orderBy(asc(masterDataSekolah.nama)).limit(limit).offset(offset);
 
-    return new Response(JSON.stringify({ success: true, data: result.results || [], total, page, limit }), { headers: jsonHeaders });
+    return new Response(JSON.stringify({ success: true, data: result || [], total, page, limit }), { headers: jsonHeaders });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,

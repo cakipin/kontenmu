@@ -1,16 +1,34 @@
 const jsonHeaders = { 'Content-Type': 'application/json' };
 
+import { drizzle } from 'drizzle-orm/d1';
+import { desc, sql } from 'drizzle-orm';
+import { users } from '../../src/db/schema';
+
 export const onRequestGet = async (context: any) => {
   try {
-    const result = await context.env.DB.prepare(`
-      SELECT id, username, nama, role_slug as role, wilayah, status, initial, color,
-        terakhir_login as terakhirLogin, kelas, nis, new_user_source as newUserSource,
-        sso_id as ssoId, email, requested_role as requestedRole, surat_tugas as suratTugas, masa_aktif as masaAktif, sekolah_id as sekolahId
-      FROM users
-      ORDER BY updated_at DESC, created_at DESC
-    `).all();
+    const ormDb = drizzle(context.env.DB);
+    const result = await ormDb.select({
+      id: users.id,
+      username: users.username,
+      nama: users.nama,
+      role: users.roleSlug,
+      wilayah: users.wilayah,
+      status: users.status,
+      initial: users.initial,
+      color: users.color,
+      terakhirLogin: users.terakhirLogin,
+      kelas: users.kelas,
+      nis: users.nis,
+      newUserSource: users.newUserSource,
+      ssoId: users.ssoId,
+      email: users.email,
+      requestedRole: users.requestedRole,
+      suratTugas: users.suratTugas,
+      masaAktif: users.masaAktif,
+      sekolahId: users.sekolahId
+    }).from(users).orderBy(desc(users.updatedAt), desc(users.createdAt));
 
-    return new Response(JSON.stringify({ users: result.results ?? [] }), { headers: jsonHeaders });
+    return new Response(JSON.stringify({ users: result }), { headers: jsonHeaders });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: jsonHeaders });
   }
@@ -23,46 +41,48 @@ export const onRequestPost = async (context: any) => {
       return new Response(JSON.stringify({ error: 'id dan username wajib diisi' }), { status: 400, headers: jsonHeaders });
     }
 
-    await context.env.DB.prepare(`
-      INSERT INTO users (
-        id, username, nama, role_slug, wilayah, status, initial, color,
-        terakhir_login, kelas, nis, new_user_source, sekolah_id, requested_role, surat_tugas, masa_aktif, updated_at
-      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, CURRENT_TIMESTAMP)
-      ON CONFLICT(username) DO UPDATE SET
-        id = excluded.id,
-        nama = excluded.nama,
-        role_slug = excluded.role_slug,
-        wilayah = excluded.wilayah,
-        status = excluded.status,
-        initial = excluded.initial,
-        color = excluded.color,
-        terakhir_login = excluded.terakhir_login,
-        kelas = excluded.kelas,
-        nis = excluded.nis,
-        new_user_source = excluded.new_user_source,
-        sekolah_id = excluded.sekolah_id,
-        requested_role = excluded.requested_role,
-        surat_tugas = excluded.surat_tugas,
-        masa_aktif = excluded.masa_aktif,
-        updated_at = CURRENT_TIMESTAMP
-    `).bind(
-      user.id,
-      user.username,
-      user.nama || user.username,
-      user.role || 'pending',
-      user.wilayah || 'SSO Login',
-      user.status || 'Aktif',
-      user.initial || '',
-      user.color || '#64748b',
-      user.terakhirLogin || '',
-      user.kelas ?? null,
-      user.nis ?? null,
-      user.newUserSource !== undefined ? user.newUserSource : 'sso',
-      user.sekolahId ?? null,
-      user.requestedRole ?? null,
-      user.suratTugas ?? null,
-      user.masaAktif ?? null,
-    ).run();
+    const ormDb = drizzle(context.env.DB);
+    const insertData = {
+      id: user.id,
+      username: user.username,
+      nama: user.nama || user.username,
+      roleSlug: user.role || 'pending',
+      wilayah: user.wilayah || 'SSO Login',
+      status: user.status || 'Aktif',
+      initial: user.initial || '',
+      color: user.color || '#64748b',
+      terakhirLogin: user.terakhirLogin || '',
+      kelas: user.kelas ?? null,
+      nis: user.nis ?? null,
+      newUserSource: user.newUserSource !== undefined ? user.newUserSource : 'sso',
+      sekolahId: user.sekolahId ?? null,
+      requestedRole: user.requestedRole ?? null,
+      suratTugas: user.suratTugas ?? null,
+      masaAktif: user.masaAktif ?? null,
+      updatedAt: sql`CURRENT_TIMESTAMP`,
+      password: '', // Dummy since it was omitted in raw SQL
+    };
+    await ormDb.insert(users).values(insertData).onConflictDoUpdate({
+      target: users.username,
+      set: {
+        id: insertData.id,
+        nama: insertData.nama,
+        roleSlug: insertData.roleSlug,
+        wilayah: insertData.wilayah,
+        status: insertData.status,
+        initial: insertData.initial,
+        color: insertData.color,
+        terakhirLogin: insertData.terakhirLogin,
+        kelas: insertData.kelas,
+        nis: insertData.nis,
+        newUserSource: insertData.newUserSource,
+        sekolahId: insertData.sekolahId,
+        requestedRole: insertData.requestedRole,
+        suratTugas: insertData.suratTugas,
+        masaAktif: insertData.masaAktif,
+        updatedAt: insertData.updatedAt
+      }
+    });
 
     return new Response(JSON.stringify({ success: true }), { headers: jsonHeaders });
   } catch (error: any) {
