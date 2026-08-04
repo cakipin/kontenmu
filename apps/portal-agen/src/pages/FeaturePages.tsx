@@ -3573,7 +3573,7 @@ export function RoleAccessSettings() {
     }
   };
 
-  const isProduction = window.location.hostname === 'kontenmu.id';
+  const isProduction = window.location.hostname === 'kontenmu.id' || window.location.hostname === 'www.kontenmu.id';
   
   return (
     <Page title="Pengaturan" subtitle="Pengaturan sistem dan integrasi">
