@@ -876,7 +876,7 @@ export function UploadContent() {
 }
 
 export function PlayKonten() {
-  const { data, setData } = useAppData();
+  const { data, setData, isLoading } = useAppData();
   const [selectedContentId, setSelectedContentId] = useState<string>('');
   const [search, setSearch] = useState('');
   const [kelasFilter, setKelasFilter] = useState('');
@@ -1123,7 +1123,13 @@ export function PlayKonten() {
           headers={['Thumbnail', 'Judul', 'Kategori', 'Target', 'Status', 'Aksi']}
           headerAligns={['center', 'left', 'left', 'left', 'center', 'center']}
         >
-          {paginatedContents.length === 0 ? (
+          {isLoading ? (
+            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '60px 40px', color: 'var(--text-secondary)' }}>
+              <div style={{ display: 'inline-block', width: '24px', height: '24px', border: '3px solid var(--border-subtle)', borderTopColor: 'var(--brand-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '12px' }} />
+              <div>Memuat data konten...</div>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </td></tr>
+          ) : paginatedContents.length === 0 ? (
             <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
               <div>Tidak ada konten untuk diputar.</div>
               <button type="button" onClick={() => window.dispatchEvent(new Event('kontenmu-appdata-updated'))} style={{ marginTop: 12, padding: '8px 16px', borderRadius: 8, background: 'var(--bg-tertiary)', border: '1px solid var(--border-subtle)', cursor: 'pointer', fontSize: '0.85rem' }}>
@@ -1182,7 +1188,12 @@ export function PlayKonten() {
 
       {isMobile && (
         <div className="player-mobile-list" style={{ marginBottom: 16 }}>
-          {paginatedContents.length === 0 ? (
+          {isLoading ? (
+            <div style={{ textAlign: 'center', padding: '60px 40px', color: 'var(--text-secondary)' }}>
+              <div style={{ display: 'inline-block', width: '24px', height: '24px', border: '3px solid var(--border-subtle)', borderTopColor: 'var(--brand-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '12px' }} />
+              <div>Memuat data konten...</div>
+            </div>
+          ) : paginatedContents.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>Tidak ada konten untuk diputar.</div>
           ) : (
             paginatedContents.map(content => {
@@ -1914,7 +1925,7 @@ export function SchoolUsers() {
 
 export function Inventory() {
   const { session } = useAuth();
-  const { data } = useAppData();
+  const { data, isLoading } = useAppData();
   const schoolId = session?.sekolahId || (session as any)?.sekolah_id || 1;
 
   const userSchoolLevel = useMemo(() => {
@@ -2012,7 +2023,13 @@ export function Inventory() {
           headers={['Thumbnail', 'Judul', 'Kategori', 'Target', 'Status', 'Aksi']}
           headerAligns={['center', 'left', 'left', 'left', 'center', 'center']}
         >
-          {paginatedContents.length === 0 ? (
+          {isLoading ? (
+            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '60px 40px', color: 'var(--text-secondary)' }}>
+              <div style={{ display: 'inline-block', width: '24px', height: '24px', border: '3px solid var(--border-subtle)', borderTopColor: 'var(--brand-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '12px' }} />
+              <div>Memuat inventaris konten...</div>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </td></tr>
+          ) : paginatedContents.length === 0 ? (
             <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>Tidak ada konten yang tersedia.</td></tr>
           ) : (
             paginatedContents.map((content) => (
@@ -2044,7 +2061,12 @@ export function Inventory() {
       {isMobile && (
         <div className="player-mobile-list" style={{ marginBottom: 32 }}>
           <h4 style={{ marginBottom: 16, fontSize: '1.1rem' }}>Daftar Konten Tersedia</h4>
-          {paginatedContents.length === 0 ? (
+          {isLoading ? (
+            <div style={{ textAlign: 'center', padding: '60px 40px', color: 'var(--text-secondary)' }}>
+              <div style={{ display: 'inline-block', width: '24px', height: '24px', border: '3px solid var(--border-subtle)', borderTopColor: 'var(--brand-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '12px' }} />
+              <div>Memuat inventaris konten...</div>
+            </div>
+          ) : paginatedContents.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>Tidak ada konten yang tersedia.</div>
           ) : (
             paginatedContents.map(content => {

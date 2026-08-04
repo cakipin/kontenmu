@@ -480,8 +480,11 @@ export async function saveAppData(data: AppData) {
   }
 }
 
+let isInitialLoad = true;
+
 export function useAppData() {
   const [data, setDataState] = useState<AppData>(() => loadAppData());
+  const [isLoading, setIsLoading] = useState(isInitialLoad);
 
   const setData = useCallback((updater: AppData | ((current: AppData) => AppData)): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -519,8 +522,13 @@ export function useAppData() {
       }
       
       // Jika dipicu secara manual tanpa detail, fetch dari server
+      setIsLoading(true);
       const remote = await loadRemoteAppData();
-      if (remote && active) setDataState(remote);
+      isInitialLoad = false;
+      if (active) {
+        if (remote) setDataState(remote);
+        setIsLoading(false);
+      }
     };
     
     void sync();
@@ -531,7 +539,7 @@ export function useAppData() {
     };
   }, []);
 
-  return { data, setData };
+  return { data, setData, isLoading };
 }
 
 export function resetAppData() {
