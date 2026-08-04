@@ -100,8 +100,7 @@ export const onRequestGet = async (context: any) => {
         isbn: item.isbn ?? undefined,
       }));
     } catch {
-      // Jika query gagal, set empty array (bukan pakai blob stale yang mungkin kosong)
-      data.contents ??= [];
+      // Jika query gagal, biarkan data.contents berisi nilai dari app_state
     }
 
     const userRows = await db

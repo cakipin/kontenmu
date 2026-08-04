@@ -3573,6 +3573,8 @@ export function RoleAccessSettings() {
     }
   };
 
+  const isProduction = window.location.hostname === 'kontenmu.id';
+  
   return (
     <Page title="Pengaturan" subtitle="Pengaturan sistem dan integrasi">
       <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
@@ -3586,16 +3588,18 @@ export function RoleAccessSettings() {
           }}>
           Akses User
         </button>
-        <button 
-          onClick={() => setActiveTab('deploy')}
-          style={{
-            background: 'none', border: 'none', padding: '8px 16px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
-            color: activeTab === 'deploy' ? 'var(--primary)' : 'var(--text-secondary)',
-            borderBottom: activeTab === 'deploy' ? '2px solid var(--primary)' : '2px solid transparent',
-            marginBottom: '-13px'
-          }}>
-          Push & Setup
-        </button>
+        {!isProduction && (
+          <button 
+            onClick={() => setActiveTab('deploy')}
+            style={{
+              background: 'none', border: 'none', padding: '8px 16px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
+              color: activeTab === 'deploy' ? 'var(--primary)' : 'var(--text-secondary)',
+              borderBottom: activeTab === 'deploy' ? '2px solid var(--primary)' : '2px solid transparent',
+              marginBottom: '-13px'
+            }}>
+            Push & Setup
+          </button>
+        )}
       </div>
 
       {activeTab === 'access' && (
@@ -3645,7 +3649,7 @@ export function RoleAccessSettings() {
         </>
       )}
 
-      {activeTab === 'deploy' && (
+      {!isProduction && activeTab === 'deploy' && (
         <DeploymentManager />
       )}
     </Page>
