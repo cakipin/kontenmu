@@ -136,16 +136,11 @@ export const onRequestPut = async (context: any) => {
     // Save everything as JSON in app_state
     const content = JSON.stringify(payload);
     const rawDb = context.env.DB;
-    const db = drizzle(rawDb);
-    
-    await db.insert(appState).values({
-      id: STATE_ID,
-      content: content,
-      updatedAt: sql`CURRENT_TIMESTAMP`
-    }).onConflictDoUpdate({
-      target: appState.id,
-      set: { content: content, updatedAt: sql`CURRENT_TIMESTAMP` }
-    });
+    await rawDb.prepare(`
+      INSERT INTO app_state (id, content, updated_at) 
+      VALUES (?1, ?2, CURRENT_TIMESTAMP)
+      ON CONFLICT(id) DO UPDATE SET content = ?2, updated_at = CURRENT_TIMESTAMP
+    `).bind(STATE_ID, content).run();
 
     // Sync users table - DISABLED because sales-api handles users directly and this causes data loss when frontend has stale users
     /*
