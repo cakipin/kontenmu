@@ -71,14 +71,28 @@ function userStatements(data: any, db: any) {
 
 export const onRequestGet = async (context: any) => {
   try {
-    const row = await context.env.DB
+    const db = context.env.DB;
+    const row = await db
       .prepare('SELECT content FROM app_state WHERE id = ?1')
       .bind(STATE_ID)
       .first();
 
     const data = row?.content ? JSON.parse(row.content) : {};
+
+    // Pastikan tabel contents ada (CREATE TABLE IF NOT EXISTS), lalu ambil data fresh
     try {
-      const contentRows = await context.env.DB.prepare('SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC').all();
+      await db.prepare(`CREATE TABLE IF NOT EXISTS contents (
+        id TEXT PRIMARY KEY, judul TEXT NOT NULL, kategori TEXT NOT NULL,
+        mapel TEXT NOT NULL DEFAULT '', target TEXT NOT NULL DEFAULT '',
+        file_name TEXT NOT NULL DEFAULT '', deskripsi TEXT NOT NULL DEFAULT '',
+        thumbnail_url TEXT, status TEXT NOT NULL DEFAULT 'Siap Review',
+        tanggal TEXT NOT NULL, preview_mode TEXT NOT NULL,
+        thumbnail_key TEXT NOT NULL, protected_preview INTEGER NOT NULL DEFAULT 1,
+        source_url TEXT, isbn TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`).run();
+      const contentRows = await db.prepare('SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC').all();
       data.contents = (contentRows.results ?? []).map((item: any) => ({
         id: item.id,
         judul: item.judul,
@@ -94,11 +108,14 @@ export const onRequestGet = async (context: any) => {
         thumbnailKey: item.thumbnail_key,
         protectedPreview: Boolean(item.protected_preview),
         sourceUrl: item.source_url ?? undefined,
+        isbn: item.isbn ?? undefined,
       }));
     } catch {
-      // Older databases may not have the table until /api/contents is called.
+      // Jika query gagal, set empty array (bukan pakai blob stale yang mungkin kosong)
+      data.contents ??= [];
     }
-    const userRows = await context.env.DB
+
+    const userRows = await db
       .prepare(`SELECT id, username, nama, role_slug, wilayah, status, initial, color,
         terakhir_login, kelas, nis, new_user_source, sso_id, email, sekolah_id
         FROM users ORDER BY updated_at DESC, created_at DESC`)
@@ -108,9 +125,9 @@ export const onRequestGet = async (context: any) => {
       data.users = userRows.results.map(mapUserRow);
     }
 
-    const hasRemoteData = Boolean(row?.content) || Boolean(data.users?.length) || Boolean(data.contents?.length);
-
-    return new Response(JSON.stringify({ found: hasRemoteData, ...(hasRemoteData ? { data } : {}) }), {
+    // Selalu return found: true dengan data yang ada
+    // Client tidak boleh mendapat found: false hanya karena app_state kosong
+    return new Response(JSON.stringify({ found: true, data }), {
       headers: jsonHeaders,
     });
   } catch (error: any) {
