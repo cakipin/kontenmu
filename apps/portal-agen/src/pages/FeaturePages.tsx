@@ -3337,6 +3337,7 @@ function ContentPlayerStage({ content, featured = false }: { content: SimContent
       </button>
       {content.previewMode === 'video' && (
         <video
+          key={content.id}
           className="preview-media"
           controls
           controlsList="nodownload noplaybackrate noremoteplayback"
