@@ -435,14 +435,12 @@ function normalizeAppData(data: AppData): AppData {
   return next;
 }
 
+// In-memory cache: menggantikan localStorage, fair untuk semua environment
+// Tersedia selama session (tab), direset saat refresh halaman
+let cachedAppData: AppData | null = null;
+
 export function loadAppData(): AppData {
-  try {
-    const local = localStorage.getItem('kontenmu-appdata');
-    if (local) return normalizeAppData(JSON.parse(local));
-  } catch (err) {
-    console.warn('Error reading from localStorage:', err);
-  }
-  return normalizeAppData(seedAppData);
+  return cachedAppData ?? normalizeAppData(seedAppData);
 }
 
 let remoteAppPromise: Promise<AppData | null> | null = null;
@@ -502,8 +500,8 @@ export function loadRemoteAppData(): Promise<AppData | null> {
 }
 
 export async function saveAppData(data: AppData) {
+  cachedAppData = data; // Update in-memory cache segera
   try {
-    localStorage.setItem('kontenmu-appdata', JSON.stringify(data));
     const res = await fetch('/api/app-data', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -559,11 +557,8 @@ export function useAppData() {
       // Jika dipicu secara manual tanpa detail, fetch dari server
       const remote = await loadRemoteAppData();
       if (remote) {
-        if (active) {
-          // Cache ke localStorage agar refresh berikutnya instant, tidak tunggu API lagi
-          try { localStorage.setItem('kontenmu-appdata', JSON.stringify(remote)); } catch { /* ignore quota/security errors */ }
-          setDataState(remote);
-        }
+        cachedAppData = remote; // Update in-memory cache
+        if (active) setDataState(remote);
       }
     };
     
