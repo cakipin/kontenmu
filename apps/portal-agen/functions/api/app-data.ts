@@ -79,19 +79,8 @@ export const onRequestGet = async (context: any) => {
 
     const data = row?.content ? JSON.parse(row.content) : {};
 
-    // Pastikan tabel contents ada (CREATE TABLE IF NOT EXISTS), lalu ambil data fresh
+    // Ambil data fresh dari tabel contents
     try {
-      await db.prepare(`CREATE TABLE IF NOT EXISTS contents (
-        id TEXT PRIMARY KEY, judul TEXT NOT NULL, kategori TEXT NOT NULL,
-        mapel TEXT NOT NULL DEFAULT '', target TEXT NOT NULL DEFAULT '',
-        file_name TEXT NOT NULL DEFAULT '', deskripsi TEXT NOT NULL DEFAULT '',
-        thumbnail_url TEXT, status TEXT NOT NULL DEFAULT 'Siap Review',
-        tanggal TEXT NOT NULL, preview_mode TEXT NOT NULL,
-        thumbnail_key TEXT NOT NULL, protected_preview INTEGER NOT NULL DEFAULT 1,
-        source_url TEXT, isbn TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`).run();
       const contentRows = await db.prepare('SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC').all();
       data.contents = (contentRows.results ?? []).map((item: any) => ({
         id: item.id,
