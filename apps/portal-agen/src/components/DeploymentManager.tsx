@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { GlassCard } from '../../../../packages/ui/src/GlassCard';
-import { useAppData } from '../data/appData';
 import { Rocket, GitMerge, CheckCircle2, AlertCircle, Eye, EyeOff, ExternalLink, Activity, Clock, RefreshCw, XCircle } from 'lucide-react';
 
 export function DeploymentManager() {
@@ -14,8 +13,6 @@ export function DeploymentManager() {
   const [isPushingProd, setIsPushingProd] = useState(false);
   const [isRollingBack, setIsRollingBack] = useState(false);
   const [showToken, setShowToken] = useState(false);
-
-  const { data, setData } = useAppData();
 
   const [activeTab, setActiveTab] = useState<'config' | 'logs'>('config');
   const [logs, setLogs] = useState<any[]>([]);
@@ -57,28 +54,26 @@ export function DeploymentManager() {
   }, [activeTab, githubToken, repoOwner, repoName]);
 
   useEffect(() => {
-    if (data.deployConfig) {
-      setGithubToken(data.deployConfig.githubToken || '');
-      setRepoOwner(data.deployConfig.repoOwner || '');
-      setRepoName(data.deployConfig.repoName || '');
-    }
-  }, [data.deployConfig]);
-
-  const saveConfig = async () => {
-    setIsSaving(true);
+    const savedToken = localStorage.getItem('deploy_githubToken') || '';
+    const savedOwner = localStorage.getItem('deploy_repoOwner') || '';
+    const savedName = localStorage.getItem('deploy_repoName') || '';
     
-    try {
-      await setData(prev => ({
-        ...prev,
-        deployConfig: { githubToken, repoOwner, repoName }
-      }));
+    setGithubToken(savedToken);
+    setRepoOwner(savedOwner);
+    setRepoName(savedName);
+  }, []);
+
+  const saveConfig = () => {
+    setIsSaving(true);
+    localStorage.setItem('deploy_githubToken', githubToken);
+    localStorage.setItem('deploy_repoOwner', repoOwner);
+    localStorage.setItem('deploy_repoName', repoName);
+    
+    setTimeout(() => {
+      setIsSaving(false);
       setMessage({ text: 'Konfigurasi berhasil disimpan!', type: 'success' });
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
-    } catch (err) {
-      setMessage({ text: 'Gagal menyimpan konfigurasi.', type: 'error' });
-    } finally {
-      setIsSaving(false);
-    }
+    }, 500);
   };
 
   const pushGit = async () => {
