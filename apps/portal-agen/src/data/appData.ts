@@ -445,24 +445,60 @@ export function loadAppData(): AppData {
   return normalizeAppData(seedAppData);
 }
 
-export async function loadRemoteAppData(): Promise<AppData | null> {
-  try {
-    const [response, contentsResponse] = await Promise.all([
-      fetch('/api/app-data', { cache: 'no-store' }),
-      fetch('/api/contents', { cache: 'no-store' }),
-    ]);
-    if (!response.ok) return null;
-    const payload = await response.json() as { found?: boolean; data?: AppData };
-    if (!payload.found || !payload.data) return null;
-    const data = normalizeAppData(payload.data);
-    if (contentsResponse.ok) {
-      const contentsPayload = await contentsResponse.json() as { contents?: SimContent[] };
-      data.contents = contentsPayload.contents ?? [];
+let remoteAppPromise: Promise<AppData | null> | null = null;
+
+export function loadRemoteAppData(): Promise<AppData | null> {
+  if (remoteAppPromise) return remoteAppPromise;
+
+  remoteAppPromise = (async () => {
+    try {
+      const [response, contentsResponse] = await Promise.all([
+        fetch('/api/app-data', { cache: 'no-store' }),
+        fetch('/api/contents', { cache: 'no-store' }),
+      ]);
+
+      // Parse /api/contents TERLEBIH DULU, independen dari /api/app-data.
+      // Ini memastikan contents tetap muncul di prod meski app_state belum ada (found: false).
+      let freshContents: SimContent[] | null = null;
+      if (contentsResponse.ok) {
+        try {
+          const cp = await contentsResponse.json() as { contents?: SimContent[] };
+          if (Array.isArray(cp.contents) && cp.contents.length > 0) {
+            freshContents = cp.contents;
+          }
+        } catch { /* ignore parse error */ }
+      }
+
+      // Coba dapatkan full app state dari /api/app-data
+      if (response.ok) {
+        try {
+          const payload = await response.json() as { found?: boolean; data?: AppData };
+          if (payload.found && payload.data) {
+            const data = normalizeAppData(payload.data);
+            // /api/contents adalah source of truth untuk konten, selalu override
+            if (freshContents) data.contents = freshContents;
+            return data;
+          }
+        } catch { /* ignore parse error */ }
+      }
+
+      // Fallback: app-data found: false atau error (kondisi prod segar),
+      // tapi contents dari D1 sudah ada via /api/contents
+      if (freshContents) {
+        const fallback = normalizeAppData(loadAppData());
+        fallback.contents = freshContents;
+        return fallback;
+      }
+
+      return null;
+    } catch {
+      return null;
+    } finally {
+      remoteAppPromise = null;
     }
-    return data;
-  } catch {
-    return null;
-  }
+  })();
+
+  return remoteAppPromise;
 }
 
 export async function saveAppData(data: AppData) {
