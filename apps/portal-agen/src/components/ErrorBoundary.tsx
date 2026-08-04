@@ -33,7 +33,10 @@ export class ErrorBoundary extends Component<Props, State> {
       const reloadCount = parseInt(sessionStorage.getItem('vite-reload') || '0', 10);
       if (reloadCount < 2) {
         sessionStorage.setItem('vite-reload', (reloadCount + 1).toString());
-        window.location.reload();
+        // Force cache bust on URL to ensure we get the fresh index.html
+        const url = new URL(window.location.href);
+        url.searchParams.set('t', Date.now().toString());
+        window.location.href = url.toString();
       }
     }
   }

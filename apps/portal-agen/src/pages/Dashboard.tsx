@@ -24,7 +24,7 @@ import {
 
 export default function Dashboard({ currentRole }: { currentRole: string }) {
   const { session, setCustomSession } = useAuth();
-  const { data, setData } = useAppData();
+  const { data, setData, isLoading } = useAppData();
   
   const [users, setUsers] = useState<any[]>([]);
   const currentUser = users.find(u => u.username === session?.username);
@@ -375,6 +375,17 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
 
 
   }
+  
+  if (isLoading) {
+    return (
+      <div className="page-shell" style={{ textAlign: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px' }}>
+        <div style={{ display: 'inline-block', width: '32px', height: '32px', border: '3px solid var(--border-subtle)', borderTopColor: 'var(--brand-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '16px' }} />
+        <div style={{ color: 'var(--text-secondary)' }}>Memuat data dasbor...</div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
     <div ref={dashboardRef} className="page-shell" style={{ 
       background: isFullscreen ? '#f8fafc' : 'transparent',
