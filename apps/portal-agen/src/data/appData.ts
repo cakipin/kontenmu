@@ -559,7 +559,11 @@ export function useAppData() {
       // Jika dipicu secara manual tanpa detail, fetch dari server
       const remote = await loadRemoteAppData();
       if (remote) {
-        if (active) setDataState(remote);
+        if (active) {
+          // Cache ke localStorage agar refresh berikutnya instant, tidak tunggu API lagi
+          try { localStorage.setItem('kontenmu-appdata', JSON.stringify(remote)); } catch { /* ignore quota/security errors */ }
+          setDataState(remote);
+        }
       }
     };
     
