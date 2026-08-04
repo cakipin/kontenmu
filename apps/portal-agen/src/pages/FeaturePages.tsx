@@ -3290,7 +3290,14 @@ function RelatedContents({ currentContent, allContents, onPlay }: { currentConte
 
 function ContentPlayerStage({ content, featured = false }: { content: SimContent | null; featured?: boolean }) {
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    if (content?.previewMode === 'video' && videoRef.current) {
+      videoRef.current.load();
+    }
+  }, [content?.sourceUrl, content?.previewMode]);
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === stageRef.current);
@@ -3337,7 +3344,7 @@ function ContentPlayerStage({ content, featured = false }: { content: SimContent
       </button>
       {content.previewMode === 'video' && (
         <video
-          key={content.id}
+          ref={videoRef}
           className="preview-media"
           controls
           controlsList="nodownload noplaybackrate noremoteplayback"
