@@ -561,10 +561,19 @@ export function loadRemoteAppData(): Promise<AppData | null> {
           }
           
           cachedRemoteData = fullResult;
+          isBackgroundLoading = false;
+          window.dispatchEvent(
+            new CustomEvent("kontenmu-appdata-bg-updated"),
+          );
           window.dispatchEvent(
             new CustomEvent("kontenmu-appdata-updated", {
               detail: fullResult,
             }),
+          );
+        } else {
+          isBackgroundLoading = false;
+          window.dispatchEvent(
+            new CustomEvent("kontenmu-appdata-bg-updated"),
           );
         }
       });
@@ -599,13 +608,14 @@ export async function saveAppData(data: AppData) {
 }
 
 let isInitialLoad = true;
+export let isBackgroundLoading = true;
 
 export function useAppData() {
   const [data, setDataState] = useState<AppData>(() => loadAppData());
-  // isLoading hanya true pada load pertama kali (sebelum ada cachedRemoteData)
   const [isLoading, setIsLoading] = useState(
     isInitialLoad && cachedRemoteData === null,
   );
+  const [isBgLoading, setIsBgLoading] = useState(isBackgroundLoading);
 
   const setData = useCallback(
     (updater: AppData | ((current: AppData) => AppData)): Promise<void> => {
@@ -621,7 +631,6 @@ export function useAppData() {
           void (async () => {
             try {
               await saveAppData(next);
-              // Beritahu komponen lain tentang state baru tanpa harus re-fetch
               window.dispatchEvent(
                 new CustomEvent("kontenmu-appdata-updated", { detail: next }),
               );
@@ -662,15 +671,21 @@ export function useAppData() {
       }
     };
 
+    const bgSync = () => {
+      if (active) setIsBgLoading(isBackgroundLoading);
+    };
+
     void sync();
     window.addEventListener("kontenmu-appdata-updated", sync);
+    window.addEventListener("kontenmu-appdata-bg-updated", bgSync);
     return () => {
       active = false;
       window.removeEventListener("kontenmu-appdata-updated", sync);
+      window.removeEventListener("kontenmu-appdata-bg-updated", bgSync);
     };
   }, []);
 
-  return { data, setData, isLoading };
+  return { data, setData, isLoading, isBgLoading };
 }
 
 export function resetAppData() {

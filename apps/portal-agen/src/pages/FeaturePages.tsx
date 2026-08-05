@@ -1071,7 +1071,7 @@ export function Catalog() {
 }
 
 export function UploadContent() {
-  const { data, setData } = useAppData();
+  const { data, setData, isLoading, isBgLoading } = useAppData();
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [masterBooks, setMasterBooks] = useState<any[]>([]);
   const [selectedKelas, setSelectedKelas] = useState("");
@@ -1458,7 +1458,7 @@ export function UploadContent() {
               margin: 0,
             }}
           >
-            {data.contents.length}
+            {isLoading || isBgLoading ? "..." : data.contents.length}
           </h3>
           <p
             style={{
@@ -1507,7 +1507,7 @@ export function UploadContent() {
               margin: 0,
             }}
           >
-            {data.contents.filter((c) => c.kategori === "Video").length}
+            {isLoading || isBgLoading ? "..." : data.contents.filter((c) => c.kategori === "Video").length}
           </h3>
           <p
             style={{
@@ -1556,7 +1556,7 @@ export function UploadContent() {
               margin: 0,
             }}
           >
-            {data.contents.filter((c) => c.kategori === "Games HTML5").length}
+            {isLoading || isBgLoading ? "..." : data.contents.filter((c) => c.kategori === "Games HTML5").length}
           </h3>
           <p
             style={{
@@ -1605,7 +1605,7 @@ export function UploadContent() {
               margin: 0,
             }}
           >
-            {data.contents.filter((c) => c.kategori === "Infografi").length}
+            {isLoading || isBgLoading ? "..." : data.contents.filter((c) => c.kategori === "Infografi" || c.kategori === "Teks").length}
           </h3>
           <p
             style={{
@@ -1866,7 +1866,7 @@ export function UploadContent() {
 }
 
 export function PlayKonten() {
-  const { data, setData, isLoading } = useAppData();
+  const { data, setData, isLoading, isBgLoading } = useAppData();
   const [selectedContentId, setSelectedContentId] = useState<string>("");
   const [search, setSearch] = useState("");
   const [kelasFilter, setKelasFilter] = useState("");
@@ -2263,7 +2263,7 @@ export function PlayKonten() {
               "center",
             ]}
           >
-            {isLoading ? (
+            {isLoading || isBgLoading ? (
               <tr>
                 <td
                   colSpan={6}
