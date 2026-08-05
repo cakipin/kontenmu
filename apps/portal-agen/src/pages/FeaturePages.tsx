@@ -1941,13 +1941,13 @@ export function PlayKonten() {
   const mapelOptions = useMemo(() => {
     const fromMaster = masterBooks.map((b: any) => b.mapel).filter(Boolean);
     const fromContents = data.contents.map((c) => c.mapel).filter(Boolean);
-    return Array.from(new Set([...fromMaster, ...fromContents])).sort((a, b) =>
-      a.localeCompare(b),
-    );
+    return Array.from(new Set([...fromMaster, ...fromContents]))
+      .map(String)
+      .sort((a, b) => a.localeCompare(b));
   }, [masterBooks, data.contents]);
 
   const normalizeTingkat = (t: string) => {
-    if (!t) return "";
+    if (!t || typeof t !== "string") return "";
     const upper = t.toUpperCase();
     if (upper === "SD/MI") return "SD/MI";
     if (upper === "SMP/MTS") return "SMP/MTs";
@@ -1958,12 +1958,16 @@ export function PlayKonten() {
   const tingkatOptions = useMemo(() => {
     const fromMaster = masterBooks
       .map((b: any) =>
-        b.peruntukan ? b.peruntukan.replace(/untuk /i, "").trim() : "",
+        b.peruntukan && typeof b.peruntukan === "string"
+          ? b.peruntukan.replace(/untuk /i, "").trim()
+          : "",
       )
       .filter(Boolean);
     const fromContents = data.contents.map((c) => c.target).filter(Boolean);
     const all = [...fromMaster, ...fromContents].map(normalizeTingkat);
-    return Array.from(new Set(all)).sort((a, b) => a.localeCompare(b));
+    return Array.from(new Set(all))
+      .map(String)
+      .sort((a, b) => a.localeCompare(b));
   }, [masterBooks, data.contents]);
 
   const filteredContents = useMemo(() => {
@@ -6376,15 +6380,15 @@ function thumbnailDraftSrc(
       ${icon}
       <rect x="48" y="346" width="260" height="38" rx="19" fill="rgba(255,255,255,0.14)" />
       <text x="66" y="372" fill="white" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="1.2">${badge}</text>
-      <text x="52" y="442" fill="white" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="800">${escapeSvgText(truncateText(title, 32))}</text>
-      <text x="52" y="488" fill="rgba(255,255,255,0.82)" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="600">${escapeSvgText(target)}</text>
+      <text x="52" y="442" fill="white" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="800">${escapeSvgText(truncateText(String(title || ""), 32))}</text>
+      <text x="52" y="488" fill="rgba(255,255,255,0.82)" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="600">${escapeSvgText(String(target || "UMUM"))}</text>
       <text x="928" y="500" text-anchor="end" fill="rgba(255,255,255,0.72)" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700">KONTENMU PREVIEW</text>
     </svg>
   `)}`;
 }
 
 function escapeSvgText(value: string) {
-  return value
+  return String(value || "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -6393,7 +6397,8 @@ function escapeSvgText(value: string) {
 }
 
 function truncateText(value: string, max = 32) {
-  return value.length <= max ? value : `${value.slice(0, max - 1)}…`;
+  const str = String(value || "");
+  return str.length <= max ? str : `${str.slice(0, max - 1)}…`;
 }
 
 async function fileToDataUrl(file: File) {
@@ -6423,7 +6428,7 @@ function HtmlGamePreview({ content }: { content: SimContent }) {
   return (
     <iframe
       className="preview-media html-game-preview"
-      src={`${content.sourceUrl}?v=2`}
+      src={content.sourceUrl?.replace("/api/media/", "/api/media/v2/")}
       title={`Game: ${content.judul}`}
       sandbox="allow-scripts allow-forms allow-modals allow-same-origin"
       referrerPolicy="no-referrer"

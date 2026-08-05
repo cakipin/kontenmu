@@ -1,0 +1,8 @@
+name = "test-worker"
+main = "test_db.ts"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "KONTENMU_PROD_DB"
+database_id = "fed8248d-2ba2-4d68-8430-b5f64ad2f6bc"

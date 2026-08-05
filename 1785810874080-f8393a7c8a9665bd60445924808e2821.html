@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="id"><head><script>window["__codeletBootstrap__"]=JSON.parse('{"A":"A","B":"20260728-01-46f354e"}');</script><script src="/_sdk/728f18890c0241e5.telemetry_sdk.js" integrity="sha512-cMy0xd29wRWs8nyV19fws/+pwQ0u98A3fewCalZ/OWXQXUwzmcx7jKUuZ511uTJlUe1gP0Undii48zuekOylMw=="></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kimia di Sekitar Kita</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+  <style>
+  :root{
+    --science-blue:#0a84ff;
+    --deep-blue:#062a52;
+    --silver:#c7d0dc;
+    --neon:#39ff8b;
+    --panel:rgba(10,26,48,0.72);
+  }
+  *{box-sizing:border-box;}
+  body{font-family:'Work Sans',sans-serif;margin:0;overflow-x:hidden;}
+  .bg-fixed-img{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-5;}
+  .bg-overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(4,14,30,0.55),rgba(4,14,30,0.75));z-index:-4;}
+  /* molecule particles */
+  .particles{position:fixed;inset:0;z-index:-3;overflow:hidden;pointer-events:none;}
+  .particle{position:absolute;color:rgba(57,255,139,0.25);font-size:20px;animation:floatUp linear infinite;}
+  @keyframes floatUp{0%{transform:translateY(20px) rotate(0deg);opacity:0;}10%{opacity:1;}100%{transform:translateY(-110vh) rotate(360deg);opacity:0;}}
+  .glass{background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(120,180,255,0.35);box-shadow:0 8px 40px rgba(0,20,50,0.5);}
+  .neon-border{border:1px solid var(--neon);box-shadow:0 0 12px rgba(57,255,139,0.5),inset 0 0 12px rgba(57,255,139,0.15);}
+  .screen{animation:screenIn .5s ease both;}
+  @keyframes screenIn{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+  .mono{font-family:'Space Mono',monospace;}
+  /* scanner laser on panels */
+  .scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--neon),transparent);animation:scan 2.6s linear infinite;opacity:.7;}
+  @keyframes scan{0%{top:0;}100%{top:100%;}}
+  /* quiz timer bar */
+  .timer-track{height:8px;background:rgba(255,255,255,0.12);border-radius:99px;overflow:hidden;}
+  .timer-fill{height:100%;background:linear-gradient(90deg,var(--science-blue),var(--neon));width:100%;transition:width .95s linear;box-shadow:0 0 10px var(--neon);}
+  .opt-btn{transition:all .2s;}
+  .opt-btn:hover{transform:translateY(-2px);}
+  .opt-correct{background:rgba(57,255,139,0.25)!important;border-color:var(--neon)!important;box-shadow:0 0 14px rgba(57,255,139,0.6);}
+  .opt-wrong{background:rgba(255,70,90,0.25)!important;border-color:#ff465a!important;}
+  .dropzone{transition:all .25s;min-height:120px;}
+  .dz-active{border-color:var(--neon)!important;background:rgba(57,255,139,0.15)!important;box-shadow:0 0 18px rgba(57,255,139,0.5);}
+  .dz-filled{border-color:var(--neon)!important;background:rgba(57,255,139,0.22)!important;}
+  .data-card{cursor:grab;transition:all .2s;touch-action:none;}
+  .data-card:active{cursor:grabbing;}
+  .card-selected{outline:2px solid var(--neon);box-shadow:0 0 14px rgba(57,255,139,0.6);transform:scale(1.03);}
+  .card-placed{opacity:.45;pointer-events:none;}
+  .mp-btn{transition:all .2s;}
+  .mp-btn.sel{background:rgba(10,132,255,0.4)!important;border-color:var(--science-blue)!important;box-shadow:0 0 12px rgba(10,132,255,0.7);}
+  .mp-btn.done{background:rgba(57,255,139,0.22)!important;border-color:var(--neon)!important;pointer-events:none;}
+  .hidden-screen{display:none;}
+  .badge-pop{animation:badgePop .8s cubic-bezier(.2,1.4,.4,1) both;}
+  @keyframes badgePop{from{transform:scale(0) rotate(-25deg);opacity:0;}to{transform:scale(1) rotate(0);opacity:1;}}
+  .merge-mol{animation:merge 2.2s ease-in-out infinite;}
+  @keyframes merge{0%,100%{transform:translateX(0);}50%{transform:translateX(0);}}
+  .mol-a{animation:molA 2.4s ease-in-out infinite;}
+  .mol-b{animation:molB 2.4s ease-in-out infinite;}
+  @keyframes molA{0%,100%{transform:translateX(-40px);}50%{transform:translateX(-6px);}}
+  @keyframes molB{0%,100%{transform:translateX(40px);}50%{transform:translateX(6px);}}
+  .grow-text{animation:growText 1s ease both;}
+  @keyframes growText{from{transform:scale(.6);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .char-img{height:min(46vh,340px);width:auto;object-fit:contain;filter:drop-shadow(0 12px 24px rgba(0,0,0,0.6));}
+  #laser-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;}
+</style>
+  <script src="/_sdk/935a53bc2e11fb8d.data_sdk.js" type="text/javascript" integrity="sha512-qr2oyPnEys1WebcOABaRh6hG77r5PWpqeWW6JTKbRJqly/INsfBi31CVNlTmHqjgeLpkVmmHZJUdxSx/32tOFQ=="></script>
+  <script src="/_sdk/6030e540d4419216.resizing_sdk.js" type="text/javascript" integrity="sha512-b5KWzyoXsbWP4smq4sftIi6Kts4YVBpBsz0BwCViwbBJkK64a3/Z6ZMdWA+qnplNcXw4mhZeqvQi3mOosiRJdA=="></script>
+ </head>
+ <body data-template-id="__page-root" class="min-h-screen w-full text-white" style="background: rgb(4, 17, 36);"><img data-template-id="bg-image" loading="lazy" class="bg-fixed-img" alt="Latar supermarket modern berteknologi tinggi" src="https://res.cloudinary.com/dtxcnxsoe/image/upload/v1782873331/BG__Kimia_Kelas_10_SMA_g3nmkw.png">
+  <div class="bg-overlay"></div>
+  <div class="particles" id="particles"></div><!-- HUD -->
+  <header class="fixed top-0 left-0 right-0 z-40 px-3 py-2">
+   <div class="glass rounded-xl px-4 py-2 flex items-center justify-between max-w-3xl mx-auto">
+    <div class="flex items-center gap-2"><span class="text-xl">🧪</span> <span data-template-id="hud-label" class="canva-text text-sm font-semibold" style="color: rgb(199, 208, 220); font-weight: 600; font-style: normal; font-size: 16px;">Energi Reaksi</span>
+    </div>
+    <div class="flex items-center gap-2 min-w-[140px]">
+     <div class="flex-1 timer-track">
+      <div id="energy-fill" class="timer-fill" style="width:0%"></div>
+     </div><span id="energy-val" class="mono text-sm font-bold text-[var(--neon)]">0/300</span>
+    </div>
+   </div>
+  </header>
+  <main class="relative w-full min-h-screen pt-16 pb-8 px-3 flex items-center justify-center">
+   <div class="w-full max-w-3xl mx-auto"><!-- ============ INTRO ============ -->
+    <section id="scr-intro" class="screen">
+     <div class="glass rounded-2xl p-6 md:p-10 text-center relative overflow-hidden">
+      <div class="scanline"></div>
+      <div class="text-5xl mb-3">
+       ⚗️
+      </div>
+      <h1 data-template-id="intro-title" class="canva-text font-bold leading-tight mb-3" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 32px;">Darwis N'Besties<br>Kimia di Sekitar Kita: Tata Nama &amp; Hukum Dasar</h1>
+      <p data-template-id="intro-topic" class="canva-tag inline-block px-3 py-1 rounded-full mb-4" style="background: rgba(10, 132, 255, 0.35); color: rgb(57, 255, 139); font-weight: 700; font-style: normal; font-size: 14px;">Kimia SMA Kelas 10</p>
+      <p data-template-id="intro-subtitle" class="canva-text mb-6 opacity-90" style="color: rgb(219, 230, 245); font-weight: 400; font-style: normal; font-size: 16px;"></p><button data-template-id="intro-start-btn" onclick="goScene(0)" class="canva-button neon-border px-6 py-3 rounded-xl font-bold text-lg" style="background: rgba(10, 132, 255, 0.3); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 16px;">Mulai Eksplorasi!</button>
+     </div>
+    </section><!-- ============ VISUAL NOVEL ============ -->
+    <section id="scr-scene" class="screen hidden-screen">
+     <div class="relative"><!-- character stage -->
+      <div class="flex items-end justify-center gap-1 md:gap-4 mb-[-10px]"><img data-template-id="char-munjia" loading="lazy" class="canva-image char-img vn-actor" data-actor="munjia" src="https://res.cloudinary.com/dtxcnxsoe/image/upload/v1780539354/munjia_sma_qk5ank.png" alt="Karakter siswa Munjia"> <img data-template-id="char-aisyah" loading="lazy" class="canva-image char-img vn-actor" data-actor="aisyah" src="https://res.cloudinary.com/dtxcnxsoe/image/upload/v1780539353/aisyah_sma_pl7qwg.png" alt="Karakter siswa Aisyah"> <img data-template-id="char-walidah" loading="lazy" class="canva-image char-img vn-actor" data-actor="walidah" src="https://res.cloudinary.com/dtxcnxsoe/image/upload/v1777599186/walida_sma_jmbhmg.png" alt="Karakter siswa Walidah membawa tablet"> <img data-template-id="char-darwis" loading="lazy" class="canva-image char-img vn-actor" data-actor="darwis" src="https://res.cloudinary.com/dtxcnxsoe/image/upload/v1777599186/darwis_sma_xbvalk.png" alt="Karakter siswa Darwis">
+      </div><!-- Part 1 -->
+      <div class="vn-part" data-part="0">
+       <div class="glass rounded-2xl p-4 md:p-6 relative"><span data-template-id="vn-p1-name" class="canva-tag inline-block px-3 py-1 rounded-lg mb-2 font-bold" style="background: rgba(10, 132, 255, 0.35); color: rgb(57, 255, 139); font-weight: 400; font-style: normal; font-size: 14px;">Munjia, Aisyah &amp; Walidah</span>
+        <p data-template-id="vn-p1-text" class="canva-text leading-relaxed" style="color: rgb(238, 244, 255); font-weight: 400; font-style: normal; font-size: 16px;">Munjia: "Syah, ini apa sih NaCl? Kok ada di kemasan garam dapur?" — Aisyah: "Aku kira cuma garam biasa, ternyata ada nama kimianya ya!" — Walidah (membawa tablet holografik): "Inilah tata nama senyawa. Nama kimia membantu kita mengenali zat dengan jelas secara ilmiah."</p>
+       </div>
+      </div><!-- Part 2 -->
+      <div class="vn-part hidden-screen" data-part="1">
+       <div class="glass rounded-2xl p-4 md:p-6 relative"><span data-template-id="vn-p2-name" class="canva-tag inline-block px-3 py-1 rounded-lg mb-2 font-bold" style="background: rgba(10, 132, 255, 0.35); color: rgb(57, 255, 139); font-weight: 400; font-style: normal; font-size: 14px;">Darwis</span>
+        <p data-template-id="vn-p2-text" class="canva-text leading-relaxed" style="color: rgb(238, 244, 255); font-weight: 400; font-style: normal; font-size: 16px;">"Setiap senyawa punya nama karena komposisinya tetap. Kenapa bisa begitu? Itu dijelaskan oleh hukum dasar kimia." (memunculkan animasi lilin menyala) "Hukum Lavoisier menyatakan massa zat sebelum dan sesudah reaksi selalu tetap sama. Misalnya pada lilin, massanya tidak hilang, melainkan berubah menjadi gas."</p>
+       </div>
+      </div><!-- Part 3 -->
+      <div class="vn-part hidden-screen" data-part="2">
+       <div class="glass rounded-2xl p-4 md:p-6 relative"><span data-template-id="vn-p3-name" class="canva-tag inline-block px-3 py-1 rounded-lg mb-2 font-bold" style="background: rgba(10, 132, 255, 0.35); color: rgb(57, 255, 139); font-weight: 400; font-style: normal; font-size: 14px;">Walidah &amp; Munjia</span>
+        <p data-template-id="vn-p3-text" class="canva-text leading-relaxed" style="color: rgb(238, 244, 255); font-weight: 400; font-style: normal; font-size: 16px;">Walidah (menampilkan rumus gula C6H12O6): "Menurut Hukum Proust, setiap senyawa selalu memiliki perbandingan unsur penyusun yang tetap. Gula akan selalu punya rasio atom C, H, dan O yang sama di manapun ia berada!" — Munjia: "Jadi, nama senyawa bukan sekadar hafalan, tapi menjelaskan komposisi zat yang kita pakai sehari-hari!"</p>
+       </div>
+      </div>
+      <div class="mt-4 flex justify-end"><button id="vn-next" onclick="vnNext()" class="neon-border px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2"> <span data-template-id="vn-next-label" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 16px;">Lanjut</span> <i data-lucide="chevron-right"></i> </button>
+      </div>
+     </div>
+    </section><!-- ============ MINI GAME 1: QUIZ ============ -->
+    <section id="scr-quiz" class="screen hidden-screen">
+     <div class="glass rounded-2xl p-4 md:p-6 relative overflow-hidden">
+      <div class="flex items-center justify-between mb-3">
+       <h2 data-template-id="q-panel-title" class="canva-text font-bold" style="color: rgb(57, 255, 139); font-weight: 700; font-style: normal; font-size: 24px;">Kuis Analisis Hukum Kimia</h2><span id="q-counter" class="mono text-sm text-[var(--silver)]"></span>
+      </div>
+      <div class="flex items-center gap-2 mb-4"><i data-lucide="scan-line" class="text-[var(--neon)]"></i>
+       <div class="flex-1 timer-track">
+        <div id="q-timer" class="timer-fill" style="width:100%"></div>
+       </div><span id="q-time-txt" class="mono text-sm font-bold text-[var(--neon)]">20</span>
+      </div>
+      <div id="quiz-body"><!-- Q1 -->
+       <div class="quiz-q" data-q="0">
+        <p data-template-id="q1-text" class="canva-text font-medium mb-3" style="color: rgb(238, 244, 255); font-weight: 400; font-style: normal; font-size: 16px;">Munjia menemukan label "NaCl" pada kemasan garam dapur. Berdasarkan tata nama senyawa biner, nama kimia yang tepat untuk NaCl adalah...</p>
+        <div class="grid gap-2"><button data-template-id="q1-a" data-correct="0" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Natrium Karbonat</button> <button data-template-id="q1-b" data-correct="1" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Natrium Klorida</button> <button data-template-id="q1-c" data-correct="0" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Nitrogen Klorin</button>
+        </div>
+       </div><!-- Q2 -->
+       <div class="quiz-q hidden-screen" data-q="1">
+        <p data-template-id="q2-text" class="canva-text font-medium mb-3" style="color: rgb(238, 244, 255); font-weight: 400; font-style: normal; font-size: 16px;">Darwis menjelaskan bahwa dalam sistem tertutup, massa zat sebelum bereaksi dan sesudah bereaksi adalah sama. Prinsip ini dikemukakan oleh Antoine Lavoisier yang dikenal sebagai...</p>
+        <div class="grid gap-2"><button data-template-id="q2-a" data-correct="1" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Hukum Kekekalan Massa</button> <button data-template-id="q2-b" data-correct="0" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Hukum Perbandingan Berganda</button> <button data-template-id="q2-c" data-correct="0" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Hukum Perbandingan Tetap</button>
+        </div>
+       </div><!-- Q3 -->
+       <div class="quiz-q hidden-screen" data-q="2">
+        <p data-template-id="q3-text" class="canva-text font-medium mb-3" style="color: rgb(238, 244, 255); font-weight: 400; font-style: normal; font-size: 16px;">Walidah memberikan contoh gula (C6H12O6) yang selalu memiliki rasio massa penyusun yang tetap. Pernyataan ini sesuai dengan Hukum Proust yang disebut juga...</p>
+        <div class="grid gap-2"><button data-template-id="q3-a" data-correct="0" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Hukum Kekekalan Massa</button> <button data-template-id="q3-b" data-correct="1" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Hukum Perbandingan Tetap</button> <button data-template-id="q3-c" data-correct="0" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Hukum Volume Gas</button>
+        </div>
+       </div><!-- Q4 -->
+       <div class="quiz-q hidden-screen" data-q="3">
+        <p data-template-id="q4-text" class="canva-text font-medium mb-3" style="color: rgb(238, 244, 255); font-weight: 400; font-style: normal; font-size: 16px;">Selain NaCl untuk garam dapur, senyawa NaHCO3 sering ditemukan di dapur sebagai pengembang kue. Nama senyawa dari NaHCO3 adalah...</p>
+        <div class="grid gap-2"><button data-template-id="q4-a" data-correct="0" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Natrium Hidroksida</button> <button data-template-id="q4-b" data-correct="0" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Natrium Klorida</button> <button data-template-id="q4-c" data-correct="1" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Natrium Bikarbonat</button>
+        </div>
+       </div><!-- Q5 -->
+       <div class="quiz-q hidden-screen" data-q="4">
+        <p data-template-id="q5-text" class="canva-text font-medium mb-3" style="color: rgb(238, 244, 255); font-weight: 400; font-style: normal; font-size: 16px;">Jika 12 gram karbon bereaksi tepat dengan 32 gram oksigen membentuk karbon dioksida (CO2), berapakah massa CO2 yang dihasilkan berdasarkan Hukum Lavoisier?</p>
+        <div class="grid gap-2"><button data-template-id="q5-a" data-correct="0" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">20 gram</button> <button data-template-id="q5-b" data-correct="1" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">44 gram</button> <button data-template-id="q5-c" data-correct="0" class="canva-button opt-btn glass rounded-xl px-4 py-3 text-left" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">12 gram</button>
+        </div>
+       </div>
+      </div>
+      <div id="q-next-wrap" class="mt-4 hidden-screen flex justify-end"><button id="q-next-btn" onclick="quizNext()" class="neon-border px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2"> <span data-template-id="q-next-label" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 16px;">Lanjut</span> <i data-lucide="chevron-right"></i> </button>
+      </div>
+     </div>
+    </section><!-- ============ MINI GAME 2: DRAG & DROP ============ -->
+    <section id="scr-dd" class="screen hidden-screen">
+     <div class="glass rounded-2xl p-4 md:p-6 relative overflow-hidden">
+      <div class="scanline"></div>
+      <h2 data-template-id="dd-title" class="canva-text font-bold mb-1" style="color: rgb(57, 255, 139); font-weight: 700; font-style: normal; font-size: 24px;">Mesin Pemindai Senyawa</h2>
+      <p data-template-id="dd-hint" class="canva-text text-sm opacity-80 mb-4" style="color: rgb(219, 230, 245); font-weight: 400; font-style: normal; font-size: 16px;">Tarik (atau ketuk lalu pilih rak) setiap kartu ke rumus kimia yang tepat.</p>
+      <div class="grid grid-cols-2 gap-3 mb-5">
+       <div class="dropzone glass rounded-xl border-2 border-dashed border-[var(--silver)] p-3 flex flex-col" data-zone="NaCl"><span data-template-id="dz-nacl-label" class="canva-tag self-center px-3 py-1 rounded-lg mono font-bold mb-2" style="background: rgba(10, 132, 255, 0.3); color: rgb(57, 255, 139); font-weight: 400; font-style: normal; font-size: 15px;">RUMUS NaCl</span>
+        <div class="dz-slots flex flex-wrap gap-2 justify-center content-start flex-1"></div>
+       </div>
+       <div class="dropzone glass rounded-xl border-2 border-dashed border-[var(--silver)] p-3 flex flex-col" data-zone="NaHCO3"><span data-template-id="dz-nahco3-label" class="canva-tag self-center px-3 py-1 rounded-lg mono font-bold mb-2" style="background: rgba(10, 132, 255, 0.3); color: rgb(57, 255, 139); font-weight: 400; font-style: normal; font-size: 15px;">RUMUS NaHCO3</span>
+        <div class="dz-slots flex flex-wrap gap-2 justify-center content-start flex-1"></div>
+       </div>
+      </div>
+      <div id="dd-cards" class="flex flex-wrap gap-2 justify-center">
+       <div data-template-id="card-garam" draggable="true" data-target="NaCl" class="canva-card data-card glass rounded-xl px-4 py-3 font-medium" style="background: rgba(255, 255, 255, 0.08); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Garam Dapur</div>
+       <div data-template-id="card-natriumklorida" draggable="true" data-target="NaCl" class="canva-card data-card glass rounded-xl px-4 py-3 font-medium" style="background: rgba(255, 255, 255, 0.08); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Natrium Klorida</div>
+       <div data-template-id="card-sodakue" draggable="true" data-target="NaHCO3" class="canva-card data-card glass rounded-xl px-4 py-3 font-medium" style="background: rgba(255, 255, 255, 0.08); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Soda Kue</div>
+       <div data-template-id="card-natriumbikarbonat" draggable="true" data-target="NaHCO3" class="canva-card data-card glass rounded-xl px-4 py-3 font-medium" style="background: rgba(255, 255, 255, 0.08); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 15px;">Natrium Bikarbonat</div>
+      </div>
+      <div id="dd-next-wrap" class="mt-5 hidden-screen flex justify-end"><button onclick="goMatch()" class="neon-border px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2"> <span data-template-id="dd-next-label" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 16px;">Lanjut ke Dekoder Hukum!</span> <i data-lucide="chevron-right"></i> </button>
+      </div>
+     </div>
+    </section><!-- ============ MINI GAME 3: MATCH PAIRS ============ -->
+    <section id="scr-match" class="screen hidden-screen">
+     <div class="glass rounded-2xl p-4 md:p-6 relative overflow-hidden">
+      <svg id="laser-svg"></svg>
+      <h2 data-template-id="mp-title" class="canva-text font-bold mb-1" style="color: rgb(57, 255, 139); font-weight: 700; font-style: normal; font-size: 24px;">Dekoder Hukum Dasar</h2>
+      <p data-template-id="mp-hint" class="canva-text text-sm opacity-80 mb-4" style="color: rgb(219, 230, 245); font-weight: 400; font-style: normal; font-size: 16px;">Klik satu nama hukum di kiri, lalu klik prinsip yang cocok di kanan.</p>
+      <div class="grid grid-cols-2 gap-3 relative">
+       <div class="flex flex-col gap-3"><button data-template-id="mp-left-1" data-key="lav" onclick="mpPick('left','lav',this)" class="canva-button mp-btn glass rounded-xl px-3 py-3 text-sm font-semibold" style="background: rgba(255, 255, 255, 0.08); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">Hukum Lavoisier</button> <button data-template-id="mp-left-2" data-key="proust" onclick="mpPick('left','proust',this)" class="canva-button mp-btn glass rounded-xl px-3 py-3 text-sm font-semibold" style="background: rgba(255, 255, 255, 0.08); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">Hukum Proust</button> <button data-template-id="mp-left-3" data-key="biner" onclick="mpPick('left','biner',this)" class="canva-button mp-btn glass rounded-xl px-3 py-3 text-sm font-semibold" style="background: rgba(255, 255, 255, 0.08); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">Tata Nama Biner</button>
+       </div>
+       <div class="flex flex-col gap-3"><button data-template-id="mp-right-1" data-key="proust" onclick="mpPick('right','proust',this)" class="canva-button mp-btn glass rounded-xl px-3 py-3 text-sm" style="background: rgba(255, 255, 255, 0.08); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">Perbandingan Unsur Selalu Tetap</button> <button data-template-id="mp-right-2" data-key="biner" onclick="mpPick('right','biner',this)" class="canva-button mp-btn glass rounded-xl px-3 py-3 text-sm" style="background: rgba(255, 255, 255, 0.08); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">Identitas Senyawa Kimia</button> <button data-template-id="mp-right-3" data-key="lav" onclick="mpPick('right','lav',this)" class="canva-button mp-btn glass rounded-xl px-3 py-3 text-sm" style="background: rgba(255, 255, 255, 0.08); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">Massa Sebelum &amp; Sesudah Reaksi Sama</button>
+       </div>
+      </div>
+      <div id="mp-next-wrap" class="mt-5 hidden-screen flex justify-end"><button onclick="goEnding()" class="neon-border px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2"> <span data-template-id="mp-next-label" class="canva-text" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 16px;">Selesaikan Analisis!</span> <i data-lucide="check-circle"></i> </button>
+      </div>
+     </div>
+    </section><!-- ============ ENDING ============ -->
+    <section id="scr-end" class="screen hidden-screen">
+     <div class="glass rounded-2xl p-5 md:p-8 text-center relative overflow-hidden">
+      <div class="scanline"></div>
+      <h2 data-template-id="end-title" class="canva-text font-bold mb-3" style="color: rgb(57, 255, 139); font-weight: 700; font-style: normal; font-size: 24px;">Laporan Eksperimen</h2>
+      <div class="mono text-4xl font-bold text-[var(--neon)] mb-1" id="end-score">
+       0
+      </div>
+      <p data-template-id="end-score-label" class="canva-text text-sm opacity-80 mb-4" style="color: rgb(219, 230, 245); font-weight: 400; font-style: normal; font-size: 14px;">Total Energi Reaksi Akhir (Maksimal 300)</p>
+      <div id="end-badge-wrap" class="hidden-screen mb-4">
+       <div class="badge-pop inline-flex flex-col items-center glass neon-border rounded-2xl px-6 py-4">
+        <div class="relative h-12 flex items-center justify-center mb-2"><span class="mol-a text-3xl absolute">⚛️</span> <span class="mol-b text-3xl absolute">🧬</span>
+        </div><span data-template-id="end-badge" class="canva-tag font-bold text-[var(--neon)]" style="color: rgb(57, 255, 139); font-weight: 400; font-style: normal; font-size: 16px;">🏅 Lencana: Ahli Kimia Terapan</span>
+       </div>
+      </div>
+      <div class="flex items-end justify-center gap-1 md:gap-3 my-4"><img data-template-id="end-char-darwis" loading="lazy" class="canva-image char-img" style="height:min(30vh,200px)" src="https://res.cloudinary.com/dtxcnxsoe/image/upload/v1777599186/darwis_sma_xbvalk.png" alt="Karakter siswa Darwis memegang produk"> <img data-template-id="end-char-walidah" loading="lazy" class="canva-image char-img" style="height:min(30vh,200px)" src="https://res.cloudinary.com/dtxcnxsoe/image/upload/v1777599186/walida_sma_jmbhmg.png" alt="Karakter siswa Walidah memegang produk"> <img data-template-id="end-char-munjia" loading="lazy" class="canva-image char-img" style="height:min(30vh,200px)" src="https://res.cloudinary.com/dtxcnxsoe/image/upload/v1780539354/munjia_sma_qk5ank.png" alt="Karakter siswa Munjia memegang produk"> <img data-template-id="end-char-aisyah" loading="lazy" class="canva-image char-img" style="height:min(30vh,200px)" src="https://res.cloudinary.com/dtxcnxsoe/image/upload/v1780539353/aisyah_sma_pl7qwg.png" alt="Karakter siswa Aisyah memegang produk">
+      </div>
+      <div class="glass rounded-xl p-4 mb-4"><span data-template-id="end-speaker" class="canva-tag inline-block px-3 py-1 rounded-lg mb-2 font-bold" style="background: rgba(10, 132, 255, 0.35); color: rgb(57, 255, 139); font-weight: 400; font-style: normal; font-size: 14px;">Aisyah &amp; Darwis</span>
+       <p data-template-id="end-dialog" class="canva-text leading-relaxed" style="color: rgb(238, 244, 255); font-weight: 400; font-style: normal; font-size: 16px;">"Wah, jadi gampang paham! Nama senyawa bikin kita kenal zat sehari-hari, dan hukum kimia memastikan semuanya tetap konsisten."</p>
+      </div>
+      <p data-template-id="end-system" class="canva-text grow-text font-bold text-[var(--neon)] mb-5" style="color: rgb(57, 255, 139); font-weight: 700; font-style: normal; font-size: 22px;">Misi Selesai: Analisis Kimia Kehidupan Berhasil!</p><button data-template-id="end-replay-btn" onclick="restartGame()" class="canva-button neon-border px-6 py-3 rounded-xl font-bold flex items-center gap-2 mx-auto" style="background: rgba(10, 132, 255, 0.3); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 16px;">Ulangi Eksplorasi</button>
+     </div>
+    </section>
+   </div>
+  </main>
+  <script src="/_sdk/e61e3bb72e36f08d.editing_sdk.js" integrity="sha512-LNDXoyj464zjNUcR41hm7lkTLlyZduf4kBeksh2z3RHuIS1A12T54/YA9mzuTcPC6fMYEb1qnwz8DUt7H3J6Ag=="></script>
+  <script>
+    lucide.createIcons();
+
+    // ---------- molecule particles ----------
+    (function(){
+      const wrap=document.getElementById('particles');
+      const glyphs=['🧪','⚛️','🔬','H₂O','NaCl','CO₂','O₂'];
+      for(let i=0;i<16;i++){
+        const p=document.createElement('span');
+        p.className='particle';
+        p.textContent=glyphs[i%glyphs.length];
+        p.style.left=Math.random()*100+'%';
+        p.style.animationDuration=(12+Math.random()*14)+'s';
+        p.style.animationDelay=(-Math.random()*20)+'s';
+        p.style.fontSize=(12+Math.random()*16)+'px';
+        wrap.appendChild(p);
+      }
+    })();
+
+    // ---------- Web Audio ----------
+    let audioCtx=null;
+    function ac(){ if(!audioCtx){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}} return audioCtx; }
+    function beep(freq,dur,type){
+      const c=ac(); if(!c) return;
+      const o=c.createOscillator(),g=c.createGain();
+      o.type=type||'square'; o.frequency.value=freq;
+      o.connect(g); g.connect(c.destination);
+      g.gain.setValueAtTime(0.12,c.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+dur);
+      o.start(); o.stop(c.currentTime+dur);
+    }
+    const sndBeep=()=>{beep(1400,0.08,'square');setTimeout(()=>beep(1800,0.1,'square'),90);};
+    const sndOk=()=>{beep(660,0.1,'sine');setTimeout(()=>beep(990,0.15,'sine'),100);};
+    const sndErr=()=>beep(180,0.2,'sawtooth');
+
+    // ---------- HUD score ----------
+    let energy=0;
+    function addEnergy(n){
+      energy=Math.min(300,energy+n);
+      document.getElementById('energy-val').textContent=energy+'/300';
+      document.getElementById('energy-fill').style.width=(energy/300*100)+'%';
+    }
+
+    // ---------- screen switching ----------
+    function show(id){
+      document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden-screen'));
+      const el=document.getElementById(id);
+      el.classList.remove('hidden-screen');
+      el.classList.remove('screen'); void el.offsetWidth; el.classList.add('screen');
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    // ---------- Visual Novel ----------
+    let vnPart=0;
+    function goScene(){ vnPart=0; showVnPart(); show('scr-scene'); }
+    function showVnPart(){
+      document.querySelectorAll('.vn-part').forEach(p=>p.classList.add('hidden-screen'));
+      document.querySelector('.vn-part[data-part="'+vnPart+'"]').classList.remove('hidden-screen');
+      // highlight active actors softly (all shown, dim non-active)
+      const active={0:['munjia','aisyah','walidah'],1:['darwis'],2:['walidah','munjia']}[vnPart];
+      document.querySelectorAll('.vn-actor').forEach(a=>{
+        a.style.opacity = active.includes(a.dataset.actor)?'1':'0.35';
+      });
+    }
+    function vnNext(){
+      if(vnPart<2){ vnPart++; showVnPart(); }
+      else { startQuiz(); }
+    }
+
+    // ---------- Quiz ----------
+    let qIndex=0,qAnswered=false,qTimer=null,qTime=20;
+    function startQuiz(){ qIndex=0; show('scr-quiz'); loadQuestion(); }
+    function loadQuestion(){
+      qAnswered=false;
+      document.getElementById('q-next-wrap').classList.add('hidden-screen');
+      document.querySelectorAll('.quiz-q').forEach(q=>q.classList.add('hidden-screen'));
+      document.querySelector('.quiz-q[data-q="'+qIndex+'"]').classList.remove('hidden-screen');
+      document.getElementById('q-counter').textContent='Soal '+(qIndex+1)+'/5';
+      // reset option styling + bind
+      const cur=document.querySelector('.quiz-q[data-q="'+qIndex+'"]');
+      cur.querySelectorAll('.opt-btn').forEach(b=>{
+        b.classList.remove('opt-correct','opt-wrong');
+        b.disabled=false;
+        b.onclick=()=>answer(b);
+      });
+      startQTimer();
+    }
+    function startQTimer(){
+      qTime=20;
+      const fill=document.getElementById('q-timer');
+      const txt=document.getElementById('q-time-txt');
+      fill.style.width='100%'; txt.textContent='20';
+      clearInterval(qTimer);
+      qTimer=setInterval(()=>{
+        qTime--;
+        fill.style.width=(qTime/20*100)+'%';
+        txt.textContent=qTime;
+        if(qTime<=0){ clearInterval(qTimer); if(!qAnswered) revealTimeout(); }
+      },1000);
+    }
+    function answer(btn){
+      if(qAnswered) return;
+      qAnswered=true; clearInterval(qTimer);
+      const cur=document.querySelector('.quiz-q[data-q="'+qIndex+'"]');
+      const correct=btn.dataset.correct==='1';
+      if(correct){ btn.classList.add('opt-correct'); addEnergy(20); sndOk(); }
+      else{
+        btn.classList.add('opt-wrong'); sndErr();
+        cur.querySelector('[data-correct="1"]').classList.add('opt-correct');
+      }
+      cur.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+      document.getElementById('q-next-wrap').classList.remove('hidden-screen');
+    }
+    function revealTimeout(){
+      qAnswered=true;
+      const cur=document.querySelector('.quiz-q[data-q="'+qIndex+'"]');
+      cur.querySelector('[data-correct="1"]').classList.add('opt-correct');
+      cur.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+      sndErr();
+      document.getElementById('q-next-wrap').classList.remove('hidden-screen');
+    }
+    function quizNext(){
+      if(qIndex<4){ qIndex++; loadQuestion(); }
+      else { startDD(); }
+    }
+
+    // ---------- Drag & Drop ----------
+    let ddPlaced=0, ddSelected=null;
+    function startDD(){ show('scr-dd'); }
+    function bindDD(){
+      const cards=document.querySelectorAll('#dd-cards .data-card');
+      const zones=document.querySelectorAll('#scr-dd .dropzone');
+      cards.forEach(card=>{
+        card.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain',card.dataset.templateId); });
+        // touch/click fallback
+        card.addEventListener('click',()=>{
+          if(card.classList.contains('card-placed')) return;
+          document.querySelectorAll('.data-card').forEach(c=>c.classList.remove('card-selected'));
+          ddSelected=card; card.classList.add('card-selected');
+        });
+      });
+      zones.forEach(zone=>{
+        zone.addEventListener('dragover',e=>{ e.preventDefault(); zone.classList.add('dz-active'); });
+        zone.addEventListener('dragleave',()=>zone.classList.remove('dz-active'));
+        zone.addEventListener('drop',e=>{
+          e.preventDefault(); zone.classList.remove('dz-active');
+          const id=e.dataTransfer.getData('text/plain');
+          const card=document.querySelector('[data-template-id="'+id+'"]');
+          tryPlace(card,zone);
+        });
+        zone.addEventListener('click',()=>{ if(ddSelected) tryPlace(ddSelected,zone); });
+      });
+    }
+    function tryPlace(card,zone){
+      if(!card||card.classList.contains('card-placed')) return;
+      if(card.dataset.target===zone.dataset.zone){
+        zone.querySelector('.dz-slots').appendChild(card);
+        card.classList.add('card-placed'); card.classList.remove('card-selected');
+        card.draggable=false; ddSelected=null;
+        zone.classList.add('dz-filled');
+        sndBeep(); addEnergy(25); ddPlaced++;
+        if(ddPlaced===4){ document.getElementById('dd-next-wrap').classList.remove('hidden-screen'); sndOk(); }
+      } else {
+        sndErr();
+        zone.animate([{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:250});
+      }
+    }
+
+    // ---------- Match Pairs ----------
+    let mpLeft=null, mpMatched=0;
+    const mpColors={lav:'#39ff8b',proust:'#0a84ff',biner:'#ff9f0a'};
+    function goMatch(){ show('scr-match'); }
+    function mpPick(side,key,btn){
+      if(btn.classList.contains('done')) return;
+      if(side==='left'){
+        document.querySelectorAll('#scr-match .flex-col:first-child .mp-btn').forEach(b=>b.classList.remove('sel'));
+        mpLeft={key,btn}; btn.classList.add('sel');
+      } else {
+        if(!mpLeft){ return; }
+        if(mpLeft.key===key){
+          mpLeft.btn.classList.remove('sel');
+          mpLeft.btn.classList.add('done'); btn.classList.add('done');
+          drawLaser(mpLeft.btn,btn,mpColors[key]);
+          sndOk(); addEnergy(34); mpMatched++;
+          mpLeft=null;
+          if(mpMatched===3) document.getElementById('mp-next-wrap').classList.remove('hidden-screen');
+        } else {
+          sndErr();
+          btn.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:220});
+          mpLeft.btn.classList.remove('sel'); mpLeft=null;
+        }
+      }
+    }
+    function drawLaser(a,b,color){
+      const svg=document.getElementById('laser-svg');
+      const box=svg.getBoundingClientRect();
+      const ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
+      const x1=ra.right-box.left, y1=ra.top+ra.height/2-box.top;
+      const x2=rb.left-box.left, y2=rb.top+rb.height/2-box.top;
+      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',x1);line.setAttribute('y1',y1);
+      line.setAttribute('x2',x1);line.setAttribute('y2',y1);
+      line.setAttribute('stroke',color);line.setAttribute('stroke-width','3');
+      line.setAttribute('stroke-linecap','round');
+      line.style.filter='drop-shadow(0 0 6px '+color+')';
+      svg.appendChild(line);
+      line.animate([{},{}],{duration:1});
+      // animate to endpoint
+      const start=performance.now();
+      function step(t){
+        const p=Math.min(1,(t-start)/300);
+        line.setAttribute('x2',x1+(x2-x1)*p);
+        line.setAttribute('y2',y1+(y2-y1)*p);
+        if(p<1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // ---------- Ending ----------
+    function goEnding(){
+      show('scr-end');
+      // animate score count up
+      document.getElementById('end-score').textContent=energy;
+      let n=0; const target=energy;
+      const el=document.getElementById('end-score');
+      const iv=setInterval(()=>{ n+=Math.ceil(target/30)||1; if(n>=target){n=target;clearInterval(iv);} el.textContent=n; },40);
+      if(energy>200){ document.getElementById('end-badge-wrap').classList.remove('hidden-screen'); sndOk(); }
+    }
+
+    function restartGame(){
+      energy=0; addEnergy(0);
+      qIndex=0; ddPlaced=0; ddSelected=null; mpLeft=null; mpMatched=0;
+      // reset quiz
+      document.querySelectorAll('.opt-btn').forEach(b=>{b.classList.remove('opt-correct','opt-wrong');b.disabled=false;});
+      // reset DD
+      document.querySelectorAll('#dd-cards, #scr-dd .dz-slots');
+      const cardBar=document.getElementById('dd-cards');
+      document.querySelectorAll('#scr-dd .data-card').forEach(c=>{
+        c.classList.remove('card-placed','card-selected'); c.draggable=true; cardBar.appendChild(c);
+      });
+      document.querySelectorAll('#scr-dd .dropzone').forEach(z=>z.classList.remove('dz-filled'));
+      document.getElementById('dd-next-wrap').classList.add('hidden-screen');
+      // reset match
+      document.querySelectorAll('#scr-match .mp-btn').forEach(b=>b.classList.remove('done','sel'));
+      document.getElementById('laser-svg').innerHTML='';
+      document.getElementById('mp-next-wrap').classList.add('hidden-screen');
+      document.getElementById('end-badge-wrap').classList.add('hidden-screen');
+      show('scr-intro');
+    }
+
+    bindDD();
+    window.addEventListener('resize',()=>{
+      // redraw lasers by clearing (they lock on match; simplest is leave as-is on rotate)
+    });
+  </script>
+ 
+</body></html>

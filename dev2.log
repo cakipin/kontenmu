@@ -1,0 +1,28 @@
+
+ ⛅️ wrangler 3.114.17 (update available 4.118.0)
+------------------------------------------------
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mThe version of Wrangler you are using is now out-of-date.[0m
+
+  Please update to the latest version to prevent critical errors.
+  Run `npm install --save-dev wrangler@4` to update to the latest version.
+  After installation, run Wrangler with `npx wrangler`.
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNo compatibility_date was specified. Using today's date: 2026-08-04.[0m
+
+  ❯❯ Add one to your Wrangler configuration file: compatibility_date = "2026-08-04", or
+  ❯❯ Pass it in your terminal: wrangler pages dev [<DIRECTORY>] --compatibility-date=2026-08-04
+  
+  See [4mhttps://developers.cloudflare.com/workers/platform/compatibility-dates/[0m for more information.
+
+
+No Functions. Shimming...
+No bindings found.
+⎔ Starting local server...
+[wrangler-UserWorker:wrn] The latest compatibility date supported by the installed Cloudflare Workers Runtime is "2025-07-18",
+but you've requested "2026-08-04". Falling back to "2025-07-18"...
+Features enabled by your requested compatibility date may not be available.
+Upgrade to `wrangler@4.118.0` to remove this warning.
+[wrangler:inf] Ready on http://localhost:8788
+[wrangler:inf] GET /api/contents 200 OK (16ms)

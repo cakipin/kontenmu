@@ -1,0 +1,248 @@
+
+ ⛅️ wrangler 3.114.17 (update available 4.118.0)
+------------------------------------------------
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mThe version of Wrangler you are using is now out-of-date.[0m
+
+  Please update to the latest version to prevent critical errors.
+  Run `npm install --save-dev wrangler@4` to update to the latest version.
+  After installation, run Wrangler with `npx wrangler`.
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNo compatibility_date was specified. Using today's date: 2026-08-04.[0m
+
+  ❯❯ Add one to your wrangler.toml file: compatibility_date = "2026-08-04", or
+  ❯❯ Pass it in your terminal: wrangler pages dev [<DIRECTORY>] --compatibility-date=2026-08-04
+  
+  See [4mhttps://developers.cloudflare.com/workers/platform/compatibility-dates/[0m for more information.
+
+
+No Functions. Shimming...
+[custom build] Running: npm run build
+[custom build] 
+[custom build] > build
+[custom build] > turbo run build
+[custom build] 
+[custom build] 
+[custom build] • turbo 2.10.3
+[custom build] 
+[custom build] 
+[custom build] 
+[custom build]    • Packages in scope: @repo/api, @repo/auth, @repo/eslint-config, @repo/typescript-config, @repo/ui, allocation-api, app-masa, content-api, portal-agen, portal-sekolah, sales-api
+[custom build]    • Running build in 11 packages
+[custom build]    • Remote caching disabled
+[custom build] 
+[custom build] 
+[custom build] portal-agen:build: cache hit, replaying logs a2e1e6fedd9e552e
+[custom build] portal-sekolah:build: cache hit, replaying logs 6da105f6348e114e
+[custom build] 
+[custom build] app-masa:build: cache hit, replaying logs 824d4247c26a230b
+[custom build] app-masa:build: 
+[custom build] app-masa:build: > app-masa@0.0.0 build
+[custom build] app-masa:build: > tsc -b && vite build
+[custom build] app-masa:build: 
+[custom build] app-masa:build: vite v8.1.3 building client environment for production...
+[custom build] app-masa:build: [2Kapp-masa:build: transforming...✓ 19 modules transformed.
+[custom build] app-masa:build: rendering chunks...
+[custom build] app-masa:build: computing gzip size...
+[custom build] app-masa:build: dist/index.html                   0.45 kB │ gzip:  0.29 kB
+[custom build] app-masa:build: dist/assets/react-CHdo91hT.svg    4.12 kB │ gzip:  2.06 kB
+[custom build] app-masa:build: dist/assets/vite-BF8QNONU.svg     8.70 kB │ gzip:  1.60 kB
+[custom build] app-masa:build: dist/assets/hero-CLDdwZDr.png    13.05 kB
+[custom build] app-masa:build: dist/assets/index-D64VDMd1.css    4.10 kB │ gzip:  1.47 kB
+[custom build] app-masa:build: dist/assets/index-CSkTArc9.js   143.59 kB │ gzip: 46.43 kB
+[custom build] app-masa:build: 
+[custom build] app-masa:build: ✓ built in 129ms
+[custom build] portal-agen:build: 
+[custom build] portal-agen:build: > portal-agen@0.0.0 build
+[custom build] portal-agen:build: > tsc -b && vite build
+[custom build] portal-agen:build: 
+[custom build] portal-agen:build: vite v8.1.3 building client environment for production...
+[custom build] portal-agen:build: [2Kportal-agen:build: transforming...✓ 2020 modules transformed.
+[custom build] portal-agen:build: rendering chunks...
+[custom build] portal-agen:build: computing gzip size...
+[custom build] portal-agen:build: dist/index.html                                1.98 kB │ gzip:   0.72 kB
+[custom build] portal-agen:build: dist/assets/student-content-BgDUKKVT.png   1,604.12 kB
+[custom build] portal-agen:build: dist/assets/index-AuISbvnR.css                51.23 kB │ gzip:  10.23 kB
+[custom build] portal-agen:build: dist/assets/Editor-rO8e4Zmz.css               83.57 kB │ gzip:  12.61 kB
+[custom build] portal-agen:build: dist/assets/clock-BXUgqVuU.js                  0.15 kB │ gzip:   0.16 kB
+[custom build] portal-agen:build: dist/assets/ButtonPromax-DHEOK3uB.js           0.22 kB │ gzip:   0.19 kB
+[custom build] portal-agen:build: dist/assets/Chip-CW2uJzsS.js                   0.34 kB │ gzip:   0.26 kB
+[custom build] portal-agen:build: dist/assets/chunk-H635BA2V-DOIV7rxj.js         0.35 kB │ gzip:   0.18 kB
+[custom build] portal-agen:build: dist/assets/chunk-XIGSFEU7-ShXaT7Xx.js         0.40 kB │ gzip:   0.29 kB
+[custom build] portal-agen:build: dist/assets/loaded-PILFUJGA-kAT_Dkgm.js        0.69 kB │ gzip:   0.42 kB
+[custom build] portal-agen:build: dist/assets/loaded-QH5RKCGC-DKSUcGE3.js        0.72 kB │ gzip:   0.42 kB
+[custom build] portal-agen:build: dist/assets/loaded-LAKI4KDY-DaLxQk1w.js        0.75 kB │ gzip:   0.47 kB
+[custom build] portal-agen:build: dist/assets/chunk-M5GPDW62-nzcYsjp3.js         0.75 kB │ gzip:   0.39 kB
+[custom build] portal-agen:build: dist/assets/Editor-Ck0KBgzN.js                 0.76 kB │ gzip:   0.52 kB
+[custom build] portal-agen:build: dist/assets/chunk-3RQGAM3Z-DAFYzqMu.js         0.84 kB │ gzip:   0.41 kB
+[custom build] portal-agen:build: dist/assets/preload-helper-CZgWQFsJ.js         1.25 kB │ gzip:   0.70 kB
+[custom build] portal-agen:build: dist/assets/Render-DQXAYUBI-CQavmaMo.js        1.95 kB │ gzip:   0.86 kB
+[custom build] portal-agen:build: dist/assets/full-6ZILLKCS-Bs_L0KDe.js          2.07 kB │ gzip:   0.86 kB
+[custom build] portal-agen:build: dist/assets/TableControls-DBrq_PhQ.js          2.10 kB │ gzip:   0.84 kB
+[custom build] portal-agen:build: dist/assets/SimSekolah-SMErVRSF.js             2.33 kB │ gzip:   1.07 kB
+[custom build] portal-agen:build: dist/assets/chunk-Y2EFNT5P-PDkCnf7Z.js         2.47 kB │ gzip:   1.15 kB
+[custom build] portal-agen:build: dist/assets/Editor-FJJNKTC3-Kz73Cot7.js        2.51 kB │ gzip:   1.26 kB
+[custom build] portal-agen:build: dist/assets/SchoolSearchInput-Mu1kbtwM.js      3.81 kB │ gzip:   1.46 kB
+[custom build] portal-agen:build: dist/assets/SalesForm-BMvunuqm.js              6.44 kB │ gzip:   2.45 kB
+[custom build] portal-agen:build: dist/assets/chunk-4US666EQ-T9fanVVt.js         7.19 kB │ gzip:   1.89 kB
+[custom build] portal-agen:build: dist/assets/jsx-runtime-DmaltCKy.js            8.01 kB │ gzip:   3.11 kB
+[custom build] portal-agen:build: dist/assets/Profile-Ael_Nq4K.js                8.49 kB │ gzip:   2.96 kB
+[custom build] portal-agen:build: dist/assets/AiSettings-B240oyKS.js             9.85 kB │ gzip:   2.95 kB
+[custom build] portal-agen:build: dist/assets/SchoolProfile-BM8xlgff.js         11.09 kB │ gzip:   2.76 kB
+[custom build] portal-agen:build: dist/assets/History-B8_yPKeq.js               11.54 kB │ gzip:   3.10 kB
+[custom build] portal-agen:build: dist/assets/dist-CTHFOlJE.js                  15.66 kB │ gzip:   5.04 kB
+[custom build] portal-agen:build: dist/assets/Users-mX4pnJLM.js                 21.76 kB │ gzip:   6.21 kB
+[custom build] portal-agen:build: dist/assets/Dashboard-CCI3ROcy.js             43.55 kB │ gzip:  10.26 kB
+[custom build] portal-agen:build: dist/assets/react-select.esm-BnB6zbBc.js      81.17 kB │ gzip:  28.18 kB
+[custom build] portal-agen:build: dist/assets/chunk-XQHCQEAF-ChH9zcj1.js        90.97 kB │ gzip:  30.94 kB
+[custom build] portal-agen:build: dist/assets/chunk-2CNEFIQP-CsweVS8V.js       103.83 kB │ gzip:  34.93 kB
+[custom build] portal-agen:build: dist/assets/FeaturePages-CBDEjCte.js         128.92 kB │ gzip:  27.81 kB
+[custom build] portal-agen:build: dist/assets/floating-ui.dom-DA5zqMwo.js      151.53 kB │ gzip:  50.31 kB
+[custom build] portal-agen:build: dist/assets/dist-DSVeySC6.js                 276.79 kB │ gzip:  84.56 kB
+[custom build] portal-agen:build: dist/assets/index-CVqJvXqQ.js                549.39 kB │ gzip: 148.70 kB
+[custom build] portal-agen:build: 
+[custom build] portal-agen:build: ✓ built in 223ms
+[custom build] portal-agen:build: [plugin builtin:vite-reporter] 
+[custom build] portal-agen:build: (!) Some chunks are larger than 500 kB after minification. Consider:
+[custom build] portal-agen:build: - Using dynamic import() to code-split the application
+[custom build] portal-agen:build: - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[custom build] portal-agen:build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[custom build] portal-sekolah:build: 
+[custom build] portal-sekolah:build: > portal-sekolah@0.0.0 build
+[custom build] portal-sekolah:build: > tsc -b && vite build
+[custom build] portal-sekolah:build: 
+[custom build] portal-sekolah:build: vite v8.1.3 building client environment for production...
+[custom build] portal-sekolah:build: [2Kportal-sekolah:build: transforming...✓ 1791 modules transformed.
+[custom build] portal-sekolah:build: rendering chunks...
+[custom build] portal-sekolah:build: computing gzip size...
+[custom build] portal-sekolah:build: dist/index.html                   0.46 kB │ gzip:  0.29 kB
+[custom build] portal-sekolah:build: dist/assets/index-BxrVPW42.css   34.88 kB │ gzip:  7.03 kB
+[custom build] portal-sekolah:build: dist/assets/index-CqAUlrlz.js   202.56 kB │ gzip: 66.12 kB
+[custom build] portal-sekolah:build: 
+[custom build] portal-sekolah:build: ✓ built in 199ms
+[custom build] 
+[custom build] 
+[custom build]  Tasks:    3 successful, 3 total
+[custom build] Cached:    3 cached, 3 total
+[custom build]   Time:    25ms >>> FULL TURBO
+[custom build] 
+[custom build] 
+No bindings found.
+The file src changed, restarting build...
+[custom build] Running: npm run build
+[custom build] 
+[custom build] > build
+[custom build] > turbo run build
+[custom build] 
+[custom build] 
+[custom build] • turbo 2.10.3
+[custom build] 
+[custom build] 
+[custom build]    • Packages in scope: @repo/api, @repo/auth, @repo/eslint-config, @repo/typescript-config, @repo/ui, allocation-api, app-masa, content-api, portal-agen, portal-sekolah, sales-api
+[custom build]    • Running build in 11 packages
+[custom build]    • Remote caching disabled
+[custom build] 
+[custom build] 
+[custom build] app-masa:build: cache hit, replaying logs 824d4247c26a230b
+[custom build] 
+[custom build] app-masa:build: 
+[custom build] app-masa:build: > app-masa@0.0.0 build
+[custom build] app-masa:build: > tsc -b && vite build
+[custom build] app-masa:build: 
+[custom build] app-masa:build: vite v8.1.3 building client environment for production...
+[custom build] app-masa:build: [2Kapp-masa:build: transforming...✓ 19 modules transformed.
+[custom build] app-masa:build: rendering chunks...
+[custom build] app-masa:build: computing gzip size...
+[custom build] app-masa:build: dist/index.html                   0.45 kB │ gzip:  0.29 kB
+[custom build] app-masa:build: dist/assets/react-CHdo91hT.svg    4.12 kB │ gzip:  2.06 kB
+[custom build] app-masa:build: dist/assets/vite-BF8QNONU.svg     8.70 kB │ gzip:  1.60 kB
+[custom build] app-masa:build: dist/assets/hero-CLDdwZDr.png    13.05 kB
+[custom build] app-masa:build: dist/assets/index-D64VDMd1.css    4.10 kB │ gzip:  1.47 kB
+[custom build] app-masa:build: dist/assets/index-CSkTArc9.js   143.59 kB │ gzip: 46.43 kB
+[custom build] app-masa:build: 
+[custom build] app-masa:build: ✓ built in 129ms
+[custom build] portal-sekolah:build: cache hit, replaying logs 6da105f6348e114e
+[custom build] portal-sekolah:build: 
+[custom build] portal-sekolah:build: > portal-sekolah@0.0.0 build
+[custom build] portal-sekolah:build: > tsc -b && vite build
+[custom build] portal-sekolah:build: 
+[custom build] portal-sekolah:build: vite v8.1.3 building client environment for production...
+[custom build] portal-sekolah:build: [2Kportal-sekolah:build: transforming...✓ 1791 modules transformed.
+[custom build] portal-sekolah:build: rendering chunks...
+[custom build] portal-sekolah:build: computing gzip size...
+[custom build] 
+[custom build] portal-sekolah:build: dist/index.html                   0.46 kB │ gzip:  0.29 kB
+[custom build] portal-sekolah:build: dist/assets/index-BxrVPW42.css   34.88 kB │ gzip:  7.03 kB
+[custom build] portal-sekolah:build: dist/assets/index-CqAUlrlz.js   202.56 kB │ gzip: 66.12 kB
+[custom build] portal-sekolah:build: 
+[custom build] portal-sekolah:build: ✓ built in 199ms
+[custom build] portal-agen:build: cache hit, replaying logs a2e1e6fedd9e552e
+[custom build] portal-agen:build: 
+[custom build] portal-agen:build: > portal-agen@0.0.0 build
+[custom build] portal-agen:build: > tsc -b && vite build
+[custom build] portal-agen:build: 
+[custom build] portal-agen:build: vite v8.1.3 building client environment for production...
+[custom build] portal-agen:build: [2Kportal-agen:build: transforming...✓ 2020 modules transformed.
+[custom build] portal-agen:build: rendering chunks...
+[custom build] portal-agen:build: computing gzip size...
+[custom build] portal-agen:build: dist/index.html                                1.98 kB │ gzip:   0.72 kB
+[custom build] portal-agen:build: dist/assets/student-content-BgDUKKVT.png   1,604.12 kB
+[custom build] portal-agen:build: dist/assets/index-AuISbvnR.css                51.23 kB │ gzip:  10.23 kB
+[custom build] portal-agen:build: dist/assets/Editor-rO8e4Zmz.css               83.57 kB │ gzip:  12.61 kB
+[custom build] portal-agen:build: dist/assets/clock-BXUgqVuU.js                  0.15 kB │ gzip:   0.16 kB
+[custom build] portal-agen:build: dist/assets/ButtonPromax-DHEOK3uB.js           0.22 kB │ gzip:   0.19 kB
+[custom build] portal-agen:build: dist/assets/Chip-CW2uJzsS.js                   0.34 kB │ gzip:   0.26 kB
+[custom build] portal-agen:build: dist/assets/chunk-H635BA2V-DOIV7rxj.js         0.35 kB │ gzip:   0.18 kB
+[custom build] portal-agen:build: dist/assets/chunk-XIGSFEU7-ShXaT7Xx.js         0.40 kB │ gzip:   0.29 kB
+[custom build] portal-agen:build: dist/assets/loaded-PILFUJGA-kAT_Dkgm.js        0.69 kB │ gzip:   0.42 kB
+[custom build] portal-agen:build: dist/assets/loaded-QH5RKCGC-DKSUcGE3.js        0.72 kB │ gzip:   0.42 kB
+[custom build] portal-agen:build: dist/assets/loaded-LAKI4KDY-DaLxQk1w.js        0.75 kB │ gzip:   0.47 kB
+[custom build] portal-agen:build: dist/assets/chunk-M5GPDW62-nzcYsjp3.js         0.75 kB │ gzip:   0.39 kB
+[custom build] portal-agen:build: dist/assets/Editor-Ck0KBgzN.js                 0.76 kB │ gzip:   0.52 kB
+[custom build] portal-agen:build: dist/assets/chunk-3RQGAM3Z-DAFYzqMu.js         0.84 kB │ gzip:   0.41 kB
+[custom build] portal-agen:build: dist/assets/preload-helper-CZgWQFsJ.js         1.25 kB │ gzip:   0.70 kB
+[custom build] portal-agen:build: dist/assets/Render-DQXAYUBI-CQavmaMo.js        1.95 kB │ gzip:   0.86 kB
+[custom build] portal-agen:build: dist/assets/full-6ZILLKCS-Bs_L0KDe.js          2.07 kB │ gzip:   0.86 kB
+[custom build] portal-agen:build: dist/assets/TableControls-DBrq_PhQ.js          2.10 kB │ gzip:   0.84 kB
+[custom build] portal-agen:build: dist/assets/SimSekolah-SMErVRSF.js             2.33 kB │ gzip:   1.07 kB
+[custom build] portal-agen:build: dist/assets/chunk-Y2EFNT5P-PDkCnf7Z.js         2.47 kB │ gzip:   1.15 kB
+[custom build] portal-agen:build: dist/assets/Editor-FJJNKTC3-Kz73Cot7.js        2.51 kB │ gzip:   1.26 kB
+[custom build] portal-agen:build: dist/assets/SchoolSearchInput-Mu1kbtwM.js      3.81 kB │ gzip:   1.46 kB
+[custom build] portal-agen:build: dist/assets/SalesForm-BMvunuqm.js              6.44 kB │ gzip:   2.45 kB
+[custom build] portal-agen:build: dist/assets/chunk-4US666EQ-T9fanVVt.js         7.19 kB │ gzip:   1.89 kB
+[custom build] portal-agen:build: dist/assets/jsx-runtime-DmaltCKy.js            8.01 kB │ gzip:   3.11 kB
+[custom build] portal-agen:build: dist/assets/Profile-Ael_Nq4K.js                8.49 kB │ gzip:   2.96 kB
+[custom build] portal-agen:build: dist/assets/AiSettings-B240oyKS.js             9.85 kB │ gzip:   2.95 kB
+[custom build] portal-agen:build: dist/assets/SchoolProfile-BM8xlgff.js         11.09 kB │ gzip:   2.76 kB
+[custom build] portal-agen:build: dist/assets/History-B8_yPKeq.js               11.54 kB │ gzip:   3.10 kB
+[custom build] portal-agen:build: dist/assets/dist-CTHFOlJE.js                  15.66 kB │ gzip:   5.04 kB
+[custom build] portal-agen:build: dist/assets/Users-mX4pnJLM.js                 21.76 kB │ gzip:   6.21 kB
+[custom build] portal-agen:build: dist/assets/Dashboard-CCI3ROcy.js             43.55 kB │ gzip:  10.26 kB
+[custom build] portal-agen:build: dist/assets/react-select.esm-BnB6zbBc.js      81.17 kB │ gzip:  28.18 kB
+[custom build] portal-agen:build: dist/assets/chunk-XQHCQEAF-ChH9zcj1.js        90.97 kB │ gzip:  30.94 kB
+[custom build] portal-agen:build: dist/assets/chunk-2CNEFIQP-CsweVS8V.js       103.83 kB │ gzip:  34.93 kB
+[custom build] portal-agen:build: dist/assets/FeaturePages-CBDEjCte.js         128.92 kB │ gzip:  27.81 kB
+[custom build] portal-agen:build: dist/assets/floating-ui.dom-DA5zqMwo.js      151.53 kB │ gzip:  50.31 kB
+[custom build] portal-agen:build: dist/assets/dist-DSVeySC6.js                 276.79 kB │ gzip:  84.56 kB
+[custom build] portal-agen:build: dist/assets/index-CVqJvXqQ.js                549.39 kB │ gzip: 148.70 kB
+[custom build] portal-agen:build: 
+[custom build] portal-agen:build: ✓ built in 223ms
+[custom build] portal-agen:build: [plugin builtin:vite-reporter] 
+[custom build] portal-agen:build: (!) Some chunks are larger than 500 kB after minification. Consider:
+[custom build] portal-agen:build: - Using dynamic import() to code-split the application
+[custom build] portal-agen:build: - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[custom build] portal-agen:build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[custom build] 
+[custom build]  Tasks:    3 successful, 3 total
+[custom build] Cached:    3 cached, 3 total
+[custom build]   Time:    11ms >>> FULL TURBO
+[custom build] 
+[custom build] 
+[wrangler:inf] Ready on http://localhost:8788
+⎔ Starting local server...
+[wrangler-UserWorker:wrn] The latest compatibility date supported by the installed Cloudflare Workers Runtime is "2025-07-18",
+but you've requested "2026-08-04". Falling back to "2025-07-18"...
+Features enabled by your requested compatibility date may not be available.
+Upgrade to `wrangler@4.118.0` to remove this warning.
+[wrangler:inf] GET /api/contents 200 OK (18ms)
