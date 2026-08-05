@@ -101,9 +101,8 @@ export const onRequestGet = async (context: any) => {
   try {
     const db = context.env.DB;
     await ensureTable(db);
-    const ormDb = drizzle(db);
-    const result = await ormDb.select().from(contents).orderBy(desc(contents.updatedAt), desc(contents.createdAt));
-    return new Response(JSON.stringify({ contents: result.map(rowToContent) }), { headers: jsonHeaders });
+    const result = await db.prepare("SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC").all();
+    return new Response(JSON.stringify({ contents: (result.results ?? []).map(rowToContent) }), { headers: jsonHeaders });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: jsonHeaders });
   }
@@ -117,29 +116,7 @@ export const onRequestPost = async (context: any) => {
     }
     const db = context.env.DB;
     await ensureTable(db);
-    const ormDb = drizzle(db);
-    const insertData = {
-      id: content.id,
-      judul: content.judul,
-      kategori: content.kategori,
-      mapel: content.mapel ?? '',
-      target: content.target ?? '',
-      fileName: content.fileName ?? '',
-      deskripsi: content.deskripsi ?? '',
-      thumbnailUrl: content.thumbnailUrl ?? null,
-      status: content.status ?? 'Siap Review',
-      tanggal: content.tanggal ?? new Date().toISOString().slice(0, 10),
-      previewMode: content.previewMode ?? 'text',
-      thumbnailKey: content.thumbnailKey ?? 'text',
-      protectedPreview: content.protectedPreview === false ? 0 : 1,
-      sourceUrl: content.sourceUrl ?? null,
-      isbn: content.isbn ?? null,
-      updatedAt: sql`CURRENT_TIMESTAMP`
-    };
-    await ormDb.insert(contents).values(insertData).onConflictDoUpdate({
-      target: contents.id,
-      set: insertData
-    });
+    await contentStatement(db, content).run();
     return new Response(JSON.stringify({ success: true, content }), { headers: jsonHeaders });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: jsonHeaders });
@@ -152,8 +129,7 @@ export const onRequestDelete = async (context: any) => {
     if (!id) return new Response(JSON.stringify({ error: 'id wajib diisi' }), { status: 400, headers: jsonHeaders });
     const db = context.env.DB;
     await ensureTable(db);
-    const ormDb = drizzle(db);
-    await ormDb.delete(contents).where(eq(contents.id, id));
+    await db.prepare("DELETE FROM contents WHERE id = ?").bind(id).run();
     return new Response(JSON.stringify({ success: true }), { headers: jsonHeaders });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: jsonHeaders });

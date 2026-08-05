@@ -86,26 +86,28 @@ export const onRequestGet = async (context: any) => {
 
     const data: any = stateRow?.content ? JSON.parse(stateRow.content) : {};
 
-    // Ambil data fresh dari tabel contents via Drizzle (schema sudah camelCase)
+    // Ambil data fresh dari tabel contents dengan raw SQL
     try {
-      const contentRows = await db.select().from(contents).orderBy(desc(contents.updatedAt), desc(contents.createdAt));
-      data.contents = contentRows.map((item: any) => ({
-        id: item.id,
-        judul: item.judul,
-        kategori: item.kategori,
-        mapel: item.mapel,
-        target: item.target,
-        fileName: item.fileName,
-        deskripsi: item.deskripsi ?? undefined,
-        thumbnailUrl: item.thumbnailUrl ?? undefined,
-        status: item.status,
-        tanggal: item.tanggal,
-        previewMode: item.previewMode,
-        thumbnailKey: item.thumbnailKey,
-        protectedPreview: Boolean(item.protectedPreview),
-        sourceUrl: item.sourceUrl ?? undefined,
-        isbn: item.isbn ?? undefined,
-      }));
+      const contentRows = await rawDb.prepare('SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC').all<any>();
+      if (contentRows?.results) {
+        data.contents = contentRows.results.map((item: any) => ({
+          id: item.id,
+          judul: item.judul,
+          kategori: item.kategori,
+          mapel: item.mapel,
+          target: item.target,
+          fileName: item.file_name,
+          deskripsi: item.deskripsi ?? undefined,
+          thumbnailUrl: item.thumbnail_url ?? undefined,
+          status: item.status,
+          tanggal: item.tanggal,
+          previewMode: item.preview_mode,
+          thumbnailKey: item.thumbnail_key,
+          protectedPreview: Boolean(item.protected_preview),
+          sourceUrl: item.source_url ?? undefined,
+          isbn: item.isbn ?? undefined,
+        }));
+      }
     } catch {
       // Jika query gagal, biarkan data.contents berisi nilai dari app_state
     }
