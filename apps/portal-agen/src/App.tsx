@@ -1261,7 +1261,7 @@ function AppContent() {
 
         <footer className="admin-footer">
           <div>&copy; 2026 KontenMu. All rights reserved.</div>
-          <div>Stable v0.1</div>
+          <div>v01.1</div>
         </footer>
       </main>
 
