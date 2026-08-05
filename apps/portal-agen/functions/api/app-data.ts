@@ -77,53 +77,42 @@ import { appState, contents, users } from '../../src/db/schema';
 export const onRequestGet = async (context: any) => {
   try {
     const rawDb = context.env.DB;
-    const db = drizzle(rawDb);
 
-    // Baca app_state dengan raw SQL agar reliabel di D1
-    const stateRow = await rawDb.prepare(
-      'SELECT content FROM app_state WHERE id = ?1'
-    ).bind(STATE_ID).first<{ content: string }>();
-
-    const data: any = stateRow?.content ? JSON.parse(stateRow.content) : {};
-
-    // Ambil data fresh dari tabel contents dengan raw SQL
-    try {
-      const contentRows = await rawDb.prepare('SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC').all<any>();
-      if (contentRows?.results) {
-        data.contents = contentRows.results.map((item: any) => ({
-          id: item.id,
-          judul: item.judul,
-          kategori: item.kategori,
-          mapel: item.mapel,
-          target: item.target,
-          fileName: item.file_name,
-          deskripsi: item.deskripsi ?? undefined,
-          thumbnailUrl: item.thumbnail_url ?? undefined,
-          status: item.status,
-          tanggal: item.tanggal,
-          previewMode: item.preview_mode,
-          thumbnailKey: item.thumbnail_key,
-          protectedPreview: Boolean(item.protected_preview),
-          sourceUrl: item.source_url ?? undefined,
-          isbn: item.isbn ?? undefined,
-        }));
-      }
-    } catch {
-      // Jika query gagal, biarkan data.contents berisi nilai dari app_state
-    }
-
-    // Ambil users dengan raw SQL agar alias snake_case konsisten
-    try {
-      const userResult = await rawDb.prepare(
+    // Jalankan 3 query D1 secara paralel (bukan sequential) untuk mempercepat respons
+    const [stateRow, contentRows, userResult] = await Promise.all([
+      rawDb.prepare('SELECT content FROM app_state WHERE id = ?1').bind(STATE_ID).first<{ content: string }>(),
+      rawDb.prepare('SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC').all<any>(),
+      rawDb.prepare(
         `SELECT id, username, nama, role_slug, wilayah, status, initial, color,
                 terakhir_login, kelas, nis, new_user_source, sso_id, email, sekolah_id
          FROM users ORDER BY updated_at DESC, created_at DESC`
-      ).all<any>();
-      if (userResult?.results?.length > 0) {
-        data.users = userResult.results.map(mapUserRow);
-      }
-    } catch {
-      // Jika query users gagal, gunakan users dari app_state
+      ).all<any>(),
+    ]);
+
+    const data: any = stateRow?.content ? JSON.parse(stateRow.content) : {};
+
+    if (contentRows?.results) {
+      data.contents = contentRows.results.map((item: any) => ({
+        id: item.id,
+        judul: item.judul,
+        kategori: item.kategori,
+        mapel: item.mapel,
+        target: item.target,
+        fileName: item.file_name,
+        deskripsi: item.deskripsi ?? undefined,
+        thumbnailUrl: item.thumbnail_url ?? undefined,
+        status: item.status,
+        tanggal: item.tanggal,
+        previewMode: item.preview_mode,
+        thumbnailKey: item.thumbnail_key,
+        protectedPreview: Boolean(item.protected_preview),
+        sourceUrl: item.source_url ?? undefined,
+        isbn: item.isbn ?? undefined,
+      }));
+    }
+
+    if (userResult?.results?.length > 0) {
+      data.users = userResult.results.map(mapUserRow);
     }
 
     // Selalu return found: true dengan data yang ada
