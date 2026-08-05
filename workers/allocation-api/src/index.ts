@@ -18,13 +18,13 @@ function json(data: unknown, status = 200) {
 
 async function getLicenseQuota(env: Env, sekolahId: number, isbn: string) {
   const total = await env.DB.prepare(
-    "SELECT COALESCE(SUM(jumlah_lisensi), 0) as total FROM Penjualan WHERE sekolah_id = ? AND isbn = ?"
+    "SELECT COALESCE(SUM(jumlah_lisensi), 0) as total FROM Penjualan WHERE sekolah_id = ? AND isbn = ?",
   )
     .bind(sekolahId, isbn)
     .first<{ total: number }>();
 
   const allocated = await env.DB.prepare(
-    "SELECT COUNT(*) as count FROM Alokasi_Siswa WHERE sekolah_id = ? AND isbn = ?"
+    "SELECT COUNT(*) as count FROM Alokasi_Siswa WHERE sekolah_id = ? AND isbn = ?",
   )
     .bind(sekolahId, isbn)
     .first<{ count: number }>();
@@ -54,14 +54,15 @@ export default {
            FROM Penjualan p
            JOIN Buku b ON p.isbn = b.isbn
            WHERE p.sekolah_id = ?
-           GROUP BY b.isbn, b.judul`
+           GROUP BY b.isbn, b.judul`,
         )
           .bind(sekolahId, sekolahId)
           .all();
 
         return json({ success: true, data: results });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -74,14 +75,15 @@ export default {
            FROM Alokasi_Siswa a
            JOIN Buku b ON a.isbn = b.isbn
            WHERE a.sekolah_id = ?
-           ORDER BY a.tanggal_alokasi DESC`
+           ORDER BY a.tanggal_alokasi DESC`,
         )
           .bind(sekolahId)
           .all();
 
         return json({ success: true, data: results });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -95,34 +97,59 @@ export default {
         };
 
         if (!sekolahId || !isbn || !siswaId?.trim()) {
-          return json({ success: false, error: "sekolahId, isbn, dan siswaId wajib diisi" }, 400);
+          return json(
+            {
+              success: false,
+              error: "sekolahId, isbn, dan siswaId wajib diisi",
+            },
+            400,
+          );
         }
 
         const existing = await env.DB.prepare(
-          "SELECT id FROM Alokasi_Siswa WHERE siswa_id = ? AND isbn = ?"
+          "SELECT id FROM Alokasi_Siswa WHERE siswa_id = ? AND isbn = ?",
         )
           .bind(siswaId.trim(), isbn)
           .first();
 
         if (existing) {
-          return json({ success: false, error: `Siswa ${siswaId} sudah memiliki lisensi untuk ISBN ini` }, 409);
+          return json(
+            {
+              success: false,
+              error: `Siswa ${siswaId} sudah memiliki lisensi untuk ISBN ini`,
+            },
+            409,
+          );
         }
 
-        const { total, allocated } = await getLicenseQuota(env, sekolahId, isbn);
+        const { total, allocated } = await getLicenseQuota(
+          env,
+          sekolahId,
+          isbn,
+        );
 
         if (total === 0) {
-          return json({ success: false, error: "Sekolah tidak memiliki lisensi untuk ISBN ini" }, 400);
+          return json(
+            {
+              success: false,
+              error: "Sekolah tidak memiliki lisensi untuk ISBN ini",
+            },
+            400,
+          );
         }
 
         if (allocated >= total) {
-          return json({
-            success: false,
-            error: `Kuota habis: ${allocated}/${total} lisensi sudah teralokasi`,
-          }, 400);
+          return json(
+            {
+              success: false,
+              error: `Kuota habis: ${allocated}/${total} lisensi sudah teralokasi`,
+            },
+            400,
+          );
         }
 
         await env.DB.prepare(
-          "INSERT INTO Alokasi_Siswa (siswa_id, sekolah_id, isbn) VALUES (?, ?, ?)"
+          "INSERT INTO Alokasi_Siswa (siswa_id, sekolah_id, isbn) VALUES (?, ?, ?)",
         )
           .bind(siswaId.trim(), sekolahId, isbn)
           .run();
@@ -137,7 +164,8 @@ export default {
           remaining: total - allocated - 1,
         });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }

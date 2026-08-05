@@ -1,4 +1,4 @@
-type ChipType = 'success' | 'warning' | 'info';
+type ChipType = "success" | "warning" | "info";
 
 interface ChipProps {
   label: string;
@@ -6,9 +6,5 @@ interface ChipProps {
 }
 
 export function Chip({ label, type }: ChipProps) {
-  return (
-    <span className={`chip chip-${type}`}>
-      {label}
-    </span>
-  );
+  return <span className={`chip chip-${type}`}>{label}</span>;
 }

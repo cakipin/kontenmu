@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -21,21 +21,28 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('[KontenMu] Error caught by boundary:', error, info.componentStack);
+    console.error(
+      "[KontenMu] Error caught by boundary:",
+      error,
+      info.componentStack,
+    );
 
     // Auto-reload on Vite dynamic import chunk errors (common after new deployments)
-    const isChunkError = 
-      error.name === 'ChunkLoadError' || 
-      error.message.includes('Failed to fetch dynamically imported module') ||
-      error.message.includes('Importing a module script failed');
-      
+    const isChunkError =
+      error.name === "ChunkLoadError" ||
+      error.message.includes("Failed to fetch dynamically imported module") ||
+      error.message.includes("Importing a module script failed");
+
     if (isChunkError) {
-      const reloadCount = parseInt(sessionStorage.getItem('vite-reload') || '0', 10);
+      const reloadCount = parseInt(
+        sessionStorage.getItem("vite-reload") || "0",
+        10,
+      );
       if (reloadCount < 2) {
-        sessionStorage.setItem('vite-reload', (reloadCount + 1).toString());
+        sessionStorage.setItem("vite-reload", (reloadCount + 1).toString());
         // Force cache bust on URL to ensure we get the fresh index.html
         const url = new URL(window.location.href);
-        url.searchParams.set('t', Date.now().toString());
+        url.searchParams.set("t", Date.now().toString());
         window.location.href = url.toString();
       }
     }
@@ -52,35 +59,35 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div
           style={{
-            minHeight: '60vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '40px 20px',
+            minHeight: "60vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "40px 20px",
           }}
         >
           <div
             style={{
-              maxWidth: '480px',
-              width: '100%',
-              background: 'var(--bg-secondary, #f8fafc)',
-              border: '1px solid var(--border-subtle, #e2e8f0)',
-              borderRadius: '16px',
-              padding: '40px 32px',
-              textAlign: 'center',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+              maxWidth: "480px",
+              width: "100%",
+              background: "var(--bg-secondary, #f8fafc)",
+              border: "1px solid var(--border-subtle, #e2e8f0)",
+              borderRadius: "16px",
+              padding: "40px 32px",
+              textAlign: "center",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
             }}
           >
             {/* Error icon */}
             <div
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
                 width: 64,
                 height: 64,
-                borderRadius: '50%',
-                background: 'rgba(239, 68, 68, 0.1)',
+                borderRadius: "50%",
+                background: "rgba(239, 68, 68, 0.1)",
                 marginBottom: 24,
               }}
             >
@@ -102,9 +109,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
             <h2
               style={{
-                fontSize: '1.25rem',
+                fontSize: "1.25rem",
                 fontWeight: 700,
-                color: 'var(--text-primary, #1e293b)',
+                color: "var(--text-primary, #1e293b)",
                 marginBottom: 8,
               }}
             >
@@ -112,38 +119,38 @@ export class ErrorBoundary extends Component<Props, State> {
             </h2>
             <p
               style={{
-                color: 'var(--text-secondary, #64748b)',
-                fontSize: '0.9rem',
+                color: "var(--text-secondary, #64748b)",
+                fontSize: "0.9rem",
                 lineHeight: 1.6,
                 marginBottom: 24,
               }}
             >
-              Halaman ini mengalami kesalahan yang tidak terduga. Coba muat ulang,
-              atau kembali ke halaman sebelumnya.
+              Halaman ini mengalami kesalahan yang tidak terduga. Coba muat
+              ulang, atau kembali ke halaman sebelumnya.
             </p>
 
             {/* Error detail (collapsible) */}
             {this.state.error && (
               <details
                 style={{
-                  textAlign: 'left',
-                  background: 'rgba(239, 68, 68, 0.05)',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  textAlign: "left",
+                  background: "rgba(239, 68, 68, 0.05)",
+                  border: "1px solid rgba(239, 68, 68, 0.2)",
                   borderRadius: 8,
-                  padding: '8px 12px',
+                  padding: "8px 12px",
                   marginBottom: 24,
-                  fontSize: '0.8rem',
-                  color: '#ef4444',
-                  cursor: 'pointer',
+                  fontSize: "0.8rem",
+                  color: "#ef4444",
+                  cursor: "pointer",
                 }}
               >
                 <summary style={{ fontWeight: 600 }}>Detail error</summary>
                 <pre
                   style={{
                     marginTop: 8,
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-all',
-                    fontSize: '0.75rem',
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-all",
+                    fontSize: "0.75rem",
                   }}
                 >
                   {this.state.error.message}
@@ -151,19 +158,19 @@ export class ErrorBoundary extends Component<Props, State> {
               </details>
             )}
 
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <button
                 type="button"
                 onClick={this.handleReload}
                 style={{
-                  padding: '10px 20px',
+                  padding: "10px 20px",
                   borderRadius: 8,
-                  background: 'var(--primary, #6366f1)',
-                  color: '#fff',
-                  border: 'none',
+                  background: "var(--primary, #6366f1)",
+                  color: "#fff",
+                  border: "none",
                   fontWeight: 600,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
                 }}
               >
                 Coba Lagi
@@ -172,14 +179,14 @@ export class ErrorBoundary extends Component<Props, State> {
                 type="button"
                 onClick={() => window.history.back()}
                 style={{
-                  padding: '10px 20px',
+                  padding: "10px 20px",
                   borderRadius: 8,
-                  background: 'transparent',
-                  color: 'var(--text-secondary, #64748b)',
-                  border: '1px solid var(--border-subtle, #e2e8f0)',
+                  background: "transparent",
+                  color: "var(--text-secondary, #64748b)",
+                  border: "1px solid var(--border-subtle, #e2e8f0)",
                   fontWeight: 600,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
                 }}
               >
                 Kembali

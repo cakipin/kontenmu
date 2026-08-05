@@ -8,6 +8,6 @@ export {
   type AppId,
   type Session,
   type UserRole,
-} from './session';
+} from "./session";
 
-export { AuthProvider, useAuth } from './AuthContext';
+export { AuthProvider, useAuth } from "./AuthContext";

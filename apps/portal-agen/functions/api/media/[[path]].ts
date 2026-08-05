@@ -1,11 +1,11 @@
 export const onRequestGet = async (context: any) => {
   try {
     const { MEDIA } = context.env;
-    const pathArray = context.params.path; 
+    const pathArray = context.params.path;
     if (!pathArray || pathArray.length === 0) {
       return new Response("Not found", { status: 404 });
     }
-    const filename = pathArray.join('/');
+    const filename = pathArray.join("/");
 
     const object = await MEDIA.get(filename);
 

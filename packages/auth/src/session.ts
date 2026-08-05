@@ -1,6 +1,7 @@
-export type UserRole = 'superadmin' | 'agen' | 'sekolah' | 'guru' | 'siswa' | 'uploader' | 'pending';
+export type UserRole =
+  "superadmin" | "agen" | "sekolah" | "guru" | "siswa" | "uploader" | "pending";
 
-export type AppId = 'portal-agen' | 'portal-sekolah';
+export type AppId = "portal-agen" | "portal-sekolah";
 
 export interface Session {
   id?: string;
@@ -20,17 +21,18 @@ export interface Session {
 
 export const SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 
-
-const SESSION_COOKIE_PREFIX = 'kontenmu_session';
+const SESSION_COOKIE_PREFIX = "kontenmu_session";
 
 function cookieKey(appId: AppId) {
-  return `${SESSION_COOKIE_PREFIX}_${appId.replace('-', '_')}`;
+  return `${SESSION_COOKIE_PREFIX}_${appId.replace("-", "_")}`;
 }
 
 function readCookie(name: string) {
-  if (typeof document === 'undefined') return null;
+  if (typeof document === "undefined") return null;
   const prefix = `${encodeURIComponent(name)}=`;
-  const item = document.cookie.split('; ').find((value) => value.startsWith(prefix));
+  const item = document.cookie
+    .split("; ")
+    .find((value) => value.startsWith(prefix));
   return item ? decodeURIComponent(item.slice(prefix.length)) : null;
 }
 
@@ -50,7 +52,7 @@ export function getSession(appId: AppId): Session | null {
       return null;
     }
 
-    if (typeof document !== 'undefined') {
+    if (typeof document !== "undefined") {
       const storedPicture = localStorage.getItem(`${cookieKey(appId)}_picture`);
       if (storedPicture) {
         session.picture = storedPicture;
@@ -65,32 +67,33 @@ export function getSession(appId: AppId): Session | null {
 }
 
 export function saveSession(appId: AppId, session: Session) {
-  if (typeof document === 'undefined') return;
-  const isSecure = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
-  const secureFlag = isSecure ? '; Secure' : '';
-  
+  if (typeof document === "undefined") return;
+  const isSecure =
+    typeof window !== "undefined" &&
+    !window.location.hostname.includes("localhost");
+  const secureFlag = isSecure ? "; Secure" : "";
+
   // Omit large fields like picture to prevent cookie size limit issues
   const { picture, ...sessionToSave } = session;
-  
+
   if (picture) {
     localStorage.setItem(`${cookieKey(appId)}_picture`, picture);
   } else {
     localStorage.removeItem(`${cookieKey(appId)}_picture`);
   }
-  
+
   document.cookie = `${encodeURIComponent(cookieKey(appId))}=${encodeURIComponent(JSON.stringify(sessionToSave))}; Path=/; Max-Age=${Math.floor(SESSION_DURATION_MS / 1000)}; SameSite=Lax${secureFlag}`;
 }
 
 export function clearSession(appId: AppId) {
-  if (typeof document === 'undefined') return;
+  if (typeof document === "undefined") return;
   localStorage.removeItem(`${cookieKey(appId)}_picture`);
   document.cookie = `${encodeURIComponent(cookieKey(appId))}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
 
-
 export function getSessionTimeLeft(session: Session): string {
   const ms = session.expiresAt - Date.now();
-  if (ms <= 0) return 'Kedaluwarsa';
+  if (ms <= 0) return "Kedaluwarsa";
 
   const hours = Math.floor(ms / (1000 * 60 * 60));
   const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));

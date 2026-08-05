@@ -1,23 +1,23 @@
-import { Puck } from '@puckeditor/core';
-import '@puckeditor/core/dist/index.css';
-import { puckConfig, initialData } from './puck.config';
-import './LandingPage.css'; // We need the landing page styles so it renders correctly inside the editor
+import { Puck } from "@puckeditor/core";
+import "@puckeditor/core/dist/index.css";
+import { puckConfig, initialData } from "./puck.config";
+import "./LandingPage.css"; // We need the landing page styles so it renders correctly inside the editor
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 // Function to save data to KV
 const save = async (data: any) => {
   try {
-    await fetch('/api/puck-data', {
-      method: 'POST',
+    await fetch("/api/puck-data", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
-    console.log('Saved to KV successfully');
+    console.log("Saved to KV successfully");
   } catch (error) {
-    console.error('Failed to save to KV', error);
+    console.error("Failed to save to KV", error);
   }
 };
 
@@ -26,9 +26,9 @@ export default function Editor() {
 
   useEffect(() => {
     // Load data from KV or use initialData
-    fetch('/api/puck-data')
+    fetch("/api/puck-data")
       .then((res) => {
-        if (!res.ok) throw new Error('Not found');
+        if (!res.ok) throw new Error("Not found");
         return res.json();
       })
       .then((kvData) => {
@@ -39,13 +39,20 @@ export default function Editor() {
       });
   }, []);
 
-  if (!data) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'sans-serif' }}>Memuat Editor...</div>;
+  if (!data)
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          fontFamily: "sans-serif",
+        }}
+      >
+        Memuat Editor...
+      </div>
+    );
 
-  return (
-    <Puck
-      config={puckConfig}
-      data={data}
-      onPublish={save}
-    />
-  );
+  return <Puck config={puckConfig} data={data} onPublish={save} />;
 }

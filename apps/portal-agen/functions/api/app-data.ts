@@ -1,141 +1,55 @@
-const STATE_ID = "portal-agen:simulation:v1";
-
-const jsonHeaders = { "Content-Type": "application/json" };
-
-function mapUserRow(row: any) {
-  return {
-    id: row.id,
-    username: row.username,
-    nama: row.nama,
-    role: row.role_slug,
-    wilayah: row.wilayah,
-    status: row.status,
-    initial: row.initial,
-    color: row.color,
-    terakhirLogin: row.terakhir_login,
-    kelas: row.kelas ?? undefined,
-    nis: row.nis ?? undefined,
-    newUserSource: row.new_user_source ?? undefined,
-    ssoId: row.sso_id ?? undefined,
-    email: row.email ?? undefined,
-    sekolah_id: row.sekolah_id ?? undefined,
-  };
-}
-
-function userStatements(data: any, db: any) {
-  const users = Array.isArray(data?.users) ? data.users : [];
-  return users.map((user: any) => {
-    const hasSekolahId =
-      user.sekolahId !== undefined || user.sekolah_id !== undefined;
-    const sekolahIdValue = user.sekolahId ?? user.sekolah_id ?? null;
-    return db
-      .prepare(
-        `
-    INSERT INTO users (
-      id, username, nama, role_slug, wilayah, status, initial, color,
-      terakhir_login, kelas, nis, new_user_source, sekolah_id, updated_at, sso_id, email
-    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, CURRENT_TIMESTAMP, ?14, ?15)
-    ON CONFLICT(username) DO UPDATE SET
-      id = excluded.id,
-      nama = excluded.nama,
-      role_slug = excluded.role_slug,
-      wilayah = excluded.wilayah,
-      status = excluded.status,
-      initial = excluded.initial,
-      color = excluded.color,
-      terakhir_login = excluded.terakhir_login,
-      kelas = excluded.kelas,
-      nis = excluded.nis,
-      new_user_source = excluded.new_user_source,
-      sekolah_id = CASE WHEN ?16 = 1 THEN excluded.sekolah_id ELSE users.sekolah_id END,
-      sso_id = excluded.sso_id,
-      email = excluded.email,
-      updated_at = CURRENT_TIMESTAMP
-  `,
-      )
-      .bind(
-        user.id,
-        user.username,
-        user.nama || user.username,
-        user.role || "pending",
-        user.wilayah || "",
-        user.status || "Aktif",
-        user.initial || "",
-        user.color || "#64748b",
-        user.terakhirLogin || "",
-        user.kelas ?? null,
-        user.nis ?? null,
-        user.newUserSource ?? null,
-        sekolahIdValue,
-        user.ssoId ?? null,
-        user.email ?? null,
-        hasSekolahId ? 1 : 0,
-      );
-  });
-}
-
 import { drizzle } from "drizzle-orm/d1";
-import { eq, desc, sql } from "drizzle-orm";
-import { appState, contents, users } from "../../src/db/schema";
+import { eq, sql } from "drizzle-orm";
+import { appState } from "../../src/db/schema";
+
+const STATE_ID = "portal-agen:simulation:v1";
+const jsonHeaders = { "Content-Type": "application/json" };
 
 export const onRequestGet = async (context: any) => {
   try {
-    const rawDb = context.env.DB;
     const url = new URL(context.request.url);
     const isLite = url.searchParams.get("lite") === "true";
 
-    // Jalankan 3 query D1 secara paralel (bukan sequential) untuk mempercepat respons
-    const [stateRow, contentRows, userResult] = await Promise.all([
-      rawDb
-        .prepare("SELECT content FROM app_state WHERE id = ?1")
-        .bind(STATE_ID)
-        .first<{ content: string }>(),
-      rawDb
-        .prepare(
-          "SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC",
-        )
-        .all<any>(),
-      rawDb
-        .prepare(
-          `SELECT id, username, nama, role_slug, wilayah, status, initial, color,
-                terakhir_login, kelas, nis, new_user_source, sso_id, email, sekolah_id
-         FROM users ORDER BY updated_at DESC, created_at DESC`,
-        )
-        .all<any>(),
-    ]);
+    const KV = context.env.PUCK_DATA;
+    let stateString = null;
+    
+    // 1. Coba ambil dari KV Cache
+    if (KV) {
+      stateString = await KV.get("app_state");
+    }
 
-    const data: any = stateRow?.content ? JSON.parse(stateRow.content) : {};
+    // 2. Cache miss atau KV tidak tersedia, ambil dari D1
+    if (!stateString) {
+      const rawDb = context.env.DB;
+      const db = drizzle(rawDb);
+      
+      const stateResult = await db
+        .select()
+        .from(appState)
+        .where(eq(appState.id, STATE_ID))
+        .get();
+
+      stateString = stateResult?.content || "{}";
+
+      // Simpan ke KV untuk permintaan berikutnya (Cache selama 1 jam = 3600 detik)
+      if (KV) {
+        await KV.put("app_state", stateString, { expirationTtl: 3600 });
+      }
+    }
+
+    const data: any = stateString ? JSON.parse(stateString) : {};
 
     // Lazy load: Jika lite=true, kosongkan schools agar payload jauh lebih kecil (~500KB -> ~50KB)
     if (isLite) {
       data.schools = [];
     }
+    
+    // Catatan Refactor (v0.1.1):
+    // contents dan users TIDAK LAGI diambil dari sini. Klien akan mengambil secara mandiri via API masing-masing.
+    // Pastikan payload bersih jika sisa cache ada:
+    data.contents = [];
+    data.users = [];
 
-    if (contentRows?.results) {
-      data.contents = contentRows.results.map((item: any) => ({
-        id: item.id,
-        judul: item.judul,
-        kategori: item.kategori,
-        mapel: item.mapel,
-        target: item.target,
-        fileName: item.file_name,
-        deskripsi: item.deskripsi ?? undefined,
-        thumbnailUrl: item.thumbnail_url ?? undefined,
-        status: item.status,
-        tanggal: item.tanggal,
-        previewMode: item.preview_mode,
-        thumbnailKey: item.thumbnail_key,
-        protectedPreview: Boolean(item.protected_preview),
-        sourceUrl: item.source_url ?? undefined,
-        isbn: item.isbn ?? undefined,
-      }));
-    }
-
-    if (userResult?.results?.length > 0) {
-      data.users = userResult.results.map(mapUserRow);
-    }
-
-    // Selalu return found: true dengan data yang ada
     return new Response(JSON.stringify({ found: true, data }), {
       headers: jsonHeaders,
     });
@@ -151,6 +65,7 @@ export const onRequestPut = async (context: any) => {
   try {
     const payload = await context.request.json();
     const rawDb = context.env.DB;
+    const db = drizzle(rawDb);
 
     // Safety check: Jangan izinkan menyimpan schools kosong jika sebelumnya ada schools,
     // karena frontend mungkin mengirim payload dari fetch(lite=true)
@@ -159,50 +74,42 @@ export const onRequestPut = async (context: any) => {
       Array.isArray(payload.schools) &&
       payload.schools.length === 0
     ) {
-      const existing = await rawDb
-        .prepare("SELECT content FROM app_state WHERE id = ?1")
-        .bind(STATE_ID)
-        .first<{ content: string }>();
-      const existingData = existing?.content
-        ? JSON.parse(existing.content)
-        : {};
+      const existing = await db
+        .select()
+        .from(appState)
+        .where(eq(appState.id, STATE_ID))
+        .get();
+        
+      const existingData = existing?.content ? JSON.parse(existing.content) : {};
       if (existingData.schools && existingData.schools.length > 0) {
         payload.schools = existingData.schools;
       }
     }
 
-    // Save everything as JSON in app_state
+    // Hanya simpan state murni (konfigurasi, schools, dll). 
+    // contents dan users sekarang dikelola mandiri via masing-masing API-nya.
+    if (payload.contents) delete payload.contents;
+    if (payload.users) delete payload.users;
+
     const content = JSON.stringify(payload);
-    const db = drizzle(rawDb);
 
-    await rawDb
-      .prepare(
-        `INSERT INTO app_state (id, content, updated_at) VALUES (?1, ?2, CURRENT_TIMESTAMP)
-       ON CONFLICT(id) DO UPDATE SET content = excluded.content, updated_at = CURRENT_TIMESTAMP`,
-      )
-      .bind(STATE_ID, content)
-      .run();
-
-    // Sync users table - DISABLED because sales-api handles users directly and this causes data loss when frontend has stale users
-    /*
-    if (payload.users && Array.isArray(payload.users) && payload.users.length > 0) {
-      const existingUserRows = await db.prepare('SELECT id FROM users').all();
-      const existingIds = existingUserRows.results ? existingUserRows.results.map((r: any) => r.id) : [];
-      const payloadUserIds = payload.users.map((u: any) => u.id).filter(Boolean);
-      
-      const idsToDelete = existingIds.filter(id => !payloadUserIds.includes(id));
-      if (idsToDelete.length > 0) {
-        for (const id of idsToDelete) {
-          await db.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
-        }
+    await db.insert(appState).values({
+      id: STATE_ID,
+      content: content,
+      updatedAt: sql`CURRENT_TIMESTAMP`
+    }).onConflictDoUpdate({
+      target: appState.id,
+      set: {
+        content: content,
+        updatedAt: sql`CURRENT_TIMESTAMP`
       }
+    });
 
-      const stmts = userStatements(payload, db);
-      for (const stmt of stmts) {
-        await stmt.run();
-      }
+    // Invalidate KV Cache karena data berubah
+    const KV = context.env.PUCK_DATA;
+    if (KV) {
+      await KV.delete("app_state");
     }
-    */
 
     return new Response(JSON.stringify({ success: true }), {
       headers: jsonHeaders,

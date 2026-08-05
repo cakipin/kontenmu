@@ -1,5 +1,5 @@
-import React from 'react';
-import './styles/promax.css';
+import React from "react";
+import "./styles/promax.css";
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   width?: string | number;
@@ -7,10 +7,16 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   borderRadius?: string | number;
 }
 
-export function Skeleton({ width = '100%', height = '20px', borderRadius = '8px', className = '', ...props }: SkeletonProps) {
+export function Skeleton({
+  width = "100%",
+  height = "20px",
+  borderRadius = "8px",
+  className = "",
+  ...props
+}: SkeletonProps) {
   return (
-    <div 
-      className={`skeleton ${className}`} 
+    <div
+      className={`skeleton ${className}`}
       style={{ width, height, borderRadius, ...props.style }}
       {...props}
     />

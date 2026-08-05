@@ -3,49 +3,70 @@ export const onRequest = async (context: any) => {
   const url = new URL(request.url);
 
   // Bypass auth for the SSO token exchange endpoint, media routes, and public landing page data
-  if (url.pathname.startsWith('/api/auth/') || url.pathname.startsWith('/api/media/')) {
+  if (
+    url.pathname.startsWith("/api/auth/") ||
+    url.pathname.startsWith("/api/media/")
+  ) {
     return next();
   }
-  if ((url.pathname === '/api/puck-data' || url.pathname.startsWith('/api/schools')) && request.method === 'GET') {
+  if (
+    (url.pathname === "/api/puck-data" ||
+      url.pathname.startsWith("/api/schools")) &&
+    request.method === "GET"
+  ) {
     return next();
   }
-  
+
   // Allow OPTIONS preflight requests to pass through
-  if (request.method === 'OPTIONS') {
+  if (request.method === "OPTIONS") {
     return next();
   }
 
   // Allow registration of new users during SSO login (from OAuthCallback)
   // We'll trust the client for POST /api/users for now, ideally it should be signed,
   // but since we removed the superadmin override, the risk is mitigated.
-  if (url.pathname === '/api/users' && request.method === 'POST') {
+  if (url.pathname === "/api/users" && request.method === "POST") {
     return next();
   }
 
-  const cookieHeader = request.headers.get('Cookie');
+  const cookieHeader = request.headers.get("Cookie");
   let isAuthenticated = false;
 
   if (cookieHeader) {
-    const cookies = cookieHeader.split(';').reduce((acc: any, cookieString: string) => {
-      const trimmed = cookieString.trim();
-      const eqIdx = trimmed.indexOf('=');
-      if (eqIdx === -1) return acc;
-      const key = trimmed.substring(0, eqIdx).trim();
-      const val = trimmed.substring(eqIdx + 1);
-      if (key) {
-        try { acc[key] = decodeURIComponent(val); } catch { acc[key] = val; }
-        try { acc[decodeURIComponent(key)] = acc[key]; } catch {}
-      }
-      return acc;
-    }, {});
+    const cookies = cookieHeader
+      .split(";")
+      .reduce((acc: any, cookieString: string) => {
+        const trimmed = cookieString.trim();
+        const eqIdx = trimmed.indexOf("=");
+        if (eqIdx === -1) return acc;
+        const key = trimmed.substring(0, eqIdx).trim();
+        const val = trimmed.substring(eqIdx + 1);
+        if (key) {
+          try {
+            acc[key] = decodeURIComponent(val);
+          } catch {
+            acc[key] = val;
+          }
+          try {
+            acc[decodeURIComponent(key)] = acc[key];
+          } catch {}
+        }
+        return acc;
+      }, {});
 
     // Try both possible cookie key formats
-    const sessionRaw = cookies['kontenmu_session_portal_agen'] 
-      || cookies['kontenmu_session_portal-agen'];
+    const sessionRaw =
+      cookies["kontenmu_session_portal_agen"] ||
+      cookies["kontenmu_session_portal-agen"];
     if (sessionRaw) {
       try {
         const session = JSON.parse(sessionRaw);
-        if (session && typeof session === 'object' && session.expiresAt && Date.now() < session.expiresAt) {
+        if (
+          session &&
+          typeof session === "object" &&
+          session.expiresAt &&
+          Date.now() < session.expiresAt
+        ) {
           isAuthenticated = true;
           // You could also set context.data.user = session here for downstream use
         }
@@ -56,13 +77,16 @@ export const onRequest = async (context: any) => {
   }
 
   if (!isAuthenticated) {
-    return new Response(JSON.stringify({ error: 'Unauthorized: Session is invalid or missing' }), {
-      status: 401,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    return new Response(
+      JSON.stringify({ error: "Unauthorized: Session is invalid or missing" }),
+      {
+        status: 401,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      },
+    );
   }
 
   return next();

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface StepperProps {
   steps: string[];
@@ -11,7 +11,7 @@ export function Stepper({ steps, currentStep }: StepperProps) {
       {steps.map((label, index) => {
         const isActive = index === currentStep;
         const isCompleted = index < currentStep;
-        
+
         let circleClass = "step-circle";
         if (isActive) circleClass += " active";
         if (isCompleted) circleClass += " completed";
@@ -21,9 +21,7 @@ export function Stepper({ steps, currentStep }: StepperProps) {
 
         return (
           <div key={label} className="step-item">
-            <div className={circleClass}>
-              {isCompleted ? "✓" : index + 1}
-            </div>
+            <div className={circleClass}>{isCompleted ? "✓" : index + 1}</div>
             <div className={labelClass}>{label}</div>
           </div>
         );

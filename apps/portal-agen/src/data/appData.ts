@@ -506,7 +506,7 @@ export function loadRemoteAppData(): Promise<AppData | null> {
 
   remoteAppPromise = (async () => {
     try {
-      // Tahap 1: Fetch data lite (tanpa schools) agar sangat cepat (lazy load)
+      // Tahap 1: Fetch data lite (tanpa schools) dari app-data (sekarang sangat cepat karena KV cache)
       const response = await fetch("/api/app-data?lite=true", {
         cache: "no-store",
       });
@@ -520,26 +520,35 @@ export function loadRemoteAppData(): Promise<AppData | null> {
       cachedRemoteData = result;
 
       // Beritahu UI agar langsung render data lite tanpa menunggu full data
-      // Hal ini menghilangkan loading lama saat refresh.
       window.dispatchEvent(
         new CustomEvent("kontenmu-appdata-updated", { detail: result }),
       );
 
-      // Tahap 2: Fetch full data di background
-      void fetch("/api/app-data", { cache: "no-store" })
-        .then((res) => res.json())
-        .then((fullPayload: any) => {
-          if (fullPayload?.found && fullPayload?.data) {
-            const fullResult = normalizeAppData(fullPayload.data);
-            cachedRemoteData = fullResult;
-            window.dispatchEvent(
-              new CustomEvent("kontenmu-appdata-updated", {
-                detail: fullResult,
-              }),
-            );
+      // Tahap 2: Fetch full data di background secara mandiri
+      Promise.all([
+        fetch("/api/app-data", { cache: "no-store" }).then(res => res.json()).catch(() => null),
+        fetch("/api/contents?page=1&limit=2000", { cache: "no-store" }).then(res => res.json()).catch(() => null),
+        fetch("/api/users?page=1&limit=2000", { cache: "no-store" }).then(res => res.json()).catch(() => null)
+      ]).then(([fullPayload, contentsPayload, usersPayload]) => {
+        if (fullPayload?.found && fullPayload?.data) {
+          const fullResult = normalizeAppData(fullPayload.data);
+          
+          // Sisipkan hasil dari endpoint mandiri ke dalam state (Decoupled API)
+          if (contentsPayload?.success && Array.isArray(contentsPayload.contents)) {
+            fullResult.contents = contentsPayload.contents;
           }
-        })
-        .catch(() => {});
+          if (usersPayload?.success && Array.isArray(usersPayload.users)) {
+            fullResult.users = usersPayload.users;
+          }
+          
+          cachedRemoteData = fullResult;
+          window.dispatchEvent(
+            new CustomEvent("kontenmu-appdata-updated", {
+              detail: fullResult,
+            }),
+          );
+        }
+      });
 
       return result;
     } catch {

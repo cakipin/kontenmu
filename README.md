@@ -6,16 +6,16 @@ Platform distribusi konten digital buku pelajaran untuk ekosistem sekolah Muhamm
 
 ## Struktur Monorepo
 
-| Path | Deskripsi |
-|------|-----------|
-| `apps/portal-agen` | Portal multi-role (superadmin, agen, sekolah, siswa) |
-| `apps/portal-sekolah` | Portal admin sekolah (inventaris & alokasi) |
-| `apps/app-masa` | Aplikasi siswa (belum dikembangkan) |
-| `packages/ui` | Komponen UI bersama (GlassCard, Chip, dll.) |
-| `packages/api` | Client API bersama |
-| `workers/sales-api` | API penjualan gelondongan (Cloudflare D1) |
-| `workers/allocation-api` | API inventaris & alokasi siswa |
-| `workers/content-api` | API streaming konten (stub) |
+| Path                     | Deskripsi                                            |
+| ------------------------ | ---------------------------------------------------- |
+| `apps/portal-agen`       | Portal multi-role (superadmin, agen, sekolah, siswa) |
+| `apps/portal-sekolah`    | Portal admin sekolah (inventaris & alokasi)          |
+| `apps/app-masa`          | Aplikasi siswa (belum dikembangkan)                  |
+| `packages/ui`            | Komponen UI bersama (GlassCard, Chip, dll.)          |
+| `packages/api`           | Client API bersama                                   |
+| `workers/sales-api`      | API penjualan gelondongan (Cloudflare D1)            |
+| `workers/allocation-api` | API inventaris & alokasi siswa                       |
+| `workers/content-api`    | API streaming konten (stub)                          |
 
 ## Setup Lokal
 
@@ -49,10 +49,10 @@ Vite proxy otomatis meneruskan `/api/*` ke workers lokal.
 
 ## Akun Demo
 
-| Portal | Username | Password |
-|--------|----------|----------|
-| portal-agen | `superadmin`, `agen`, `sekolah`, `siswa` | `123` |
-| portal-sekolah | `sekolah` | `123` |
+| Portal         | Username                                 | Password |
+| -------------- | ---------------------------------------- | -------- |
+| portal-agen    | `superadmin`, `agen`, `sekolah`, `siswa` | `123`    |
+| portal-sekolah | `sekolah`                                | `123`    |
 
 ## API Endpoints
 
@@ -82,15 +82,17 @@ Seed data sudah termasuk 3 sekolah, 3 buku, dan contoh transaksi.
 Proyek ini memiliki dua _environment_ utama di Cloudflare Pages yang dikonfigurasi melalui GitHub Actions. Keduanya sangat terpisah dan tidak saling menyinkronkan data.
 
 ### 1. Staging Environment (`kontenmu`)
+
 - **Domain**: `kontenmu.labmu.dev`
 - **Cloudflare Pages Project**: `kontenmu`
-- **Cloudflare Worker/D1**: `sales-api` (`KONTENMU_DB`) 
+- **Cloudflare Worker/D1**: `sales-api` (`KONTENMU_DB`)
 - **API URL**: `https://sales-api.1912.workers.dev`
-- **Deployment**: Di-*trigger* melalui _event_ `manual-push-from-dashboard` menggunakan script `.github/workflows/deploy-staging.yml`. Kode pada *branch* `main` **TIDAK otomatis** di-_deploy_ ke staging kecuali di-*trigger* manual.
+- **Deployment**: Di-_trigger_ melalui _event_ `manual-push-from-dashboard` menggunakan script `.github/workflows/deploy-staging.yml`. Kode pada _branch_ `main` **TIDAK otomatis** di-_deploy_ ke staging kecuali di-_trigger_ manual.
 
 ### 2. Production Environment (`kontenmu-prod`)
-- **Domain**: *Tidak diketahui secara spesifik (kemungkinan `kontenmu-prod.pages.dev`)*
+
+- **Domain**: _Tidak diketahui secara spesifik (kemungkinan `kontenmu-prod.pages.dev`)_
 - **Cloudflare Pages Project**: `kontenmu-prod`
-- **Cloudflare Worker/D1**: Menggunakan *binding* spesifik produksi (contoh: `KONTENMU_PROD_DB`)
+- **Cloudflare Worker/D1**: Menggunakan _binding_ spesifik produksi (contoh: `KONTENMU_PROD_DB`)
 - **API URL**: `https://kontenmu-prod-api.1912.workers.dev`
-- **Deployment**: Di-*trigger* melalui _event_ `deploy-production` menggunakan script `.github/workflows/deploy-prod.yml`. Ini merupakan environment kritis yang tidak boleh diubah atau di-_deploy_ sembarangan untuk keperluan _testing_.
+- **Deployment**: Di-_trigger_ melalui _event_ `deploy-production` menggunakan script `.github/workflows/deploy-prod.yml`. Ini merupakan environment kritis yang tidak boleh diubah atau di-_deploy_ sembarangan untuk keperluan _testing_.

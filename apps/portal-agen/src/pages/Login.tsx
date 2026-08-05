@@ -1,23 +1,23 @@
-import { useState } from 'react';
-import { useAuth } from '@repo/auth';
-import { Eye, EyeOff } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useState } from "react";
+import { useAuth } from "@repo/auth";
+import { Eye, EyeOff } from "lucide-react";
+import { Link } from "react-router-dom";
 
-import { GlassCard } from '../../../../packages/ui/src/GlassCard';
+import { GlassCard } from "../../../../packages/ui/src/GlassCard";
 
 export default function Login() {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [isLocalLoading, setIsLocalLoading] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleLocalLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
-      setError('Username dan password harus diisi');
+      setError("Username dan password harus diisi");
       return;
     }
     setIsLocalLoading(true);
@@ -33,18 +33,24 @@ export default function Login() {
     setLoading(true);
     const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
     const redirectUri = `${window.location.origin}/oauth/callback`;
-        const authorizeUrl = `https://dias.muhammadiyah.or.id/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
-    
+    const authorizeUrl = `https://dias.muhammadiyah.or.id/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
+
     window.location.href = authorizeUrl;
   };
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      minHeight: '100vh', width: '100vw', 
-      background: 'radial-gradient(circle at 50% -20%, #1a365d 0%, #0f172a 50%, #020617 100%)',
-      fontFamily: 'Inter, system-ui, sans-serif'
-    }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        width: "100vw",
+        background:
+          "radial-gradient(circle at 50% -20%, #1a365d 0%, #0f172a 50%, #020617 100%)",
+        fontFamily: "Inter, system-ui, sans-serif",
+      }}
+    >
       <style>
         {`
           .sso-btn {
@@ -162,117 +168,259 @@ export default function Login() {
         `}
       </style>
 
-      <GlassCard style={{ 
-        width: '100%', 
-        maxWidth: '440px', 
-        padding: '48px 40px',
-        background: 'rgba(30, 41, 59, 0.65)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+      <GlassCard
+        style={{
+          width: "100%",
+          maxWidth: "440px",
+          padding: "48px 40px",
+          background: "rgba(30, 41, 59, 0.65)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          boxShadow:
+            "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset",
+        }}
+      >
+        <div style={{ textAlign: "center", marginBottom: "40px" }}>
           <div className="logo-container">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
               <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
             </svg>
           </div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 800, color: 'white', letterSpacing: '-0.025em', margin: 0 }}>
-            Portal <span style={{ color: '#38bdf8' }}>KontenMu</span>
+          <h2
+            style={{
+              fontSize: "1.875rem",
+              fontWeight: 800,
+              color: "white",
+              letterSpacing: "-0.025em",
+              margin: 0,
+            }}
+          >
+            Portal <span style={{ color: "#38bdf8" }}>KontenMu</span>
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.95rem', marginTop: '12px', lineHeight: 1.6 }}>
+          <p
+            style={{
+              color: "#94a3b8",
+              fontSize: "0.95rem",
+              marginTop: "12px",
+              lineHeight: 1.6,
+            }}
+          >
             Media Pembelajaran Digital Sekolah Masa Depan
           </p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           {error && (
-            <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', color: '#f87171', fontSize: '0.9rem', textAlign: 'center', marginBottom: '16px' }}>
+            <div
+              style={{
+                padding: "12px",
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                borderRadius: "8px",
+                color: "#f87171",
+                fontSize: "0.9rem",
+                textAlign: "center",
+                marginBottom: "16px",
+              }}
+            >
               {error}
             </div>
           )}
-          
-          <form onSubmit={handleLocalLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ textAlign: 'left' }}>
-              <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Username</label>
-              <input 
-                type="text" 
-                placeholder="Masukkan username Anda" 
-                className="login-input" 
+
+          <form
+            onSubmit={handleLocalLogin}
+            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+          >
+            <div style={{ textAlign: "left" }}>
+              <label
+                style={{
+                  display: "block",
+                  color: "#94a3b8",
+                  fontSize: "0.875rem",
+                  marginBottom: "8px",
+                  fontWeight: 500,
+                }}
+              >
+                Username
+              </label>
+              <input
+                type="text"
+                placeholder="Masukkan username Anda"
+                className="login-input"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={isLocalLoading || loading}
               />
             </div>
-            <div style={{ textAlign: 'left', position: 'relative' }}>
-              <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 500 }}>Password</label>
-              <input 
-                type={showPassword ? "text" : "password"} 
-                placeholder="••••••••" 
-                className="login-input" 
+            <div style={{ textAlign: "left", position: "relative" }}>
+              <label
+                style={{
+                  display: "block",
+                  color: "#94a3b8",
+                  fontSize: "0.875rem",
+                  marginBottom: "8px",
+                  fontWeight: 500,
+                }}
+              >
+                Password
+              </label>
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className="login-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLocalLoading || loading}
-                style={{ width: '100%', paddingRight: '44px' }}
+                style={{ width: "100%", paddingRight: "44px" }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
                 style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '38px',
-                  background: 'none',
-                  border: 'none',
-                  color: '#94a3b8',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '4px',
+                  position: "absolute",
+                  right: "12px",
+                  top: "38px",
+                  background: "none",
+                  border: "none",
+                  color: "#94a3b8",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "4px",
                 }}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            <button type="submit" className="login-btn" disabled={isLocalLoading || loading} style={{ marginTop: '8px' }}>
-              {isLocalLoading ? 'Masuk...' : 'Masuk'}
+            <button
+              type="submit"
+              className="login-btn"
+              disabled={isLocalLoading || loading}
+              style={{ marginTop: "8px" }}
+            >
+              {isLocalLoading ? "Masuk..." : "Masuk"}
             </button>
           </form>
 
-          <div style={{ marginTop: '24px', color: '#64748b', fontSize: '0.9rem', textAlign: 'center' }}>
-            Belum punya akun? <Link to="/register" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>Daftar di sini</Link>
+          <div
+            style={{
+              marginTop: "24px",
+              color: "#64748b",
+              fontSize: "0.9rem",
+              textAlign: "center",
+            }}
+          >
+            Belum punya akun?{" "}
+            <Link
+              to="/register"
+              style={{
+                color: "#38bdf8",
+                textDecoration: "none",
+                fontWeight: 600,
+              }}
+            >
+              Daftar di sini
+            </Link>
           </div>
 
           <div className="divider">Atau masuk dengan</div>
 
-          <button 
+          <button
             className="sso-btn"
-            onClick={handleSsoRedirect} 
-            disabled={loading} 
+            onClick={handleSsoRedirect}
+            disabled={loading}
           >
             {loading ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 600 }}>
-                <svg className="animate-spin-slow" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="4"></circle>
-                  <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="4" strokeLinecap="round"></path>
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  fontWeight: 600,
+                }}
+              >
+                <svg
+                  className="animate-spin-slow"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="rgba(255,255,255,0.3)"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    d="M12 2a10 10 0 0 1 10 10"
+                    stroke="white"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  ></path>
                 </svg>
                 Menghubungkan ke DiasMu...
               </span>
             ) : (
               <>
-                <span style={{ fontWeight: 700, fontSize: '1.15rem', letterSpacing: '0.02em' }}>Muhammadiyah ID</span>
+                <span
+                  style={{
+                    fontWeight: 700,
+                    fontSize: "1.15rem",
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  Muhammadiyah ID
+                </span>
               </>
             )}
           </button>
         </div>
-        
-        <div style={{ marginTop: '36px', textAlign: 'center' }}>
-          <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', width: '100%', marginBottom: '24px' }}></div>
-          <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+
+        <div style={{ marginTop: "36px", textAlign: "center" }}>
+          <div
+            style={{
+              height: "1px",
+              background: "rgba(255,255,255,0.1)",
+              width: "100%",
+              marginBottom: "24px",
+            }}
+          ></div>
+          <p
+            style={{
+              color: "#64748b",
+              fontSize: "0.8rem",
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>

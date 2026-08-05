@@ -66,7 +66,9 @@ export const api = {
   getSekolah: () => request<Sekolah[]>("/api/sekolah"),
   getBuku: () => request<Buku[]>("/api/buku"),
   getSales: () => request<Penjualan[]>("/api/sales"),
-  createBulkSales: async (rows: { sekolahId: number; isbn: string; jumlah: number }[]) => {
+  createBulkSales: async (
+    rows: { sekolahId: number; isbn: string; jumlah: number }[],
+  ) => {
     const res = await fetch("/api/sales/bulk", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 
 export interface Env {
   DB: D1Database;
@@ -28,9 +28,10 @@ export default {
     if (url.pathname === "/api/sekolah" && request.method === "GET") {
       try {
         const search = url.searchParams.get("search");
-        let query = "SELECT id, nama, alamat_jalan, nomor_telepon, kabupaten, npsn, provinsi, bentuk_pendidikan FROM master_data_sekolah ";
+        let query =
+          "SELECT id, nama, alamat_jalan, nomor_telepon, kabupaten, npsn, provinsi, bentuk_pendidikan FROM master_data_sekolah ";
         let results;
-        
+
         if (search) {
           query += "WHERE nama LIKE ? ORDER BY nama LIMIT 20";
           const stmt = await env.DB.prepare(query).bind(`%${search}%`);
@@ -49,14 +50,15 @@ export default {
           alamat: row.alamat_jalan,
           telepon: row.nomor_telepon,
           kota: row.kabupaten,
-          agen: '',
+          agen: "",
           npsn: row.npsn,
           provinsi: row.provinsi,
-          bentuk_pendidikan: row.bentuk_pendidikan
+          bentuk_pendidikan: row.bentuk_pendidikan,
         }));
         return json({ success: true, data: mappedResults });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -66,11 +68,18 @@ export default {
         const body = (await request.json()) as any;
         const { nama, alamat, telepon, kota, npsn } = body;
         const { meta } = await env.DB.prepare(
-          "INSERT INTO master_data_sekolah (nama, alamat_jalan, nomor_telepon, kabupaten, npsn) VALUES (?, ?, ?, ?, ?)"
-        ).bind(nama, alamat, telepon, kota, npsn).run();
-        return json({ success: true, message: "Sekolah berhasil ditambahkan", id: meta.last_row_id });
+          "INSERT INTO master_data_sekolah (nama, alamat_jalan, nomor_telepon, kabupaten, npsn) VALUES (?, ?, ?, ?, ?)",
+        )
+          .bind(nama, alamat, telepon, kota, npsn)
+          .run();
+        return json({
+          success: true,
+          message: "Sekolah berhasil ditambahkan",
+          id: meta.last_row_id,
+        });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -81,40 +90,63 @@ export default {
         const body = (await request.json()) as any;
         const { nama, alamat, telepon, kota, npsn } = body;
         await env.DB.prepare(
-          "UPDATE master_data_sekolah SET nama = ?, alamat_jalan = ?, nomor_telepon = ?, kabupaten = ?, npsn = ? WHERE id = ?"
-        ).bind(nama, alamat, telepon, kota, npsn, id).run();
+          "UPDATE master_data_sekolah SET nama = ?, alamat_jalan = ?, nomor_telepon = ?, kabupaten = ?, npsn = ? WHERE id = ?",
+        )
+          .bind(nama, alamat, telepon, kota, npsn, id)
+          .run();
         return json({ success: true, message: "Sekolah berhasil diupdate" });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
 
-    if (url.pathname.startsWith("/api/sekolah/") && request.method === "DELETE") {
+    if (
+      url.pathname.startsWith("/api/sekolah/") &&
+      request.method === "DELETE"
+    ) {
       try {
         const id = url.pathname.split("/").pop();
-        await env.DB.prepare("DELETE FROM master_data_sekolah WHERE id = ?").bind(id).run();
+        await env.DB.prepare("DELETE FROM master_data_sekolah WHERE id = ?")
+          .bind(id)
+          .run();
         return json({ success: true, message: "Sekolah berhasil dihapus" });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
 
     if (url.pathname === "/api/master/stats" && request.method === "GET") {
       try {
-        const muhammadiyahRes = await env.DB.prepare("SELECT COUNT(*) as total FROM master_data_sekolah WHERE nama LIKE '%muhammadiyah%'").first();
-        const guruRes = await env.DB.prepare("SELECT SUM(ptk_total) as total FROM master_data_sekolah").first();
-        const siswaRes = await env.DB.prepare("SELECT SUM(pd_total) as total FROM master_data_sekolah").first();
-        
-        const aktifRes = await env.DB.prepare("SELECT COUNT(DISTINCT m.id) as total FROM master_data_sekolah m INNER JOIN users u ON m.id = u.sekolah_id WHERE u.role_slug = 'sekolah' AND u.status = 'Aktif'").first();
-        const totalSekolahRes = await env.DB.prepare("SELECT COUNT(*) as total FROM master_data_sekolah").first();
-        
-        const guruAktifRes = await env.DB.prepare("SELECT COUNT(*) as total FROM users WHERE role_slug = 'guru' AND status = 'Aktif'").first();
-        const siswaAktifRes = await env.DB.prepare("SELECT COUNT(*) as total FROM users WHERE role_slug = 'siswa' AND status = 'Aktif'").first();
-        
-        return json({ 
-          success: true, 
+        const muhammadiyahRes = await env.DB.prepare(
+          "SELECT COUNT(*) as total FROM master_data_sekolah WHERE nama LIKE '%muhammadiyah%'",
+        ).first();
+        const guruRes = await env.DB.prepare(
+          "SELECT SUM(ptk_total) as total FROM master_data_sekolah",
+        ).first();
+        const siswaRes = await env.DB.prepare(
+          "SELECT SUM(pd_total) as total FROM master_data_sekolah",
+        ).first();
+
+        const aktifRes = await env.DB.prepare(
+          "SELECT COUNT(DISTINCT m.id) as total FROM master_data_sekolah m INNER JOIN users u ON m.id = u.sekolah_id WHERE u.role_slug = 'sekolah' AND u.status = 'Aktif'",
+        ).first();
+        const totalSekolahRes = await env.DB.prepare(
+          "SELECT COUNT(*) as total FROM master_data_sekolah",
+        ).first();
+
+        const guruAktifRes = await env.DB.prepare(
+          "SELECT COUNT(*) as total FROM users WHERE role_slug = 'guru' AND status = 'Aktif'",
+        ).first();
+        const siswaAktifRes = await env.DB.prepare(
+          "SELECT COUNT(*) as total FROM users WHERE role_slug = 'siswa' AND status = 'Aktif'",
+        ).first();
+
+        return json({
+          success: true,
           data: {
             sekolahMuhammadiyah: (muhammadiyahRes as any)?.total || 0,
             totalGuru: (guruRes as any)?.total || 0,
@@ -122,26 +154,29 @@ export default {
             sekolahAktif: (aktifRes as any)?.total || 0,
             totalSekolah: (totalSekolahRes as any)?.total || 0,
             guruAktif: (guruAktifRes as any)?.total || 0,
-            siswaAktif: (siswaAktifRes as any)?.total || 0
-          } 
+            siswaAktif: (siswaAktifRes as any)?.total || 0,
+          },
         });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
 
-
     if (url.pathname === "/api/users" && request.method === "GET") {
       try {
-        const { results } = await env.DB.prepare("SELECT * FROM users ORDER BY created_at DESC").all();
+        const { results } = await env.DB.prepare(
+          "SELECT * FROM users ORDER BY created_at DESC",
+        ).all();
         const mappedResults = results.map((row: any) => ({
           ...row,
-          role: row.role_slug
+          role: row.role_slug,
         }));
         return json({ success: true, data: mappedResults });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -151,69 +186,152 @@ export default {
         const body = (await request.json()) as any;
         console.log("USERS POST BODY:", JSON.stringify(body));
         const id = crypto.randomUUID();
-        const { username, nama, role, wilayah, status, kelas, nis, npsn, nuptk, nip, email, password, sekolah_id } = body;
+        const {
+          username,
+          nama,
+          role,
+          wilayah,
+          status,
+          kelas,
+          nis,
+          npsn,
+          nuptk,
+          nip,
+          email,
+          password,
+          sekolah_id,
+        } = body;
 
         const result = await env.DB.prepare(
-          "INSERT INTO users (id, username, nama, role_slug, wilayah, status, kelas, nis, npsn, nuptk, nip, email, password, sekolah_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        ).bind(id, username, nama, role, wilayah || '', status || 'Aktif', kelas || null, nis || null, npsn || null, nuptk || null, nip || null, email || null, password || null, sekolah_id || null).run();
+          "INSERT INTO users (id, username, nama, role_slug, wilayah, status, kelas, nis, npsn, nuptk, nip, email, password, sekolah_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        )
+          .bind(
+            id,
+            username,
+            nama,
+            role,
+            wilayah || "",
+            status || "Aktif",
+            kelas || null,
+            nis || null,
+            npsn || null,
+            nuptk || null,
+            nip || null,
+            email || null,
+            password || null,
+            sekolah_id || null,
+          )
+          .run();
         console.log("INSERT RESULT:", JSON.stringify(result));
         if (!result.success) throw new Error("Insert failed silently");
-        
-        return json({ success: true, message: "User berhasil ditambahkan", id });
+
+        return json({
+          success: true,
+          message: "User berhasil ditambahkan",
+          id,
+        });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
 
-    if (url.pathname.match(/^\/api\/users\/[^\/]+$/) && request.method === "PUT") {
+    if (
+      url.pathname.match(/^\/api\/users\/[^\/]+$/) &&
+      request.method === "PUT"
+    ) {
       try {
         const id = url.pathname.split("/").pop();
         const body = (await request.json()) as any;
-        const { username, nama, role, wilayah, status, kelas, nis, npsn, nuptk, nip, email, password, sekolah_id } = body;
-        
+        const {
+          username,
+          nama,
+          role,
+          wilayah,
+          status,
+          kelas,
+          nis,
+          npsn,
+          nuptk,
+          nip,
+          email,
+          password,
+          sekolah_id,
+        } = body;
+
         await env.DB.prepare(
-          "UPDATE users SET username = ?, nama = ?, role_slug = ?, wilayah = ?, status = ?, kelas = ?, nis = ?, npsn = ?, nuptk = ?, nip = ?, email = ?, password = ?, sekolah_id = ? WHERE id = ?"
-        ).bind(username, nama, role, wilayah || '', status || 'Aktif', kelas || null, nis || null, npsn || null, nuptk || null, nip || null, email || null, password || null, sekolah_id || null, id).run();
-        
+          "UPDATE users SET username = ?, nama = ?, role_slug = ?, wilayah = ?, status = ?, kelas = ?, nis = ?, npsn = ?, nuptk = ?, nip = ?, email = ?, password = ?, sekolah_id = ? WHERE id = ?",
+        )
+          .bind(
+            username,
+            nama,
+            role,
+            wilayah || "",
+            status || "Aktif",
+            kelas || null,
+            nis || null,
+            npsn || null,
+            nuptk || null,
+            nip || null,
+            email || null,
+            password || null,
+            sekolah_id || null,
+            id,
+          )
+          .run();
+
         return json({ success: true, message: "User berhasil diupdate" });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
 
-    if (url.pathname.match(/^\/api\/users\/[^\/]+\/password$/) && request.method === "PUT") {
+    if (
+      url.pathname.match(/^\/api\/users\/[^\/]+\/password$/) &&
+      request.method === "PUT"
+    ) {
       try {
         const id = url.pathname.split("/")[3];
         const body = (await request.json()) as any;
         const { newPassword } = body;
-        
-        await env.DB.prepare(
-          "UPDATE users SET password = ? WHERE id = ?"
-        ).bind(newPassword, id).run();
-        
-        return json({ success: true, message: "Password berhasil diubah" });
 
+        await env.DB.prepare("UPDATE users SET password = ? WHERE id = ?")
+          .bind(newPassword, id)
+          .run();
+
+        return json({ success: true, message: "Password berhasil diubah" });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
 
-    if (url.pathname.match(/^\/api\/users\/[^\/]+\/picture$/) && request.method === "PUT") {
+    if (
+      url.pathname.match(/^\/api\/users\/[^\/]+\/picture$/) &&
+      request.method === "PUT"
+    ) {
       try {
         const id = url.pathname.split("/")[3];
         const body = (await request.json()) as any;
         const { picture } = body;
-        
+
         await env.DB.prepare(
-          "UPDATE users SET picture = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
-        ).bind(picture, id).run();
-        
-        return json({ success: true, message: "Foto profil berhasil diperbarui" });
+          "UPDATE users SET picture = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        )
+          .bind(picture, id)
+          .run();
+
+        return json({
+          success: true,
+          message: "Foto profil berhasil diperbarui",
+        });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -224,23 +342,37 @@ export default {
         await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(id).run();
         return json({ success: true, message: "User berhasil dihapus" });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
 
-    
     if (url.pathname === "/api/stats" && request.method === "GET") {
       try {
-        const totalSekolah = await env.DB.prepare("SELECT COUNT(*) as count FROM master_data_sekolah").first('count');
-        const sekolahMuhammadiyah = await env.DB.prepare("SELECT COUNT(*) as count FROM master_data_sekolah WHERE nama LIKE '%Muhammadiyah%'").first('count');
-        const sekolahAktif = await env.DB.prepare("SELECT COUNT(DISTINCT sekolah_id) as count FROM users WHERE role_slug = 'sekolah' AND status = 'Aktif'").first('count');
-        
-        const totalGuru = await env.DB.prepare("SELECT SUM(ptk_total) as count FROM master_data_sekolah").first('count');
-        const guruAktif = await env.DB.prepare("SELECT COUNT(*) as count FROM users WHERE role_slug = 'guru' AND status = 'Aktif'").first('count');
+        const totalSekolah = await env.DB.prepare(
+          "SELECT COUNT(*) as count FROM master_data_sekolah",
+        ).first("count");
+        const sekolahMuhammadiyah = await env.DB.prepare(
+          "SELECT COUNT(*) as count FROM master_data_sekolah WHERE nama LIKE '%Muhammadiyah%'",
+        ).first("count");
+        const sekolahAktif = await env.DB.prepare(
+          "SELECT COUNT(DISTINCT sekolah_id) as count FROM users WHERE role_slug = 'sekolah' AND status = 'Aktif'",
+        ).first("count");
 
-        const totalSiswa = await env.DB.prepare("SELECT SUM(pd_total) as count FROM master_data_sekolah").first('count');
-        const siswaAktif = await env.DB.prepare("SELECT COUNT(*) as count FROM users WHERE role_slug = 'siswa' AND status = 'Aktif'").first('count');
+        const totalGuru = await env.DB.prepare(
+          "SELECT SUM(ptk_total) as count FROM master_data_sekolah",
+        ).first("count");
+        const guruAktif = await env.DB.prepare(
+          "SELECT COUNT(*) as count FROM users WHERE role_slug = 'guru' AND status = 'Aktif'",
+        ).first("count");
+
+        const totalSiswa = await env.DB.prepare(
+          "SELECT SUM(pd_total) as count FROM master_data_sekolah",
+        ).first("count");
+        const siswaAktif = await env.DB.prepare(
+          "SELECT COUNT(*) as count FROM users WHERE role_slug = 'siswa' AND status = 'Aktif'",
+        ).first("count");
 
         return json({
           success: true,
@@ -251,11 +383,12 @@ export default {
             totalGuru: totalGuru || 0,
             guruAktif: guruAktif || 0,
             totalSiswa: totalSiswa || 0,
-            siswaAktif: siswaAktif || 0
-          }
+            siswaAktif: siswaAktif || 0,
+          },
         });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -263,11 +396,12 @@ export default {
     if (url.pathname === "/api/buku" && request.method === "GET") {
       try {
         const { results } = await env.DB.prepare(
-          "SELECT isbn, judul, penulis, penerbit FROM Buku ORDER BY judul"
+          "SELECT isbn, judul, penulis, penerbit FROM Buku ORDER BY judul",
         ).all();
         return json({ success: true, data: results });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -275,11 +409,12 @@ export default {
     if (url.pathname === "/api/books" && request.method === "GET") {
       try {
         const { results } = await env.DB.prepare(
-          "SELECT id, isbn, isbn_asli, jilid, judul, judul_inggris, peruntukan, kelas, terbit, mapel, cover_url FROM books ORDER BY created_at DESC"
+          "SELECT id, isbn, isbn_asli, jilid, judul, judul_inggris, peruntukan, kelas, terbit, mapel, cover_url FROM books ORDER BY created_at DESC",
         ).all();
         return json({ success: true, data: results });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -288,15 +423,23 @@ export default {
       try {
         const body = (await request.json()) as any;
         const id = crypto.randomUUID();
-        const { isbn, judul, peruntukan, kelas, terbit, mapel, cover_url } = body;
-        
+        const { isbn, judul, peruntukan, kelas, terbit, mapel, cover_url } =
+          body;
+
         await env.DB.prepare(
-          "INSERT INTO books (id, isbn, judul, peruntukan, kelas, terbit, mapel, cover_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-        ).bind(id, isbn, judul, peruntukan, kelas, terbit, mapel, cover_url).run();
-        
-        return json({ success: true, message: "Buku berhasil ditambahkan", id });
+          "INSERT INTO books (id, isbn, judul, peruntukan, kelas, terbit, mapel, cover_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        )
+          .bind(id, isbn, judul, peruntukan, kelas, terbit, mapel, cover_url)
+          .run();
+
+        return json({
+          success: true,
+          message: "Buku berhasil ditambahkan",
+          id,
+        });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -305,15 +448,19 @@ export default {
       try {
         const id = url.pathname.split("/").pop();
         const body = (await request.json()) as any;
-        const { isbn, judul, peruntukan, kelas, terbit, mapel, cover_url } = body;
-        
+        const { isbn, judul, peruntukan, kelas, terbit, mapel, cover_url } =
+          body;
+
         await env.DB.prepare(
-          "UPDATE books SET isbn = ?, judul = ?, peruntukan = ?, kelas = ?, terbit = ?, mapel = ?, cover_url = ? WHERE id = ?"
-        ).bind(isbn, judul, peruntukan, kelas, terbit, mapel, cover_url, id).run();
-        
+          "UPDATE books SET isbn = ?, judul = ?, peruntukan = ?, kelas = ?, terbit = ?, mapel = ?, cover_url = ? WHERE id = ?",
+        )
+          .bind(isbn, judul, peruntukan, kelas, terbit, mapel, cover_url, id)
+          .run();
+
         return json({ success: true, message: "Buku berhasil diupdate" });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -324,7 +471,8 @@ export default {
         await env.DB.prepare("DELETE FROM books WHERE id = ?").bind(id).run();
         return json({ success: true, message: "Buku berhasil dihapus" });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -337,11 +485,12 @@ export default {
            FROM Penjualan p
            JOIN Sekolah s ON p.sekolah_id = s.id
            JOIN Buku b ON p.isbn = b.isbn
-           ORDER BY p.tanggal_transaksi DESC`
+           ORDER BY p.tanggal_transaksi DESC`,
         ).all();
         return json({ success: true, data: results });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
@@ -355,19 +504,31 @@ export default {
         }[];
 
         if (!Array.isArray(body) || body.length === 0) {
-          return json({ success: false, error: "Data penjualan tidak boleh kosong" }, 400);
+          return json(
+            { success: false, error: "Data penjualan tidak boleh kosong" },
+            400,
+          );
         }
 
         for (const row of body) {
           if (!row.sekolahId || !row.isbn || !row.jumlah || row.jumlah < 1) {
-            return json({ success: false, error: "Setiap baris harus memiliki sekolah, ISBN, dan jumlah valid" }, 400);
+            return json(
+              {
+                success: false,
+                error:
+                  "Setiap baris harus memiliki sekolah, ISBN, dan jumlah valid",
+              },
+              400,
+            );
           }
         }
 
         const stmt = env.DB.prepare(
-          "INSERT INTO Penjualan (sekolah_id, isbn, jumlah_lisensi) VALUES (?, ?, ?)"
+          "INSERT INTO Penjualan (sekolah_id, isbn, jumlah_lisensi) VALUES (?, ?, ?)",
         );
-        const stmts = body.map((row) => stmt.bind(row.sekolahId, row.isbn, row.jumlah));
+        const stmts = body.map((row) =>
+          stmt.bind(row.sekolahId, row.isbn, row.jumlah),
+        );
         await env.DB.batch(stmts);
 
         return json({
@@ -375,7 +536,8 @@ export default {
           message: `Berhasil menginput ${body.length} data penjualan`,
         });
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Unknown error";
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
       }
     }
