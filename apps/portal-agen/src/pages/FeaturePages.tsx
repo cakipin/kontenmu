@@ -1458,7 +1458,7 @@ export function UploadContent() {
               margin: 0,
             }}
           >
-            {isLoading || isBgLoading ? "..." : data.contents.length}
+            {(isLoading || isBgLoading) && data.contents.length === 0 ? "..." : data.contents.length}
           </h3>
           <p
             style={{
@@ -1507,7 +1507,7 @@ export function UploadContent() {
               margin: 0,
             }}
           >
-            {isLoading || isBgLoading ? "..." : data.contents.filter((c) => c.kategori === "Video").length}
+            {(isLoading || isBgLoading) && data.contents.length === 0 ? "..." : data.contents.filter((c) => c.kategori === "Video").length}
           </h3>
           <p
             style={{
@@ -1556,7 +1556,7 @@ export function UploadContent() {
               margin: 0,
             }}
           >
-            {isLoading || isBgLoading ? "..." : data.contents.filter((c) => c.kategori === "Games HTML5").length}
+            {(isLoading || isBgLoading) && data.contents.length === 0 ? "..." : data.contents.filter((c) => c.kategori === "Games HTML5").length}
           </h3>
           <p
             style={{
@@ -1605,7 +1605,7 @@ export function UploadContent() {
               margin: 0,
             }}
           >
-            {isLoading || isBgLoading ? "..." : data.contents.filter((c) => c.kategori === "Infografi" || c.kategori === "Teks").length}
+            {(isLoading || isBgLoading) && data.contents.length === 0 ? "..." : data.contents.filter((c) => c.kategori === "Infografi" || c.kategori === "Teks").length}
           </h3>
           <p
             style={{
@@ -2263,7 +2263,7 @@ export function PlayKonten() {
               "center",
             ]}
           >
-            {isLoading || isBgLoading ? (
+            {(isLoading || isBgLoading) && data.contents.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}

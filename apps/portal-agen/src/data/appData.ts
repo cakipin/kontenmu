@@ -535,12 +535,30 @@ export function loadRemoteAppData(): Promise<AppData | null> {
         data?: AppData;
       };
       if (!payload.found || !payload.data) return null;
+      
       const result = normalizeAppData(payload.data);
+      
+      // FIX: Jangan hapus contents dan users jika sudah ada di cache!
+      if (cachedRemoteData) {
+        if (cachedRemoteData.contents.length > 0) {
+          result.contents = cachedRemoteData.contents;
+        }
+        if (cachedRemoteData.users.length > 0) {
+          result.users = cachedRemoteData.users;
+        }
+      }
+      
       cachedRemoteData = result;
 
       // Beritahu UI agar langsung render data lite tanpa menunggu full data
       window.dispatchEvent(
         new CustomEvent("kontenmu-appdata-updated", { detail: result }),
+      );
+
+      // Mulai background fetch baru, set state loading menjadi true
+      isBackgroundLoading = true;
+      window.dispatchEvent(
+        new CustomEvent("kontenmu-appdata-bg-updated"),
       );
 
       // Tahap 2: Fetch full data di background secara mandiri
