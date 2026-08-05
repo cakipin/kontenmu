@@ -78,11 +78,15 @@ export const onRequestGet = async (context: any) => {
   try {
     const rawDb = context.env.DB;
     const db = drizzle(rawDb);
-    const row = await db.select({ content: appState.content }).from(appState).where(eq(appState.id, STATE_ID)).get();
 
-    const data = row?.content ? JSON.parse(row.content) : {};
+    // Baca app_state dengan raw SQL agar reliabel di D1
+    const stateRow = await rawDb.prepare(
+      'SELECT content FROM app_state WHERE id = ?1'
+    ).bind(STATE_ID).first<{ content: string }>();
 
-    // Ambil data fresh dari tabel contents
+    const data: any = stateRow?.content ? JSON.parse(stateRow.content) : {};
+
+    // Ambil data fresh dari tabel contents via Drizzle (schema sudah camelCase)
     try {
       const contentRows = await db.select().from(contents).orderBy(desc(contents.updatedAt), desc(contents.createdAt));
       data.contents = contentRows.map((item: any) => ({
@@ -106,19 +110,21 @@ export const onRequestGet = async (context: any) => {
       // Jika query gagal, biarkan data.contents berisi nilai dari app_state
     }
 
-    const userRows = await db
-      .select({
-        id: users.id, username: users.username, nama: users.nama, role_slug: users.roleSlug, wilayah: users.wilayah, status: users.status, initial: users.initial, color: users.color,
-        terakhir_login: users.terakhirLogin, kelas: users.kelas, nis: users.nis, new_user_source: users.newUserSource, sso_id: users.ssoId, email: users.email, sekolah_id: users.sekolahId
-      })
-      .from(users).orderBy(desc(users.updatedAt), desc(users.createdAt));
-
-    if (userRows.length > 0) {
-      data.users = userRows.map(mapUserRow);
+    // Ambil users dengan raw SQL agar alias snake_case konsisten
+    try {
+      const userResult = await rawDb.prepare(
+        `SELECT id, username, nama, role_slug, wilayah, status, initial, color,
+                terakhir_login, kelas, nis, new_user_source, sso_id, email, sekolah_id
+         FROM users ORDER BY updated_at DESC, created_at DESC`
+      ).all<any>();
+      if (userResult?.results?.length > 0) {
+        data.users = userResult.results.map(mapUserRow);
+      }
+    } catch {
+      // Jika query users gagal, gunakan users dari app_state
     }
 
     // Selalu return found: true dengan data yang ada
-    // Client tidak boleh mendapat found: false hanya karena app_state kosong
     return new Response(JSON.stringify({ found: true, data }), {
       headers: jsonHeaders,
     });
@@ -136,11 +142,12 @@ export const onRequestPut = async (context: any) => {
     // Save everything as JSON in app_state
     const content = JSON.stringify(payload);
     const rawDb = context.env.DB;
-    await rawDb.prepare(`
-      INSERT INTO app_state (id, content, updated_at) 
-      VALUES (?1, ?2, CURRENT_TIMESTAMP)
-      ON CONFLICT(id) DO UPDATE SET content = ?2, updated_at = CURRENT_TIMESTAMP
-    `).bind(STATE_ID, content).run();
+    const db = drizzle(rawDb);
+    
+    await rawDb.prepare(
+      `INSERT INTO app_state (id, content, updated_at) VALUES (?1, ?2, CURRENT_TIMESTAMP)
+       ON CONFLICT(id) DO UPDATE SET content = excluded.content, updated_at = CURRENT_TIMESTAMP`
+    ).bind(STATE_ID, content).run();
 
     // Sync users table - DISABLED because sales-api handles users directly and this causes data loss when frontend has stale users
     /*
