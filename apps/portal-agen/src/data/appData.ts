@@ -1,14 +1,22 @@
-import { useEffect, useState, useCallback } from 'react';
-import type { UserRole } from '@repo/auth';
+import { useEffect, useState, useCallback } from "react";
+import type { UserRole } from "@repo/auth";
 
-export type UserStatus = 'Aktif' | 'Nonaktif' | 'Menunggu' | 'Menunggu Approve';
-export type PaymentStatus = 'Lunas' | 'Menunggu' | 'Terlambat';
-export type BookStatus = 'Aktif' | 'Draft';
-export type ContentCategory = 'Teks' | 'Infografi' | 'Video' | 'Games HTML5';
-export type SalesPackage = 'Konten Digital' | 'Konten Digital + Buku' | 'Buku Cetak';
-export type SubscriptionDuration = 'Trial 1 Bulan' | '3 Bulan' | '6 Bulan' | '1 Tahun';
-export type SubscriptionStatus = 'Menunggu Approve Agen' | 'Disetujui Agen' | 'Menunggu Super Admin' | 'Disetujui Super Admin' | 'Aktif' | 'Kadaluarsa';
-export type SchoolStaffRole = 'admin' | 'guru' | 'siswa';
+export type UserStatus = "Aktif" | "Nonaktif" | "Menunggu" | "Menunggu Approve";
+export type PaymentStatus = "Lunas" | "Menunggu" | "Terlambat";
+export type BookStatus = "Aktif" | "Draft";
+export type ContentCategory = "Teks" | "Infografi" | "Video" | "Games HTML5";
+export type SalesPackage =
+  "Konten Digital" | "Konten Digital + Buku" | "Buku Cetak";
+export type SubscriptionDuration =
+  "Trial 1 Bulan" | "3 Bulan" | "6 Bulan" | "1 Tahun";
+export type SubscriptionStatus =
+  | "Menunggu Approve Agen"
+  | "Disetujui Agen"
+  | "Menunggu Super Admin"
+  | "Disetujui Super Admin"
+  | "Aktif"
+  | "Kadaluarsa";
+export type SchoolStaffRole = "admin" | "guru" | "siswa";
 
 export interface SimUser {
   id: string;
@@ -20,7 +28,7 @@ export interface SimUser {
   initial: string;
   color: string;
   terakhirLogin: string;
-  newUserSource?: 'sso' | 'manual';
+  newUserSource?: "sso" | "manual";
   kelas?: string;
   nis?: string;
   nuptk?: string;
@@ -30,7 +38,7 @@ export interface SimUser {
   password?: string;
   sekolahId?: number;
   sekolah_id?: number;
-  requestedRole?: 'sekolah' | 'agen';
+  requestedRole?: "sekolah" | "agen";
   suratTugas?: string;
   masaAktif?: string;
 }
@@ -89,7 +97,7 @@ export interface SimSubscription {
   status: SubscriptionStatus;
   requestAt: string;
   agentDeadline: string;
-  approverRole?: 'agen' | 'superadmin';
+  approverRole?: "agen" | "superadmin";
   approverName?: string;
   agentApprovedAt?: string;
   superAdminApprovedAt?: string;
@@ -103,7 +111,7 @@ export interface SimSchoolUser {
   nama: string;
   role: SchoolStaffRole;
   mapel: string;
-  status: 'Aktif' | 'Nonaktif';
+  status: "Aktif" | "Nonaktif";
   initial: string;
   color: string;
   terakhirLogin: string;
@@ -117,7 +125,7 @@ export interface SimSchoolAccess {
   schoolId: number;
   staffUsername: string;
   staffRole: SchoolStaffRole;
-  accessType: 'Mapel' | 'Konten';
+  accessType: "Mapel" | "Konten";
   mapel: string;
   contentId?: string;
   grantedBy: string;
@@ -159,10 +167,10 @@ export interface SimContent {
   fileName: string;
   deskripsi?: string;
   thumbnailUrl?: string;
-  status: 'Draft' | 'Siap Review' | 'Terbit';
+  status: "Draft" | "Siap Review" | "Terbit";
   tanggal: string;
-  previewMode: 'text' | 'infografis' | 'video' | 'game';
-  thumbnailKey: 'text' | 'infografis' | 'video' | 'game';
+  previewMode: "text" | "infografis" | "video" | "game";
+  thumbnailKey: "text" | "infografis" | "video" | "game";
   protectedPreview?: boolean;
   sourceUrl?: string;
 }
@@ -189,7 +197,7 @@ export interface AppData {
   aiApiEndpoint: string;
   aiBotName: string;
   aiWelcomeMessage: string;
-  aiProvider: 'schmu' | 'gemini' | 'openai' | 'custom';
+  aiProvider: "schmu" | "gemini" | "openai" | "custom";
   aiApiKey: string;
   aiSystemPrompt: string;
   lastSync?: string;
@@ -199,13 +207,22 @@ export interface AppData {
   deployConfig?: DeployConfig;
 }
 
-const colors = ['#6366f1', '#4f46e5', '#10b981', '#f59e0b', '#0ea5e9', '#ec4899', '#8b5cf6', '#14b8a6'];
+const colors = [
+  "#6366f1",
+  "#4f46e5",
+  "#10b981",
+  "#f59e0b",
+  "#0ea5e9",
+  "#ec4899",
+  "#8b5cf6",
+  "#14b8a6",
+];
 
 const subscriptionMonthMap: Record<SubscriptionDuration, number> = {
-  'Trial 1 Bulan': 1,
-  '3 Bulan': 3,
-  '6 Bulan': 6,
-  '1 Tahun': 12,
+  "Trial 1 Bulan": 1,
+  "3 Bulan": 3,
+  "6 Bulan": 6,
+  "1 Tahun": 12,
 };
 
 function addMonths(date: string, months: number) {
@@ -218,117 +235,147 @@ export function subscriptionDurationMonths(duration: SubscriptionDuration) {
   return subscriptionMonthMap[duration];
 }
 
-export function subscriptionEndDate(startDate: string, duration: SubscriptionDuration) {
+export function subscriptionEndDate(
+  startDate: string,
+  duration: SubscriptionDuration,
+) {
   return addMonths(startDate, subscriptionDurationMonths(duration));
 }
 
-export function canSuperAdminApproveSubscription(subscription: SimSubscription, currentDate = new Date()) {
+export function canSuperAdminApproveSubscription(
+  subscription: SimSubscription,
+  currentDate = new Date(),
+) {
   const deadline = new Date(subscription.agentDeadline);
-  return subscription.status === 'Menunggu Approve Agen' && currentDate.getTime() >= deadline.getTime();
+  return (
+    subscription.status === "Menunggu Approve Agen" &&
+    currentDate.getTime() >= deadline.getTime()
+  );
 }
 
 export function getSchoolLevel(schoolName: string): string {
   const name = schoolName.toLowerCase();
-  if (name.includes('sd') || name.includes('mi') || name.includes('sekolah dasar') || name.includes('madrasah ibtidaiyah')) {
-    return 'SD/MI';
+  if (
+    name.includes("sd") ||
+    name.includes("mi") ||
+    name.includes("sekolah dasar") ||
+    name.includes("madrasah ibtidaiyah")
+  ) {
+    return "SD/MI";
   }
-  if (name.includes('smp') || name.includes('mts') || name.includes('madrasah tsanawiyah')) {
-    return 'SMP/MTs';
+  if (
+    name.includes("smp") ||
+    name.includes("mts") ||
+    name.includes("madrasah tsanawiyah")
+  ) {
+    return "SMP/MTs";
   }
-  if (name.includes('sma') || name.includes('smk') || name.includes('ma ') || name.includes('madrasah aliyah')) {
-    return 'SMA/MA/SMK';
+  if (
+    name.includes("sma") ||
+    name.includes("smk") ||
+    name.includes("ma ") ||
+    name.includes("madrasah aliyah")
+  ) {
+    return "SMA/MA/SMK";
   }
-  return '';
+  return "";
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  superadmin: 'Super Admin',
-  agen: 'Agen',
-  sekolah: 'Sekolah',
-  guru: 'Guru',
-  siswa: 'Siswa',
-  uploader: 'Uploader',
-  pending: 'Menunggu Persetujuan',
+  superadmin: "Super Admin",
+  agen: "Agen",
+  sekolah: "Sekolah",
+  guru: "Guru",
+  siswa: "Siswa",
+  uploader: "Uploader",
+  pending: "Menunggu Persetujuan",
 };
 
-export const NAVIGATION: Record<UserRole, { name: string; href: string; icon?: any; subItems?: { name: string; href: string }[] }[]> = {
+export const NAVIGATION: Record<
+  UserRole,
+  {
+    name: string;
+    href: string;
+    icon?: any;
+    subItems?: { name: string; href: string }[];
+  }[]
+> = {
   superadmin: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Data Sekolah', href: '/schools' },
-    { name: 'Data Guru', href: '/teachers' },
-    { name: 'Data Siswa', href: '/students' },
-    { name: 'Data Buku', href: '/books' },
-    { name: 'Data Penjualan', href: '/sales' },
-    { name: 'Data Konten', href: '/contents' },
-    { name: 'Pengaturan', href: '/settings' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Data Sekolah", href: "/schools" },
+    { name: "Data Guru", href: "/teachers" },
+    { name: "Data Siswa", href: "/students" },
+    { name: "Data Buku", href: "/books" },
+    { name: "Data Penjualan", href: "/sales" },
+    { name: "Data Konten", href: "/contents" },
+    { name: "Pengaturan", href: "/settings" },
   ],
   agen: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Data Sekolah', href: '/schools' },
-    { name: 'Penjualan', href: '/sales' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Data Sekolah", href: "/schools" },
+    { name: "Penjualan", href: "/sales" },
   ],
   sekolah: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Profil Sekolah', href: '/school-profile' },
-    { name: 'Data Guru', href: '/teachers' },
-    { name: 'Data Siswa', href: '/students' },
-    { name: 'Laporan', href: '/reports' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Profil Sekolah", href: "/school-profile" },
+    { name: "Data Guru", href: "/teachers" },
+    { name: "Data Siswa", href: "/students" },
+    { name: "Laporan", href: "/reports" },
   ],
   guru: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Profil Sekolah', href: '/school-profile' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Profil Sekolah", href: "/school-profile" },
   ],
   siswa: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Profil Sekolah', href: '/school-profile' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Profil Sekolah", href: "/school-profile" },
   ],
   uploader: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Data Buku', href: '/books' },
-    { name: 'Data Konten', href: '/contents' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Data Buku", href: "/books" },
+    { name: "Data Konten", href: "/contents" },
   ],
-  pending: [
-    { name: 'Dashboard', href: '/dashboard' },
-  ]
+  pending: [{ name: "Dashboard", href: "/dashboard" }],
 };
 
-export const MOBILE_NAVIGATION: Record<UserRole, { name: string; href: string; icon?: any }[]> = {
+export const MOBILE_NAVIGATION: Record<
+  UserRole,
+  { name: string; href: string; icon?: any }[]
+> = {
   superadmin: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Sekolah', href: '/schools' },
-    { name: 'Guru', href: '/teachers' },
-    { name: 'Siswa', href: '/students' },
-    { name: 'Buku', href: '/books' },
-    { name: 'Penjualan', href: '/sales' },
-    { name: 'Konten', href: '/contents' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Sekolah", href: "/schools" },
+    { name: "Guru", href: "/teachers" },
+    { name: "Siswa", href: "/students" },
+    { name: "Buku", href: "/books" },
+    { name: "Penjualan", href: "/sales" },
+    { name: "Konten", href: "/contents" },
   ],
   agen: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Sekolah', href: '/schools' },
-    { name: 'Penjualan', href: '/sales' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Sekolah", href: "/schools" },
+    { name: "Penjualan", href: "/sales" },
   ],
   sekolah: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Guru', href: '/teachers' },
-    { name: 'Siswa', href: '/students' },
-    { name: 'Laporan', href: '/reports' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Guru", href: "/teachers" },
+    { name: "Siswa", href: "/students" },
+    { name: "Laporan", href: "/reports" },
   ],
   guru: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Profil Sekolah', href: '/school-profile' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Profil Sekolah", href: "/school-profile" },
   ],
   siswa: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Profil Sekolah', href: '/school-profile' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Profil Sekolah", href: "/school-profile" },
   ],
   uploader: [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Buku', href: '/books' },
-    { name: 'Konten', href: '/contents' },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Buku", href: "/books" },
+    { name: "Konten", href: "/contents" },
   ],
-  pending: [
-    { name: 'Dashboard', href: '/dashboard' },
-  ]
+  pending: [{ name: "Dashboard", href: "/dashboard" }],
 };
 
 export const seedAppData: AppData = {
@@ -344,41 +391,42 @@ export const seedAppData: AppData = {
   contents: [],
   subscriptions: [],
   isChatWidgetEnabled: true,
-  aiApiEndpoint: 'https://schmu.id/api/chat/ask',
-  aiBotName: 'Asisten KontenMu',
-  aiWelcomeMessage: 'Halo! Ada yang bisa saya bantu? Saya Asisten KontenMu Platform Sekolah Masa Depan.',
-  aiProvider: 'schmu',
-  aiApiKey: '',
-  aiSystemPrompt: '',
-  aiAutoContext: '',
+  aiApiEndpoint: "https://schmu.id/api/chat/ask",
+  aiBotName: "Asisten KontenMu",
+  aiWelcomeMessage:
+    "Halo! Ada yang bisa saya bantu? Saya Asisten KontenMu Platform Sekolah Masa Depan.",
+  aiProvider: "schmu",
+  aiApiKey: "",
+  aiSystemPrompt: "",
+  aiAutoContext: "",
   aiIndexedChunks: 108,
   roleAccessPermissions: {
-    dashboard: ['superadmin', 'agen', 'sekolah', 'siswa', 'guru', 'uploader'],
-    catalog: ['superadmin', 'uploader'],
-    upload: ['superadmin', 'uploader'],
-    play: ['superadmin', 'uploader'],
-    sales: ['superadmin', 'agen'],
-    'sales-history': ['superadmin', 'agen'],
-    subscriptions: ['superadmin', 'agen'],
-    payments: ['superadmin', 'agen'],
-    'master-sekolah': ['superadmin'],
-    'sim-sekolah': ['superadmin', 'agen'],
-    'ai-settings': ['superadmin'],
-    inventory: ['sekolah'],
-    allocation: ['sekolah'],
-    'teacher-allocation': ['sekolah'],
-    'school-users': ['sekolah'],
-    profile: ['sekolah'],
-    'school-profile': ['sekolah'],
-    admin: ['siswa', 'guru', 'sekolah', 'agen'],
-    learning: ['siswa', 'guru'],
-    school: ['superadmin']
+    dashboard: ["superadmin", "agen", "sekolah", "siswa", "guru", "uploader"],
+    catalog: ["superadmin", "uploader"],
+    upload: ["superadmin", "uploader"],
+    play: ["superadmin", "uploader"],
+    sales: ["superadmin", "agen"],
+    "sales-history": ["superadmin", "agen"],
+    subscriptions: ["superadmin", "agen"],
+    payments: ["superadmin", "agen"],
+    "master-sekolah": ["superadmin"],
+    "sim-sekolah": ["superadmin", "agen"],
+    "ai-settings": ["superadmin"],
+    inventory: ["sekolah"],
+    allocation: ["sekolah"],
+    "teacher-allocation": ["sekolah"],
+    "school-users": ["sekolah"],
+    profile: ["sekolah"],
+    "school-profile": ["sekolah"],
+    admin: ["siswa", "guru", "sekolah", "agen"],
+    learning: ["siswa", "guru"],
+    school: ["superadmin"],
   },
   deployConfig: {
-    githubToken: '',
-    repoOwner: '',
-    repoName: ''
-  }
+    githubToken: "",
+    repoOwner: "",
+    repoName: "",
+  },
 };
 
 function cloneData(data: AppData): AppData {
@@ -399,39 +447,45 @@ function normalizeAppData(data: AppData): AppData {
   next.contents ??= [];
   next.subscriptions ??= [];
   next.isChatWidgetEnabled ??= true;
-  next.aiApiEndpoint ??= 'https://schmu.id/api/chat/ask';
-  next.aiBotName ??= 'Asisten KontenMu';
-  next.aiWelcomeMessage ??= 'Halo! Ada yang bisa saya bantu? Saya Asisten KontenMu Platform Sekolah Masa Depan.';
-  next.aiProvider ??= 'schmu';
-  next.aiApiKey ??= '';
-  next.aiSystemPrompt ??= '';
-  next.aiAutoContext ??= '';
+  next.aiApiEndpoint ??= "https://schmu.id/api/chat/ask";
+  next.aiBotName ??= "Asisten KontenMu";
+  next.aiWelcomeMessage ??=
+    "Halo! Ada yang bisa saya bantu? Saya Asisten KontenMu Platform Sekolah Masa Depan.";
+  next.aiProvider ??= "schmu";
+  next.aiApiKey ??= "";
+  next.aiSystemPrompt ??= "";
+  next.aiAutoContext ??= "";
   next.aiIndexedChunks ??= 108;
   const defaultPermissions = {
-    dashboard: ['superadmin', 'agen', 'sekolah', 'siswa', 'guru', 'uploader'],
-    catalog: ['superadmin', 'uploader'],
-    upload: ['superadmin', 'uploader'],
-    play: ['superadmin', 'uploader'],
-    sales: ['superadmin', 'agen'],
-    'sales-history': ['superadmin', 'agen'],
-    subscriptions: ['superadmin', 'agen'],
-    payments: ['superadmin', 'agen'],
-    'master-sekolah': ['superadmin'],
-    'sim-sekolah': ['superadmin', 'agen'],
-    'ai-settings': ['superadmin'],
-    inventory: ['sekolah'],
-    allocation: ['sekolah'],
-    'teacher-allocation': ['sekolah'],
-    'school-users': ['sekolah'],
-    profile: ['sekolah'],
-    'school-profile': ['sekolah'],
-    library: ['siswa', 'guru'],
-    learning: ['siswa', 'guru'],
-    school: ['superadmin']
+    dashboard: ["superadmin", "agen", "sekolah", "siswa", "guru", "uploader"],
+    catalog: ["superadmin", "uploader"],
+    upload: ["superadmin", "uploader"],
+    play: ["superadmin", "uploader"],
+    sales: ["superadmin", "agen"],
+    "sales-history": ["superadmin", "agen"],
+    subscriptions: ["superadmin", "agen"],
+    payments: ["superadmin", "agen"],
+    "master-sekolah": ["superadmin"],
+    "sim-sekolah": ["superadmin", "agen"],
+    "ai-settings": ["superadmin"],
+    inventory: ["sekolah"],
+    allocation: ["sekolah"],
+    "teacher-allocation": ["sekolah"],
+    "school-users": ["sekolah"],
+    profile: ["sekolah"],
+    "school-profile": ["sekolah"],
+    library: ["siswa", "guru"],
+    learning: ["siswa", "guru"],
+    school: ["superadmin"],
   };
-  next.roleAccessPermissions = { ...defaultPermissions, ...(next.roleAccessPermissions || {}) };
-  if (next.roleAccessPermissions['sim-sekolah']) {
-    next.roleAccessPermissions['sim-sekolah'] = next.roleAccessPermissions['sim-sekolah'].filter(r => r !== 'sekolah' && r !== 'guru' && r !== 'siswa');
+  next.roleAccessPermissions = {
+    ...defaultPermissions,
+    ...(next.roleAccessPermissions || {}),
+  };
+  if (next.roleAccessPermissions["sim-sekolah"]) {
+    next.roleAccessPermissions["sim-sekolah"] = next.roleAccessPermissions[
+      "sim-sekolah"
+    ].filter((r) => r !== "sekolah" && r !== "guru" && r !== "siswa");
   }
   return next;
 }
@@ -452,14 +506,41 @@ export function loadRemoteAppData(): Promise<AppData | null> {
 
   remoteAppPromise = (async () => {
     try {
-      // Satu request saja: /api/app-data sudah include contents dari D1
-      // (query contents table ada di server app-data.ts lines 81-100)
-      const response = await fetch('/api/app-data', { cache: 'no-store' });
+      // Tahap 1: Fetch data lite (tanpa schools) agar sangat cepat (lazy load)
+      const response = await fetch("/api/app-data?lite=true", {
+        cache: "no-store",
+      });
       if (!response.ok) return null;
-      const payload = await response.json() as { found?: boolean; data?: AppData };
+      const payload = (await response.json()) as {
+        found?: boolean;
+        data?: AppData;
+      };
       if (!payload.found || !payload.data) return null;
       const result = normalizeAppData(payload.data);
       cachedRemoteData = result;
+
+      // Beritahu UI agar langsung render data lite tanpa menunggu full data
+      // Hal ini menghilangkan loading lama saat refresh.
+      window.dispatchEvent(
+        new CustomEvent("kontenmu-appdata-updated", { detail: result }),
+      );
+
+      // Tahap 2: Fetch full data di background
+      void fetch("/api/app-data", { cache: "no-store" })
+        .then((res) => res.json())
+        .then((fullPayload: any) => {
+          if (fullPayload?.found && fullPayload?.data) {
+            const fullResult = normalizeAppData(fullPayload.data);
+            cachedRemoteData = fullResult;
+            window.dispatchEvent(
+              new CustomEvent("kontenmu-appdata-updated", {
+                detail: fullResult,
+              }),
+            );
+          }
+        })
+        .catch(() => {});
+
       return result;
     } catch {
       return null;
@@ -473,17 +554,19 @@ export function loadRemoteAppData(): Promise<AppData | null> {
 
 export async function saveAppData(data: AppData) {
   try {
-    const res = await fetch('/api/app-data', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("/api/app-data", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     if (!res.ok) {
       const errText = await res.text();
-      console.warn(`Sistem gagal menyimpan perubahan data (Error ${res.status}): ${errText}`);
+      console.warn(
+        `Sistem gagal menyimpan perubahan data (Error ${res.status}): ${errText}`,
+      );
     }
   } catch (err) {
-    console.warn('Error saving app data:', err);
+    console.warn("Error saving app data:", err);
   }
 }
 
@@ -492,33 +575,41 @@ let isInitialLoad = true;
 export function useAppData() {
   const [data, setDataState] = useState<AppData>(() => loadAppData());
   // isLoading hanya true pada load pertama kali (sebelum ada cachedRemoteData)
-  const [isLoading, setIsLoading] = useState(isInitialLoad && cachedRemoteData === null);
+  const [isLoading, setIsLoading] = useState(
+    isInitialLoad && cachedRemoteData === null,
+  );
 
-  const setData = useCallback((updater: AppData | ((current: AppData) => AppData)): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      setDataState((current) => {
-        const next = typeof updater === 'function' ? updater(current) : updater;
-        if (next === current) {
-          resolve();
-          return current;
-        }
-        
-        void (async () => {
-          try {
-            await saveAppData(next);
-            // Beritahu komponen lain tentang state baru tanpa harus re-fetch
-            window.dispatchEvent(new CustomEvent('kontenmu-appdata-updated', { detail: next }));
+  const setData = useCallback(
+    (updater: AppData | ((current: AppData) => AppData)): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        setDataState((current) => {
+          const next =
+            typeof updater === "function" ? updater(current) : updater;
+          if (next === current) {
             resolve();
-          } catch (err: any) {
-            setDataState(current);
-            reject(err);
+            return current;
           }
-        })();
-        
-        return next;
+
+          void (async () => {
+            try {
+              await saveAppData(next);
+              // Beritahu komponen lain tentang state baru tanpa harus re-fetch
+              window.dispatchEvent(
+                new CustomEvent("kontenmu-appdata-updated", { detail: next }),
+              );
+              resolve();
+            } catch (err: any) {
+              setDataState(current);
+              reject(err);
+            }
+          })();
+
+          return next;
+        });
       });
-    });
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     let active = true;
@@ -531,7 +622,7 @@ export function useAppData() {
         }
         return;
       }
-      
+
       // Jika dipicu secara manual tanpa detail, fetch dari server
       // Hanya tampilkan loading spinner jika belum ada cache sama sekali
       if (cachedRemoteData === null) setIsLoading(true);
@@ -542,12 +633,12 @@ export function useAppData() {
         setIsLoading(false);
       }
     };
-    
+
     void sync();
-    window.addEventListener('kontenmu-appdata-updated', sync);
+    window.addEventListener("kontenmu-appdata-updated", sync);
     return () => {
       active = false;
-      window.removeEventListener('kontenmu-appdata-updated', sync);
+      window.removeEventListener("kontenmu-appdata-updated", sync);
     };
   }, []);
 
@@ -556,13 +647,18 @@ export function useAppData() {
 
 export function resetAppData() {
   void saveAppData(normalizeAppData(seedAppData));
-  window.dispatchEvent(new Event('kontenmu-appdata-updated'));
+  window.dispatchEvent(new Event("kontenmu-appdata-updated"));
 }
 
 export function formatCurrency(value: number) {
-  if (value >= 1_000_000_000) return `Rp ${(value / 1_000_000_000).toFixed(1)} M`;
+  if (value >= 1_000_000_000)
+    return `Rp ${(value / 1_000_000_000).toFixed(1)} M`;
   if (value >= 1_000_000) return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 export function saleSubtotal(sale: SimSale, book?: SimBook) {
@@ -575,29 +671,36 @@ export function saleDiscount(sale: SimSale, book?: SimBook) {
 }
 
 export function saleCommission(sale: SimSale, book?: SimBook) {
-  const subtotalAfterDiscount = saleSubtotal(sale, book) - saleDiscount(sale, book);
-  return sale.komisiNominal ?? subtotalAfterDiscount * ((sale.komisiPersen ?? 0) / 100);
+  const subtotalAfterDiscount =
+    saleSubtotal(sale, book) - saleDiscount(sale, book);
+  return (
+    sale.komisiNominal ??
+    subtotalAfterDiscount * ((sale.komisiPersen ?? 0) / 100)
+  );
 }
 
 export function saleInvoiceTotal(sale: SimSale, book?: SimBook) {
-  return sale.totalInvoice ?? Math.max(saleSubtotal(sale, book) - saleDiscount(sale, book), 0);
+  return (
+    sale.totalInvoice ??
+    Math.max(saleSubtotal(sale, book) - saleDiscount(sale, book), 0)
+  );
 }
 
 export function formatNumber(value: number) {
-  return new Intl.NumberFormat('id-ID').format(value);
+  return new Intl.NumberFormat("id-ID").format(value);
 }
 
 export function makeInitial(name: string) {
   return name
-    .split(' ')
+    .split(" ")
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
-    .join('');
+    .join("");
 }
 
 export function nextId(prefix: string, count: number) {
-  return `${prefix}-${String(count + 1).padStart(4, '0')}`;
+  return `${prefix}-${String(count + 1).padStart(4, "0")}`;
 }
 
 export function colorForIndex(index: number) {
@@ -614,12 +717,20 @@ export function getBook(data: AppData, isbn: string) {
 
 export function soldLicenses(data: AppData, schoolId: number, isbn?: string) {
   return data.sales
-    .filter((sale) => sale.schoolId === schoolId && (!isbn || sale.isbn === isbn))
+    .filter(
+      (sale) => sale.schoolId === schoolId && (!isbn || sale.isbn === isbn),
+    )
     .reduce((total, sale) => total + sale.jumlah, 0);
 }
 
-export function allocatedLicenses(data: AppData, schoolId: number, isbn?: string) {
-  return data.allocations.filter((item) => item.schoolId === schoolId && (!isbn || item.isbn === isbn)).length;
+export function allocatedLicenses(
+  data: AppData,
+  schoolId: number,
+  isbn?: string,
+) {
+  return data.allocations.filter(
+    (item) => item.schoolId === schoolId && (!isbn || item.isbn === isbn),
+  ).length;
 }
 
 export function inventoryRows(data: AppData, schoolId = 1) {

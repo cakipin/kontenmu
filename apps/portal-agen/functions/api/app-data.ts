@@ -1,6 +1,6 @@
-const STATE_ID = 'portal-agen:simulation:v1';
+const STATE_ID = "portal-agen:simulation:v1";
 
-const jsonHeaders = { 'Content-Type': 'application/json' };
+const jsonHeaders = { "Content-Type": "application/json" };
 
 function mapUserRow(row: any) {
   return {
@@ -25,9 +25,12 @@ function mapUserRow(row: any) {
 function userStatements(data: any, db: any) {
   const users = Array.isArray(data?.users) ? data.users : [];
   return users.map((user: any) => {
-    const hasSekolahId = user.sekolahId !== undefined || user.sekolah_id !== undefined;
+    const hasSekolahId =
+      user.sekolahId !== undefined || user.sekolah_id !== undefined;
     const sekolahIdValue = user.sekolahId ?? user.sekolah_id ?? null;
-    return db.prepare(`
+    return db
+      .prepare(
+        `
     INSERT INTO users (
       id, username, nama, role_slug, wilayah, status, initial, color,
       terakhir_login, kelas, nis, new_user_source, sekolah_id, updated_at, sso_id, email
@@ -48,48 +51,65 @@ function userStatements(data: any, db: any) {
       sso_id = excluded.sso_id,
       email = excluded.email,
       updated_at = CURRENT_TIMESTAMP
-  `).bind(
-    user.id,
-    user.username,
-    user.nama || user.username,
-    user.role || 'pending',
-    user.wilayah || '',
-    user.status || 'Aktif',
-    user.initial || '',
-    user.color || '#64748b',
-    user.terakhirLogin || '',
-    user.kelas ?? null,
-    user.nis ?? null,
-    user.newUserSource ?? null,
-    sekolahIdValue,
-    user.ssoId ?? null,
-    user.email ?? null,
-    hasSekolahId ? 1 : 0,
-  );
+  `,
+      )
+      .bind(
+        user.id,
+        user.username,
+        user.nama || user.username,
+        user.role || "pending",
+        user.wilayah || "",
+        user.status || "Aktif",
+        user.initial || "",
+        user.color || "#64748b",
+        user.terakhirLogin || "",
+        user.kelas ?? null,
+        user.nis ?? null,
+        user.newUserSource ?? null,
+        sekolahIdValue,
+        user.ssoId ?? null,
+        user.email ?? null,
+        hasSekolahId ? 1 : 0,
+      );
   });
 }
 
-
-import { drizzle } from 'drizzle-orm/d1';
-import { eq, desc, sql } from 'drizzle-orm';
-import { appState, contents, users } from '../../src/db/schema';
+import { drizzle } from "drizzle-orm/d1";
+import { eq, desc, sql } from "drizzle-orm";
+import { appState, contents, users } from "../../src/db/schema";
 
 export const onRequestGet = async (context: any) => {
   try {
     const rawDb = context.env.DB;
+    const url = new URL(context.request.url);
+    const isLite = url.searchParams.get("lite") === "true";
 
     // Jalankan 3 query D1 secara paralel (bukan sequential) untuk mempercepat respons
     const [stateRow, contentRows, userResult] = await Promise.all([
-      rawDb.prepare('SELECT content FROM app_state WHERE id = ?1').bind(STATE_ID).first<{ content: string }>(),
-      rawDb.prepare('SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC').all<any>(),
-      rawDb.prepare(
-        `SELECT id, username, nama, role_slug, wilayah, status, initial, color,
+      rawDb
+        .prepare("SELECT content FROM app_state WHERE id = ?1")
+        .bind(STATE_ID)
+        .first<{ content: string }>(),
+      rawDb
+        .prepare(
+          "SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC",
+        )
+        .all<any>(),
+      rawDb
+        .prepare(
+          `SELECT id, username, nama, role_slug, wilayah, status, initial, color,
                 terakhir_login, kelas, nis, new_user_source, sso_id, email, sekolah_id
-         FROM users ORDER BY updated_at DESC, created_at DESC`
-      ).all<any>(),
+         FROM users ORDER BY updated_at DESC, created_at DESC`,
+        )
+        .all<any>(),
     ]);
 
     const data: any = stateRow?.content ? JSON.parse(stateRow.content) : {};
+
+    // Lazy load: Jika lite=true, kosongkan schools agar payload jauh lebih kecil (~500KB -> ~50KB)
+    if (isLite) {
+      data.schools = [];
+    }
 
     if (contentRows?.results) {
       data.contents = contentRows.results.map((item: any) => ({
@@ -130,15 +150,38 @@ export const onRequestGet = async (context: any) => {
 export const onRequestPut = async (context: any) => {
   try {
     const payload = await context.request.json();
+    const rawDb = context.env.DB;
+
+    // Safety check: Jangan izinkan menyimpan schools kosong jika sebelumnya ada schools,
+    // karena frontend mungkin mengirim payload dari fetch(lite=true)
+    if (
+      payload &&
+      Array.isArray(payload.schools) &&
+      payload.schools.length === 0
+    ) {
+      const existing = await rawDb
+        .prepare("SELECT content FROM app_state WHERE id = ?1")
+        .bind(STATE_ID)
+        .first<{ content: string }>();
+      const existingData = existing?.content
+        ? JSON.parse(existing.content)
+        : {};
+      if (existingData.schools && existingData.schools.length > 0) {
+        payload.schools = existingData.schools;
+      }
+    }
+
     // Save everything as JSON in app_state
     const content = JSON.stringify(payload);
-    const rawDb = context.env.DB;
     const db = drizzle(rawDb);
-    
-    await rawDb.prepare(
-      `INSERT INTO app_state (id, content, updated_at) VALUES (?1, ?2, CURRENT_TIMESTAMP)
-       ON CONFLICT(id) DO UPDATE SET content = excluded.content, updated_at = CURRENT_TIMESTAMP`
-    ).bind(STATE_ID, content).run();
+
+    await rawDb
+      .prepare(
+        `INSERT INTO app_state (id, content, updated_at) VALUES (?1, ?2, CURRENT_TIMESTAMP)
+       ON CONFLICT(id) DO UPDATE SET content = excluded.content, updated_at = CURRENT_TIMESTAMP`,
+      )
+      .bind(STATE_ID, content)
+      .run();
 
     // Sync users table - DISABLED because sales-api handles users directly and this causes data loss when frontend has stale users
     /*
@@ -161,7 +204,9 @@ export const onRequestPut = async (context: any) => {
     }
     */
 
-    return new Response(JSON.stringify({ success: true }), { headers: jsonHeaders });
+    return new Response(JSON.stringify({ success: true }), {
+      headers: jsonHeaders,
+    });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
