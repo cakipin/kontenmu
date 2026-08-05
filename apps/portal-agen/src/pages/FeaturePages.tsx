@@ -3350,7 +3350,7 @@ function ContentPlayerStage({ content, featured = false }: { content: SimContent
           controlsList="nodownload noplaybackrate noremoteplayback"
           disablePictureInPicture
           playsInline
-          preload="metadata"
+          preload="auto"
           poster={thumbnailForContent(content)}
           src={content.sourceUrl ?? 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'}
           onContextMenu={(event) => event.preventDefault()}
