@@ -39,16 +39,14 @@ export const onRequestGet = async (context: any) => {
 
     const data: any = stateString ? JSON.parse(stateString) : {};
 
-    // Lazy load: Jika lite=true, kosongkan schools agar payload jauh lebih kecil (~500KB -> ~50KB)
+    // Lazy load: Jika lite=true, kosongkan data berat agar payload jauh lebih kecil (~500KB -> ~50KB)
     if (isLite) {
       data.schools = [];
+      // Catatan Refactor (v0.1.1):
+      // Klien baru akan mengambil contents dan users secara mandiri via API masing-masing.
+      data.contents = [];
+      data.users = [];
     }
-    
-    // Catatan Refactor (v0.1.1):
-    // contents dan users TIDAK LAGI diambil dari sini. Klien akan mengambil secara mandiri via API masing-masing.
-    // Pastikan payload bersih jika sisa cache ada:
-    data.contents = [];
-    data.users = [];
 
     return new Response(JSON.stringify({ found: true, data }), {
       headers: jsonHeaders,

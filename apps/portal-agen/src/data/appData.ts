@@ -157,6 +157,25 @@ export interface SimLearning {
   terakhirDibaca: string;
 }
 
+// Helper to map DB row back to SimContent format if needed
+export const mapContentRow = (row: any): SimContent => ({
+  id: row.id,
+  kategori: row.kategori,
+  judul: row.judul,
+  mapel: row.mapel,
+  target: row.target,
+  fileName: row.fileName,
+  deskripsi: row.deskripsi,
+  status: row.status,
+  thumbnailUrl: row.thumbnailUrl,
+  sourceUrl: row.sourceUrl,
+  isbn: row.isbn,
+  tanggal: row.tanggal,
+  previewMode: row.previewMode,
+  thumbnailKey: row.thumbnailKey,
+  protectedPreview: row.protectedPreview,
+});
+
 export interface SimContent {
   id: string;
   judul: string;

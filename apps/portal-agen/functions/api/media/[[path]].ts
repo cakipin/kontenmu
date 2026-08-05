@@ -19,7 +19,22 @@ export const onRequestGet = async (context: any) => {
     headers.set("Cache-Control", "public, max-age=31536000, immutable");
     headers.set("Access-Control-Allow-Origin", "*");
 
-    return new Response(object.body, { headers });
+    let response = new Response(object.body, { headers });
+
+    // If it's an HTML file, strip SRI integrity attributes to allow dummy SDKs to load without errors
+    if (headers.get("Content-Type")?.includes("text/html")) {
+      response = new HTMLRewriter()
+        .on("script", {
+          element(element) {
+            if (element.getAttribute("src")?.includes("_sdk/")) {
+              element.removeAttribute("integrity");
+            }
+          },
+        })
+        .transform(response);
+    }
+
+    return response;
   } catch (error: any) {
     return new Response(error.message, { status: 500 });
   }
