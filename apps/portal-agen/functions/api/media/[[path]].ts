@@ -26,8 +26,10 @@ export const onRequestGet = async (context: any) => {
       response = new HTMLRewriter()
         .on("script", {
           element(element) {
-            if (element.getAttribute("src")?.includes("_sdk/")) {
+            const src = element.getAttribute("src");
+            if (src?.includes("_sdk/")) {
               element.removeAttribute("integrity");
+              element.setAttribute("src", src.replace("_sdk/", "sdk/"));
             }
           },
         })

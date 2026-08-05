@@ -6423,7 +6423,7 @@ function HtmlGamePreview({ content }: { content: SimContent }) {
   return (
     <iframe
       className="preview-media html-game-preview"
-      src={content.sourceUrl}
+      src={`${content.sourceUrl}?v=2`}
       title={`Game: ${content.judul}`}
       sandbox="allow-scripts allow-forms allow-modals allow-same-origin"
       referrerPolicy="no-referrer"
