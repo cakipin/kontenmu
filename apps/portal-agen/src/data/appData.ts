@@ -436,8 +436,12 @@ function normalizeAppData(data: AppData): AppData {
   return next;
 }
 
+// Cache data terakhir yang berhasil di-fetch dari server
+// Digunakan agar saat pindah halaman, data langsung muncul (bukan kosong)
+let cachedRemoteData: AppData | null = null;
+
 export function loadAppData(): AppData {
-  return normalizeAppData(seedAppData);
+  return cachedRemoteData ?? normalizeAppData(seedAppData);
 }
 
 let remoteAppPromise: Promise<AppData | null> | null = null;
@@ -454,7 +458,9 @@ export function loadRemoteAppData(): Promise<AppData | null> {
       if (!response.ok) return null;
       const payload = await response.json() as { found?: boolean; data?: AppData };
       if (!payload.found || !payload.data) return null;
-      return normalizeAppData(payload.data);
+      const result = normalizeAppData(payload.data);
+      cachedRemoteData = result;
+      return result;
     } catch {
       return null;
     } finally {
@@ -485,7 +491,8 @@ let isInitialLoad = true;
 
 export function useAppData() {
   const [data, setDataState] = useState<AppData>(() => loadAppData());
-  const [isLoading, setIsLoading] = useState(isInitialLoad);
+  // isLoading hanya true pada load pertama kali (sebelum ada cachedRemoteData)
+  const [isLoading, setIsLoading] = useState(isInitialLoad && cachedRemoteData === null);
 
   const setData = useCallback((updater: AppData | ((current: AppData) => AppData)): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -518,12 +525,16 @@ export function useAppData() {
     const sync = async (event?: Event) => {
       // Jika event dipicu oleh setData lokal, langsung gunakan payloadnya
       if (event instanceof CustomEvent && event.detail) {
-        if (active) setDataState(event.detail);
+        if (active) {
+          cachedRemoteData = event.detail;
+          setDataState(event.detail);
+        }
         return;
       }
       
       // Jika dipicu secara manual tanpa detail, fetch dari server
-      setIsLoading(true);
+      // Hanya tampilkan loading spinner jika belum ada cache sama sekali
+      if (cachedRemoteData === null) setIsLoading(true);
       const remote = await loadRemoteAppData();
       isInitialLoad = false;
       if (active) {
