@@ -12,14 +12,9 @@ const ALLOWED_IMAGE_TYPES = new Set([
 const ALLOWED_CONTENT_TYPES = new Set([
   // Images
   ...ALLOWED_IMAGE_TYPES,
-  // Video
+  // Video — hanya MP4 dan WebM yang didukung browser
   'video/mp4',
   'video/webm',
-  'video/ogg',
-  'video/quicktime',
-  'video/x-matroska',
-  'video/x-msvideo',
-  'video/x-m4v',
   // Document
   'application/pdf',
   // HTML5 game archives
@@ -36,11 +31,6 @@ const EXTENSION_MAP: Record<string, string> = {
   'image/svg+xml': 'svg',
   'video/mp4': 'mp4',
   'video/webm': 'webm',
-  'video/ogg': 'ogv',
-  'video/quicktime': 'mov',
-  'video/x-matroska': 'mkv',
-  'video/x-msvideo': 'avi',
-  'video/x-m4v': 'm4v',
   'application/pdf': 'pdf',
   'application/zip': 'zip',
   'application/x-zip-compressed': 'zip',
@@ -86,7 +76,7 @@ export const onRequestPost = async (context: any) => {
     if (!ALLOWED_CONTENT_TYPES.has(mimeType)) {
       return new Response(
         JSON.stringify({
-          error: `Tipe file tidak diperbolehkan: "${mimeType || '(tidak diketahui)'}". Gunakan: gambar (JPEG/PNG/WebP/GIF/SVG), video (MP4/WebM), PDF, atau ZIP.`,
+          error: `Format video tidak didukung: "${mimeType}". Hanya MP4 (video/mp4) dan WebM (video/webm) yang diperbolehkan untuk video agar dapat diputar di semua browser.`,
         }),
         { status: 415, headers: jsonHeaders },
       );

@@ -9,17 +9,21 @@ const EXTENSION_MAP: Record<string, string> = {
   'image/svg+xml': 'svg',
   'video/mp4': 'mp4',
   'video/webm': 'webm',
-  'video/ogg': 'ogv',
-  'video/quicktime': 'mov',
-  'video/x-matroska': 'mkv',
-  'video/x-msvideo': 'avi',
-  'video/x-m4v': 'm4v',
   'application/pdf': 'pdf',
   'application/zip': 'zip',
   'application/x-zip-compressed': 'zip',
   'text/html': 'html',
   'application/xhtml+xml': 'html',
 };
+
+// MIME type video yang TIDAK didukung browser — ditolak
+const REJECTED_VIDEO_TYPES = new Set([
+  'video/ogg',
+  'video/quicktime',
+  'video/x-matroska',
+  'video/x-msvideo',
+  'video/x-m4v',
+]);
 
 function safeFilename(mimeType: string): string {
   const ext = EXTENSION_MAP[mimeType] ?? 'bin';
@@ -50,6 +54,14 @@ export const onRequestPost = async (context: any) => {
       return new Response(
         JSON.stringify({ error: 'contentType harus disertakan.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Tolak format video yang tidak didukung browser
+    if (REJECTED_VIDEO_TYPES.has(contentType)) {
+      return new Response(
+        JSON.stringify({ error: `Format video "${contentType}" tidak didukung. Gunakan MP4 (video/mp4) atau WebM (video/webm) agar video dapat diputar di semua browser.` }),
+        { status: 415, headers: { 'Content-Type': 'application/json' } }
       );
     }
 

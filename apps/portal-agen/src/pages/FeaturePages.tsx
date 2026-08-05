@@ -581,6 +581,20 @@ export function UploadContent() {
       setContentFile(null);
       return;
     }
+
+    // Validasi format video — hanya MP4 dan WebM yang didukung
+    if (file.type.startsWith('video/') && file.type !== 'video/mp4' && file.type !== 'video/webm') {
+      const ext = file.name.split('.').pop()?.toUpperCase() ?? file.type;
+      setUploadStatus({
+        type: 'error',
+        message: `Format video "${ext}" tidak didukung dan tidak dapat diputar di browser. Hanya MP4 dan WebM yang diperbolehkan. Konversi file terlebih dahulu menggunakan HandBrake atau FFmpeg.`,
+      });
+      // Reset input
+      event.target.value = '';
+      setContentFile(null);
+      return;
+    }
+
     setContentFile(file);
     
     // Auto generate thumbnail if none selected
