@@ -513,8 +513,39 @@ function normalizeAppData(data: AppData): AppData {
 // Digunakan agar saat pindah halaman, data langsung muncul (bukan kosong)
 let cachedRemoteData: AppData | null = null;
 
+const LS_CONTENTS_KEY = "kontenmu_contents_cache";
+
+function readContentsFromLocalStorage(): AppData["contents"] | null {
+  try {
+    const raw = localStorage.getItem(LS_CONTENTS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function writeContentsToLocalStorage(contents: AppData["contents"]) {
+  try {
+    if (contents && contents.length > 0) {
+      localStorage.setItem(LS_CONTENTS_KEY, JSON.stringify(contents));
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export function loadAppData(): AppData {
-  return cachedRemoteData ?? normalizeAppData(seedAppData);
+  if (cachedRemoteData) return cachedRemoteData;
+  // Saat refresh: langsung isi contents dari localStorage (0 detik, tanpa network)
+  const base = normalizeAppData(seedAppData);
+  const lsContents = readContentsFromLocalStorage();
+  if (lsContents) {
+    base.contents = lsContents;
+  }
+  return base;
 }
 
 let remoteAppPromise: Promise<AppData | null> | null = null;
@@ -573,6 +604,8 @@ export function loadRemoteAppData(): Promise<AppData | null> {
           // Sisipkan hasil dari endpoint mandiri ke dalam state (Decoupled API)
           if (contentsPayload?.success && Array.isArray(contentsPayload.contents)) {
             fullResult.contents = contentsPayload.contents;
+            // Simpan ke localStorage agar refresh berikutnya 0 detik
+            writeContentsToLocalStorage(fullResult.contents);
           }
           if (usersPayload?.success && Array.isArray(usersPayload.users)) {
             fullResult.users = usersPayload.users;
@@ -704,7 +737,7 @@ export function useAppData() {
       window.removeEventListener("kontenmu-appdata-updated", sync);
       window.removeEventListener("kontenmu-appdata-bg-updated", bgSync);
     };
-  }, []);
+  }, [hasLocalCache]);
 
   return { data, setData, isLoading, isBgLoading };
 }
