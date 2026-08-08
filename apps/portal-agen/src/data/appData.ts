@@ -606,9 +606,14 @@ export function loadRemoteAppData(): Promise<AppData | null> {
             fullResult.contents = contentsPayload.contents;
             // Simpan ke localStorage agar refresh berikutnya 0 detik
             writeContentsToLocalStorage(fullResult.contents);
+          } else if (cachedRemoteData && cachedRemoteData.contents.length > 0) {
+            fullResult.contents = cachedRemoteData.contents;
           }
+
           if (usersPayload?.success && Array.isArray(usersPayload.users)) {
             fullResult.users = usersPayload.users;
+          } else if (cachedRemoteData && cachedRemoteData.users.length > 0) {
+            fullResult.users = cachedRemoteData.users;
           }
           
           cachedRemoteData = fullResult;
