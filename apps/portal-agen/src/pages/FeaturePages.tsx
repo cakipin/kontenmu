@@ -2337,8 +2337,10 @@ export function PlayKonten() {
                       {content.target}
                     </span>
                   </td>
-                  <td style={{ textAlign: "center" }}>0</td>
-                  <td style={{ textAlign: "center" }}>0 detik</td>
+                  <td style={{ textAlign: "center" }}>{content.dilihat ?? 0}</td>
+                  <td style={{ textAlign: "center" }}>
+                    {content.dilihat ? Math.round((content.totalWatchTime ?? 0) / content.dilihat) : 0} detik
+                  </td>
                   <td>
                     <div className="action-group">
                       <button
@@ -6204,8 +6206,28 @@ function ContentThumbnail({
   const [videoFailed, setVideoFailed] = useState(false);
 
   useEffect(() => {
-    setImgSrc(fallback);
-  }, [fallback]);
+    let active = true;
+    if (content.thumbnailUrl) {
+      setImgSrc(fallback);
+      return;
+    }
+    
+    // Lazy load the thumbnail for the list view since it was stripped from the main payload
+    fetch(`/api/content-thumbnail?id=${content.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (active && data.success && data.thumbnailUrl) {
+          setImgSrc(data.thumbnailUrl);
+        } else if (active) {
+          setImgSrc(fallback);
+        }
+      })
+      .catch(() => {
+        if (active) setImgSrc(fallback);
+      });
+      
+    return () => { active = false; };
+  }, [content.id, content.thumbnailUrl, fallback]);
 
   const isAutoVideoThumb =
     content.kategori === "Video" &&
@@ -6611,15 +6633,67 @@ function ContentPlayerStage({
   const stageRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const viewTrackedRef = useRef<Set<string>>(new Set());
+  const watchSessionRef = useRef<{ id: string; start: number } | null>(null);
+
+  const reportWatchTime = (session: { id: string; start: number }) => {
+    const elapsed = Math.round((Date.now() - session.start) / 1000);
+    if (elapsed > 0) {
+      fetch("/api/analytics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: session.id, type: "watch_time", watchTime: elapsed })
+      }).catch(() => {});
+    }
+  };
 
   useEffect(() => {
     if (content?.previewMode === "video" && videoRef.current) {
       const video = videoRef.current;
       video.pause();
+      if (watchSessionRef.current) {
+        reportWatchTime(watchSessionRef.current);
+        watchSessionRef.current = null;
+      }
       video.src = content.sourceUrl ?? "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
       video.load();
+
+      const handlePlay = () => {
+        if (!viewTrackedRef.current.has(content.id)) {
+          viewTrackedRef.current.add(content.id);
+          fetch("/api/analytics", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: content.id, type: "view" })
+          }).catch(() => {});
+        }
+        if (!watchSessionRef.current) {
+          watchSessionRef.current = { id: content.id, start: Date.now() };
+        }
+      };
+
+      const handlePauseOrEnd = () => {
+        if (watchSessionRef.current) {
+          reportWatchTime(watchSessionRef.current);
+          watchSessionRef.current = null;
+        }
+      };
+
+      video.addEventListener("play", handlePlay);
+      video.addEventListener("pause", handlePauseOrEnd);
+      video.addEventListener("ended", handlePauseOrEnd);
+
+      return () => {
+        video.removeEventListener("play", handlePlay);
+        video.removeEventListener("pause", handlePauseOrEnd);
+        video.removeEventListener("ended", handlePauseOrEnd);
+        if (watchSessionRef.current) {
+          reportWatchTime(watchSessionRef.current);
+          watchSessionRef.current = null;
+        }
+      };
     }
-  }, [content?.sourceUrl, content?.previewMode]);
+  }, [content?.sourceUrl, content?.previewMode, content?.id]);
 
   useEffect(() => {
     const syncFullscreen = () =>

@@ -13,7 +13,7 @@ export const onRequestGet = async (context: any) => {
     const limit = parseInt(url.searchParams.get("limit") || "1000", 10);
     const offset = (page - 1) * limit;
 
-    const result = await rawDb.prepare("SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
+    const result = await rawDb.prepare("SELECT id, judul, kategori, mapel, target, file_name, deskripsi, status, tanggal, preview_mode, thumbnail_key, protected_preview, source_url, isbn, created_at, updated_at, dilihat, total_watch_time FROM contents ORDER BY updated_at DESC, created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
     const totalResult = await rawDb.prepare("SELECT COUNT(*) as value FROM contents").first();
 
     const rowToContent = (row: any) => ({
@@ -24,7 +24,7 @@ export const onRequestGet = async (context: any) => {
       target: row.target,
       fileName: row.file_name,
       deskripsi: row.deskripsi ?? undefined,
-      thumbnailUrl: row.thumbnail_url ?? undefined,
+      thumbnailUrl: undefined, // Fetched lazily
       status: row.status,
       tanggal: row.tanggal,
       previewMode: row.preview_mode,
@@ -32,6 +32,8 @@ export const onRequestGet = async (context: any) => {
       protectedPreview: Boolean(row.protected_preview),
       sourceUrl: row.source_url ?? undefined,
       isbn: row.isbn ?? undefined,
+      dilihat: row.dilihat ?? 0,
+      totalWatchTime: row.total_watch_time ?? 0,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     });

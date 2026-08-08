@@ -192,6 +192,8 @@ export interface SimContent {
   thumbnailKey: "text" | "infografis" | "video" | "game";
   protectedPreview?: boolean;
   sourceUrl?: string;
+  dilihat?: number;
+  totalWatchTime?: number;
 }
 
 export interface DeployConfig {

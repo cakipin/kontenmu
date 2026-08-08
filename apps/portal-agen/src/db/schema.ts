@@ -24,6 +24,8 @@ export const contents = sqliteTable("contents", {
   protectedPreview: integer("protected_preview").notNull().default(1),
   sourceUrl: text("source_url"),
   isbn: text("isbn"),
+  dilihat: integer("dilihat").notNull().default(0),
+  totalWatchTime: integer("total_watch_time").notNull().default(0),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
