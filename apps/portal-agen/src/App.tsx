@@ -502,7 +502,7 @@ function AppContent() {
   const fetchPendingApiUsers = async () => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/users`,
+        `/api/users`,
         { cache: "no-store" },
       );
       if (!res.ok) return;
@@ -1030,7 +1030,7 @@ function AppContent() {
 
                                     try {
                                       await fetch(
-                                        `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/users/${user.id}`,
+                                        `/api/users/${user.id}`,
                                         {
                                           method: "PUT",
                                           headers: {

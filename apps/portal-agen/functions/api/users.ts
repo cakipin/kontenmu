@@ -42,7 +42,7 @@ export const onRequestGet = async (context: any) => {
 
     return new Response(JSON.stringify({ 
       success: true,
-      users: result,
+      data: result,
       total: Number(totalResult[0].value),
       page,
       limit

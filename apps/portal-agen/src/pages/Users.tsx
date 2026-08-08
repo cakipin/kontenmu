@@ -403,10 +403,7 @@ export default function Users() {
     setShowPassword(true);
   };
 
-  const getApiUrl = () =>
-    import.meta.env.DEV
-      ? ""
-      : import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev";
+  const getApiUrl = () => "";
 
   const fetchUsers = async () => {
     try {
