@@ -6,48 +6,65 @@ import { contents } from "../../src/db/schema";
 
 export const onRequestGet = async (context: any) => {
   try {
-    const rawDb = context.env.DB;
-    
-    const url = new URL(context.request.url);
-    const page = parseInt(url.searchParams.get("page") || "1", 10);
-    const limit = parseInt(url.searchParams.get("limit") || "1000", 10);
-    const offset = (page - 1) * limit;
+    const request = context.request;
+    const cacheUrl = new URL(request.url);
+    const cacheKey = new Request(cacheUrl.toString(), request);
+    const cache = caches.default;
 
-    const result = await rawDb.prepare("SELECT id, judul, kategori, mapel, target, file_name, deskripsi, status, tanggal, preview_mode, thumbnail_key, protected_preview, source_url, isbn, created_at, updated_at, dilihat, total_watch_time FROM contents ORDER BY updated_at DESC, created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
-    const totalResult = await rawDb.prepare("SELECT COUNT(*) as value FROM contents").first();
+    let response = await cache.match(cacheKey);
 
-    const rowToContent = (row: any) => ({
-      id: row.id,
-      judul: row.judul,
-      kategori: row.kategori,
-      mapel: row.mapel,
-      target: row.target,
-      fileName: row.file_name,
-      deskripsi: row.deskripsi ?? undefined,
-      thumbnailUrl: undefined, // Fetched lazily
-      status: row.status,
-      tanggal: row.tanggal,
-      previewMode: row.preview_mode,
-      thumbnailKey: row.thumbnail_key,
-      protectedPreview: Boolean(row.protected_preview),
-      sourceUrl: row.source_url ?? undefined,
-      isbn: row.isbn ?? undefined,
-      dilihat: row.dilihat ?? 0,
-      totalWatchTime: row.total_watch_time ?? 0,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    });
+    if (!response) {
+      const rawDb = context.env.DB;
+      
+      const url = new URL(request.url);
+      const page = parseInt(url.searchParams.get("page") || "1", 10);
+      const limit = parseInt(url.searchParams.get("limit") || "1000", 10);
+      const offset = (page - 1) * limit;
 
-    return new Response(
-      JSON.stringify({ 
+      const result = await rawDb.prepare("SELECT id, judul, kategori, mapel, target, file_name, deskripsi, status, tanggal, preview_mode, thumbnail_key, protected_preview, source_url, isbn, created_at, updated_at, dilihat, total_watch_time FROM contents ORDER BY updated_at DESC, created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
+      const totalResult = await rawDb.prepare("SELECT COUNT(*) as value FROM contents").first();
+
+      const rowToContent = (row: any) => ({
+        id: row.id,
+        judul: row.judul,
+        kategori: row.kategori,
+        mapel: row.mapel,
+        target: row.target,
+        fileName: row.file_name,
+        deskripsi: row.deskripsi ?? undefined,
+        thumbnailUrl: undefined, // Fetched lazily
+        status: row.status,
+        tanggal: row.tanggal,
+        previewMode: row.preview_mode,
+        thumbnailKey: row.thumbnail_key,
+        protectedPreview: Boolean(row.protected_preview),
+        sourceUrl: row.source_url ?? undefined,
+        isbn: row.isbn ?? undefined,
+        dilihat: row.dilihat ?? 0,
+        totalWatchTime: row.total_watch_time ?? 0,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      });
+
+      const payload = JSON.stringify({ 
         success: true,
         contents: (result.results || []).map(rowToContent),
         total: totalResult?.value || 0,
         page,
-        limit
-      }),
-      { headers: jsonHeaders },
-    );
+        limit,
+      });
+
+      response = new Response(payload, {
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "s-maxage=60", // Cache globally on Edge for 60 seconds
+        },
+      });
+
+      context.waitUntil(cache.put(cacheKey, response.clone()));
+    }
+
+    return response;
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
