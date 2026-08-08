@@ -7,27 +7,40 @@ import { contents } from "../../src/db/schema";
 export const onRequestGet = async (context: any) => {
   try {
     const rawDb = context.env.DB;
-    const db = drizzle(rawDb);
     
     const url = new URL(context.request.url);
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "1000", 10);
     const offset = (page - 1) * limit;
 
-    const [totalResult, result] = await Promise.all([
-      db.select({ value: count() }).from(contents),
-      db.select()
-        .from(contents)
-        .orderBy(desc(contents.updatedAt), desc(contents.createdAt))
-        .limit(limit)
-        .offset(offset)
-    ]);
+    const result = await rawDb.prepare("SELECT * FROM contents ORDER BY updated_at DESC, created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
+    const totalResult = await rawDb.prepare("SELECT COUNT(*) as value FROM contents").first();
+
+    const rowToContent = (row: any) => ({
+      id: row.id,
+      judul: row.judul,
+      kategori: row.kategori,
+      mapel: row.mapel,
+      target: row.target,
+      fileName: row.file_name,
+      deskripsi: row.deskripsi ?? undefined,
+      thumbnailUrl: row.thumbnail_url ?? undefined,
+      status: row.status,
+      tanggal: row.tanggal,
+      previewMode: row.preview_mode,
+      thumbnailKey: row.thumbnail_key,
+      protectedPreview: Boolean(row.protected_preview),
+      sourceUrl: row.source_url ?? undefined,
+      isbn: row.isbn ?? undefined,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    });
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        contents: result,
-        total: totalResult[0].value,
+        contents: (result.results || []).map(rowToContent),
+        total: totalResult?.value || 0,
         page,
         limit
       }),
