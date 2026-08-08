@@ -2004,14 +2004,17 @@ export function PlayKonten() {
   );
 
   const stats = useMemo(
-    () => ({
-      total: data.contents.length,
-      video: data.contents.filter((c) => c.kategori === "Video").length,
-      games: data.contents.filter((c) => c.kategori === "Games HTML5").length,
-      teksInfo: data.contents.filter(
-        (c) => c.kategori === "Teks" || c.kategori === "Infografi",
-      ).length,
-    }),
+    () => {
+      console.log("PlayKonten calculating stats. Data contents length:", data.contents.length);
+      return {
+        total: data.contents.length,
+        video: data.contents.filter((c) => c.kategori === "Video").length,
+        games: data.contents.filter((c) => c.kategori === "Games HTML5").length,
+        teksInfo: data.contents.filter(
+          (c) => c.kategori === "Teks" || c.kategori === "Infografi",
+        ).length,
+      };
+    },
     [data.contents],
   );
 

@@ -618,6 +618,10 @@ export function loadRemoteAppData(): Promise<AppData | null> {
           } else if (cachedRemoteData && cachedRemoteData.users.length > 0) {
             fullResult.users = cachedRemoteData.users;
           }
+          console.log("Full data fetched successfully", {
+            contentsLength: fullResult.contents.length,
+            usersLength: fullResult.users.length
+          });
           
           cachedRemoteData = fullResult;
           isBackgroundLoading = false;
@@ -630,6 +634,7 @@ export function loadRemoteAppData(): Promise<AppData | null> {
             }),
           );
         } else {
+          console.error("Full payload missing found or data property!", fullPayload);
           isBackgroundLoading = false;
           window.dispatchEvent(
             new CustomEvent("kontenmu-appdata-bg-updated"),
@@ -715,6 +720,10 @@ export function useAppData() {
     const sync = async (event?: Event) => {
       // Jika event dipicu oleh setData lokal, langsung gunakan payloadnya
       if (event instanceof CustomEvent && event.detail) {
+        console.log("kontenmu-appdata-updated received", {
+          contentsLength: event.detail.contents?.length,
+          active
+        });
         if (active) {
           cachedRemoteData = event.detail;
           setDataState(event.detail);
