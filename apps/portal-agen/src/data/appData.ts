@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import type { UserRole } from "@repo/auth";
 
 export type UserStatus = "Aktif" | "Nonaktif" | "Menunggu" | "Menunggu Approve";
@@ -513,39 +513,8 @@ function normalizeAppData(data: AppData): AppData {
 // Digunakan agar saat pindah halaman, data langsung muncul (bukan kosong)
 let cachedRemoteData: AppData | null = null;
 
-const LS_CONTENTS_KEY = "kontenmu_contents_cache";
-
-function readContentsFromLocalStorage(): AppData["contents"] | null {
-  try {
-    const raw = localStorage.getItem(LS_CONTENTS_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function writeContentsToLocalStorage(contents: AppData["contents"]) {
-  try {
-    if (contents && contents.length > 0) {
-      localStorage.setItem(LS_CONTENTS_KEY, JSON.stringify(contents));
-    }
-  } catch {
-    // ignore
-  }
-}
-
 export function loadAppData(): AppData {
-  if (cachedRemoteData) return cachedRemoteData;
-  // Saat refresh: langsung isi contents dari localStorage (0 detik, tanpa network)
-  const base = normalizeAppData(seedAppData);
-  const lsContents = readContentsFromLocalStorage();
-  if (lsContents) {
-    base.contents = lsContents;
-  }
-  return base;
+  return cachedRemoteData ?? normalizeAppData(seedAppData);
 }
 
 let remoteAppPromise: Promise<AppData | null> | null = null;
@@ -604,8 +573,6 @@ export function loadRemoteAppData(): Promise<AppData | null> {
           // Sisipkan hasil dari endpoint mandiri ke dalam state (Decoupled API)
           if (contentsPayload?.success && Array.isArray(contentsPayload.contents)) {
             fullResult.contents = contentsPayload.contents;
-            // Simpan ke localStorage agar refresh berikutnya 0 detik
-            writeContentsToLocalStorage(fullResult.contents);
           }
           if (usersPayload?.success && Array.isArray(usersPayload.users)) {
             fullResult.users = usersPayload.users;
@@ -662,9 +629,12 @@ let isInitialLoad = true;
 export let isBackgroundLoading = true;
 
 export function useAppData() {
-  const [data, setDataState] = useState<AppData>(() => loadAppData());
+  const initialData = useMemo(() => loadAppData(), []);
+  const [data, setDataState] = useState<AppData>(initialData);
+  const hasLocalCache = initialData.contents.length > 0 || initialData.schools.length > 0;
+  
   const [isLoading, setIsLoading] = useState(
-    isInitialLoad && cachedRemoteData === null,
+    isInitialLoad && cachedRemoteData === null && !hasLocalCache,
   );
   const [isBgLoading, setIsBgLoading] = useState(isBackgroundLoading);
 
@@ -713,7 +683,7 @@ export function useAppData() {
 
       // Jika dipicu secara manual tanpa detail, fetch dari server
       // Hanya tampilkan loading spinner jika belum ada cache sama sekali
-      if (cachedRemoteData === null) setIsLoading(true);
+      if (cachedRemoteData === null && !hasLocalCache) setIsLoading(true);
       const remote = await loadRemoteAppData();
       isInitialLoad = false;
       if (active) {
