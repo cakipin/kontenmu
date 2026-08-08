@@ -1986,7 +1986,6 @@ export function PlayKonten() {
             typeof value === "string" && value.toLowerCase().includes(query),
         );
       return (
-        content.status !== "Siap Review" &&
         matchesSearch &&
         (!kelasFilter || normalizeTingkat(content.target) === kelasFilter) &&
         (!mapelFilter || content.mapel === mapelFilter) &&
@@ -2006,11 +2005,11 @@ export function PlayKonten() {
 
   const stats = useMemo(
     () => ({
-      total: data.contents.filter((c) => c.status !== "Siap Review").length,
-      video: data.contents.filter((c) => c.kategori === "Video" && c.status !== "Siap Review").length,
-      games: data.contents.filter((c) => c.kategori === "Games HTML5" && c.status !== "Siap Review").length,
+      total: data.contents.length,
+      video: data.contents.filter((c) => c.kategori === "Video").length,
+      games: data.contents.filter((c) => c.kategori === "Games HTML5").length,
       teksInfo: data.contents.filter(
-        (c) => (c.kategori === "Teks" || c.kategori === "Infografi") && c.status !== "Siap Review",
+        (c) => c.kategori === "Teks" || c.kategori === "Infografi",
       ).length,
     }),
     [data.contents],
