@@ -70,6 +70,13 @@ export const masterDataSekolah = sqliteTable("master_data_sekolah", {
   website: text("website"),
   kepalaSekolah: text("kepala_sekolah"),
   jumlahSiswa: integer("jumlah_siswa"),
+  logoUrl: text("logo_url"),
+  gmapUrl: text("gmap_url"),
+  prm: text("prm"),
+  pdm: text("pdm"),
+  pwm: text("pwm"),
+  lintang: text("lintang"),
+  bujur: text("bujur"),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });

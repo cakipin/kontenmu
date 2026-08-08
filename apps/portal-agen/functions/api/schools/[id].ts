@@ -14,7 +14,7 @@ export const onRequestPut = async (context: any) => {
     
     // Clean up undefined properties to avoid Drizzle replacing them with null or erroring if not null allowed
     const updateData: any = {};
-    const allowedKeys = ['nama', 'jenjang', 'alamat', 'kota', 'kecamatan', 'kabupaten', 'provinsi', 'npsn', 'status'];
+    const allowedKeys = ['nama', 'jenjang', 'alamat', 'kota', 'kecamatan', 'kabupaten', 'provinsi', 'npsn', 'status', 'logoUrl', 'gmapUrl', 'prm', 'pdm', 'pwm', 'lintang', 'bujur'];
     for (const key of allowedKeys) {
       if (data[key] !== undefined) {
         updateData[key] = data[key];

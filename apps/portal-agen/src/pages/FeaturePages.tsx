@@ -6946,6 +6946,13 @@ export function MasterSekolah() {
     kabupaten: "",
     provinsi: "",
     alamat: "",
+    logoUrl: "",
+    gmapUrl: "",
+    prm: "",
+    pdm: "",
+    pwm: "",
+    lintang: "",
+    bujur: "",
     status: "Aktif",
   });
 
@@ -6958,6 +6965,13 @@ export function MasterSekolah() {
       kabupaten: "",
       provinsi: "",
       alamat: "",
+      logoUrl: "",
+      gmapUrl: "",
+      prm: "",
+      pdm: "",
+      pwm: "",
+      lintang: "",
+      bujur: "",
       status: "Aktif",
     });
     setEditingSchoolId(null);
@@ -7170,6 +7184,13 @@ export function MasterSekolah() {
                           kabupaten: school.kabupaten || "",
                           provinsi: school.provinsi || "",
                           alamat: school.alamat || "",
+                          logoUrl: school.logoUrl || "",
+                          gmapUrl: school.gmapUrl || "",
+                          prm: school.prm || "",
+                          pdm: school.pdm || "",
+                          pwm: school.pwm || "",
+                          lintang: school.lintang || "",
+                          bujur: school.bujur || "",
                           status: school.status || "Aktif",
                         });
                         setEditingSchoolId(school.id);
@@ -7324,6 +7345,109 @@ export function MasterSekolah() {
                 />
               </div>
               <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Alamat Lengkap</label>
+                <textarea
+                  value={formSchool.alamat}
+                  onChange={(e) =>
+                    setFormSchool({ ...formSchool, alamat: e.target.value })
+                  }
+                  placeholder="Alamat Lengkap"
+                  rows={3}
+                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%", fontFamily: "inherit" }}
+                />
+              </div>
+              <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>URL Logo Sekolah</label>
+                <input
+                  type="text"
+                  value={formSchool.logoUrl}
+                  onChange={(e) =>
+                    setFormSchool({ ...formSchool, logoUrl: e.target.value })
+                  }
+                  placeholder="https://..."
+                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                />
+              </div>
+              <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Paste Lokasi Google Map</label>
+                <input
+                  type="text"
+                  value={formSchool.gmapUrl}
+                  onChange={(e) =>
+                    setFormSchool({ ...formSchool, gmapUrl: e.target.value })
+                  }
+                  placeholder="Link GMap..."
+                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Latitude (Opsional)</label>
+                  <input
+                    type="text"
+                    value={formSchool.lintang}
+                    onChange={(e) =>
+                      setFormSchool({ ...formSchool, lintang: e.target.value })
+                    }
+                    placeholder="-7.12345"
+                    style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                  />
+                </div>
+                <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Longitude (Opsional)</label>
+                  <input
+                    type="text"
+                    value={formSchool.bujur}
+                    onChange={(e) =>
+                      setFormSchool({ ...formSchool, bujur: e.target.value })
+                    }
+                    placeholder="112.12345"
+                    style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                  />
+                </div>
+              </div>
+              <div style={{ padding: "12px", background: "var(--bg-secondary)", borderRadius: "8px" }}>
+                <p style={{ margin: "0 0 12px 0", fontSize: "0.9rem", fontWeight: 600 }}>Master Organisasi</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PWM (Wilayah)</label>
+                    <input
+                      type="text"
+                      value={formSchool.pwm}
+                      onChange={(e) =>
+                        setFormSchool({ ...formSchool, pwm: e.target.value })
+                      }
+                      placeholder="Contoh: PWM Jawa Timur"
+                      style={{ padding: "8px", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PDM (Daerah)</label>
+                    <input
+                      type="text"
+                      value={formSchool.pdm}
+                      onChange={(e) =>
+                        setFormSchool({ ...formSchool, pdm: e.target.value })
+                      }
+                      placeholder="Contoh: PDM Gresik"
+                      style={{ padding: "8px", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PRM (Ranting)</label>
+                    <input
+                      type="text"
+                      value={formSchool.prm}
+                      onChange={(e) =>
+                        setFormSchool({ ...formSchool, prm: e.target.value })
+                      }
+                      placeholder="Contoh: PRM Panceng"
+                      style={{ padding: "8px", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Status</label>
                 <select
                   value={formSchool.status}
@@ -7393,6 +7517,22 @@ export function MasterSekolah() {
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Kecamatan</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.kecamatan || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Provinsi</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.provinsi || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Alamat</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.alamat || "-"}</strong></div>
+              {viewingSchool.logoUrl && (
+                <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Logo</span> <img src={viewingSchool.logoUrl} alt="Logo" style={{ maxHeight: "60px", maxWidth: "100%", objectFit: "contain", borderRadius: "4px" }} /></div>
+              )}
+              {viewingSchool.gmapUrl && (
+                <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Google Map</span> <a href={viewingSchool.gmapUrl} target="_blank" rel="noreferrer" style={{ color: "var(--primary-color)" }}>Buka Peta</a></div>
+              )}
+              {(viewingSchool.lintang || viewingSchool.bujur) && (
+                <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Koordinat</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.lintang || "-"} / {viewingSchool.bujur || "-"}</strong></div>
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Organisasi</span> 
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <span style={{ fontSize: "0.85rem" }}>PWM: <strong>{viewingSchool.pwm || "-"}</strong></span>
+                  <span style={{ fontSize: "0.85rem" }}>PDM: <strong>{viewingSchool.pdm || "-"}</strong></span>
+                  <span style={{ fontSize: "0.85rem" }}>PRM: <strong>{viewingSchool.prm || "-"}</strong></span>
+                </div>
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Status DB</span> <strong style={{ color: "var(--text-color)" }}>
                 {viewingSchool.status === "Aktif" ? (
                   <span style={{ color: "var(--success-color, #22c55e)", background: "var(--success-bg, rgba(34, 197, 94, 0.1))", padding: "4px 8px", borderRadius: "12px", fontSize: "0.85rem" }}>Aktif</span>

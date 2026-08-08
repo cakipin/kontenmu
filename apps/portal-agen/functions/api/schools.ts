@@ -54,6 +54,14 @@ export const onRequestGet = async (context: any) => {
           kabupaten: masterDataSekolah.kabupaten,
           provinsi: masterDataSekolah.provinsi,
           status: masterDataSekolah.status,
+          alamat: masterDataSekolah.alamat,
+          logoUrl: masterDataSekolah.logoUrl,
+          gmapUrl: masterDataSekolah.gmapUrl,
+          prm: masterDataSekolah.prm,
+          pdm: masterDataSekolah.pdm,
+          pwm: masterDataSekolah.pwm,
+          lintang: masterDataSekolah.lintang,
+          bujur: masterDataSekolah.bujur,
         })
         .from(masterDataSekolah)
         .where(like(masterDataSekolah.nama, `%${search}%`))
@@ -89,6 +97,14 @@ export const onRequestGet = async (context: any) => {
         kabupaten: masterDataSekolah.kabupaten,
         provinsi: masterDataSekolah.provinsi,
         status: masterDataSekolah.status,
+        alamat: masterDataSekolah.alamat,
+        logoUrl: masterDataSekolah.logoUrl,
+        gmapUrl: masterDataSekolah.gmapUrl,
+        prm: masterDataSekolah.prm,
+        pdm: masterDataSekolah.pdm,
+        pwm: masterDataSekolah.pwm,
+        lintang: masterDataSekolah.lintang,
+        bujur: masterDataSekolah.bujur,
       })
       .from(masterDataSekolah)
       .orderBy(asc(masterDataSekolah.nama))
@@ -123,6 +139,13 @@ export const onRequestPost = async (context: any) => {
       provinsi: data.provinsi || "",
       npsn: data.npsn || "",
       status: data.status || "Aktif",
+      logoUrl: data.logoUrl || "",
+      gmapUrl: data.gmapUrl || "",
+      prm: data.prm || "",
+      pdm: data.pdm || "",
+      pwm: data.pwm || "",
+      lintang: data.lintang || "",
+      bujur: data.bujur || "",
     };
 
     const result = await db.insert(masterDataSekolah).values(insertData).returning();
