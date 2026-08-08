@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "@repo/auth";
-import { Files, Play, Gamepad2, Image as ImageIcon, BookOpen } from "lucide-react";
+import { Files, Play, Gamepad2, Image as ImageIcon, BookOpen, CheckCircle2, XCircle } from "lucide-react";
 import Select from "react-select";
 
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
@@ -6937,7 +6937,7 @@ export function MasterSekolah() {
     setIsLoading(true);
     const timer = setTimeout(() => {
       const url =
-        `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/sekolah?page=${currentPage}&limit=15` +
+        `/api/schools?page=${currentPage}&limit=15` +
         (searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : "");
       fetch(url)
         .then((res) => res.json())
@@ -7005,12 +7005,13 @@ export function MasterSekolah() {
         <DataTable
           headers={[
             "NPSN",
-            "Nama Sekolah",
-            "Kota / Kabupaten",
-            "Agen",
-            "Status",
+            "NAMA SEKOLAH",
+            "KOTA / KABUPATEN",
+            "AGEN",
+            "STATUS",
+            "AKSI",
           ]}
-          headerAligns={["left", "left", "left", "left", "center"]}
+          headerAligns={["left", "left", "left", "left", "center", "right"]}
         >
           {schools.map((school) => {
             // Find if this school has a matching sales record (since the database ID might not match exactly, we could match by npsn or nama. For now we use the ID assuming they map)
@@ -7046,10 +7047,42 @@ export function MasterSekolah() {
                 </td>
                 <td style={{ textAlign: "center" }}>
                   {hasSubscription ? (
-                    <Chip label="✨ Berlangganan" type="success" />
+                    <div title="Aktif" style={{ color: "var(--success-color, #22c55e)", display: "flex", justifyContent: "center" }}>
+                      <CheckCircle2 size={20} />
+                    </div>
                   ) : (
-                    <Chip label="Belum" type="warning" />
+                    <div title="Tidak Aktif" style={{ color: "var(--text-secondary)", display: "flex", justifyContent: "center" }}>
+                      <XCircle size={20} opacity={0.5} />
+                    </div>
                   )}
+                </td>
+                <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                  <div className="action-buttons" style={{ justifyContent: "flex-end" }}>
+                    <button
+                      type="button"
+                      className="icon-action-button"
+                      aria-label="Lihat"
+                      title="Lihat"
+                    >
+                      <ActionSvg name="view" />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-action-button"
+                      aria-label="Edit"
+                      title="Edit"
+                    >
+                      <ActionSvg name="edit" />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-action-button danger"
+                      aria-label="Hapus"
+                      title="Hapus"
+                    >
+                      <ActionSvg name="delete" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             );
@@ -7057,7 +7090,7 @@ export function MasterSekolah() {
           {schools.length === 0 && (
             <tr>
               <td
-                colSpan={5}
+                colSpan={6}
                 style={{
                   textAlign: "center",
                   padding: "32px",

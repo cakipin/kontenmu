@@ -50,6 +50,7 @@ export const onRequestGet = async (context: any) => {
           nama: masterDataSekolah.nama,
           npsn: masterDataSekolah.npsn,
           kecamatan: masterDataSekolah.kecamatan,
+          kota: masterDataSekolah.kota,
           kabupaten: masterDataSekolah.kabupaten,
           provinsi: masterDataSekolah.provinsi,
         })
@@ -83,6 +84,7 @@ export const onRequestGet = async (context: any) => {
         nama: masterDataSekolah.nama,
         npsn: masterDataSekolah.npsn,
         kecamatan: masterDataSekolah.kecamatan,
+        kota: masterDataSekolah.kota,
         kabupaten: masterDataSekolah.kabupaten,
         provinsi: masterDataSekolah.provinsi,
       })
