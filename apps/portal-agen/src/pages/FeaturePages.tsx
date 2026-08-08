@@ -7597,6 +7597,11 @@ export function MasterSekolah() {
               </button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px", fontSize: "0.95rem" }}>
+              {viewingSchool.logoUrl && (
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
+                  <img src={viewingSchool.logoUrl} alt="Logo Sekolah" style={{ maxHeight: "120px", maxWidth: "100%", objectFit: "contain", borderRadius: "8px" }} />
+                </div>
+              )}
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>NPSN</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.npsn || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Nama Sekolah</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.nama || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Jenjang</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.jenjang || "-"}</strong></div>
@@ -7604,9 +7609,6 @@ export function MasterSekolah() {
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Kecamatan</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.kecamatan || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Provinsi</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.provinsi || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Alamat</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.alamat || "-"}</strong></div>
-              {viewingSchool.logoUrl && (
-                <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Logo</span> <img src={viewingSchool.logoUrl} alt="Logo" style={{ maxHeight: "60px", maxWidth: "100%", objectFit: "contain", borderRadius: "4px" }} /></div>
-              )}
               {viewingSchool.gmapUrl && (
                 <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Google Map</span> <a href={viewingSchool.gmapUrl} target="_blank" rel="noreferrer" style={{ color: "var(--primary-color)" }}>Buka Peta</a></div>
               )}
