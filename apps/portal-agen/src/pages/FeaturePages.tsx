@@ -6932,6 +6932,7 @@ export function MasterSekolah() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [jenjangFilter, setJenjangFilter] = useState("Semua");
 
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [editingSchoolId, setEditingSchoolId] = useState<number | null>(null);
@@ -7047,7 +7048,8 @@ export function MasterSekolah() {
     const timer = setTimeout(() => {
       const url =
         `/api/schools?page=${currentPage}&limit=15` +
-        (searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : "");
+        (searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : "") +
+        (jenjangFilter !== "Semua" ? `&jenjang=${encodeURIComponent(jenjangFilter)}` : "");
       fetch(url)
         .then((res) => res.json())
         .then((resData) => {
@@ -7060,7 +7062,7 @@ export function MasterSekolah() {
         .finally(() => setIsLoading(false));
     }, 400); // debounce
     return () => clearTimeout(timer);
-  }, [currentPage, searchTerm, refreshKey]);
+  }, [currentPage, searchTerm, jenjangFilter, refreshKey]);
 
   return (
     <GlassCard>
@@ -7092,15 +7094,43 @@ export function MasterSekolah() {
         </div>
       </div>
 
-      <div style={{ marginBottom: "16px" }}>
-        <TableSearch
-          value={searchTerm}
-          onChange={(v) => {
-            setSearchTerm(v);
+      <div style={{ marginBottom: "16px", display: "flex", gap: "12px", alignItems: "center" }}>
+        <div style={{ flex: 1 }}>
+          <TableSearch
+            value={searchTerm}
+            onChange={(v) => {
+              setSearchTerm(v);
+              setCurrentPage(1);
+            }}
+            placeholder="Cari NPSN / Nama Sekolah..."
+          />
+        </div>
+        <select
+          value={jenjangFilter}
+          onChange={(e) => {
+            setJenjangFilter(e.target.value);
             setCurrentPage(1);
           }}
-          placeholder="Cari NPSN / Nama Sekolah..."
-        />
+          style={{
+            padding: "8px 16px",
+            borderRadius: "20px",
+            border: "1px solid var(--border-color)",
+            background: "var(--bg-secondary)",
+            color: "var(--text-primary)",
+            fontSize: "0.9rem",
+            outline: "none",
+            height: "40px",
+          }}
+        >
+          <option value="Semua">Semua Jenjang</option>
+          <option value="SD">SD</option>
+          <option value="SMP">SMP</option>
+          <option value="SMA">SMA</option>
+          <option value="SMK">SMK</option>
+          <option value="MI">MI</option>
+          <option value="MTs">MTs</option>
+          <option value="MA">MA</option>
+        </select>
       </div>
 
       {isLoading ? (
@@ -7118,12 +7148,13 @@ export function MasterSekolah() {
           headers={[
             "NPSN",
             "NAMA SEKOLAH",
+            "JENJANG",
             "KOTA / KABUPATEN",
             "AGEN",
             "STATUS",
             "AKSI",
           ]}
-          headerAligns={["left", "left", "left", "left", "center", "right"]}
+          headerAligns={["left", "left", "left", "left", "left", "center", "right"]}
         >
           {schools.map((school) => {
             return (
@@ -7141,6 +7172,9 @@ export function MasterSekolah() {
                 </td>
                 <td style={{ fontWeight: 500, color: "var(--text-primary)" }}>
                   {school.nama}
+                </td>
+                <td style={{ color: "var(--text-secondary)" }}>
+                  {school.jenjang || "-"}
                 </td>
                 <td style={{ color: "var(--text-secondary)" }}>
                   {school.kabupaten || "-"}

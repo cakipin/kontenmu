@@ -1,7 +1,7 @@
 const jsonHeaders = { "Content-Type": "application/json" };
 
 import { drizzle } from "drizzle-orm/d1";
-import { count, like, asc, eq, sql } from "drizzle-orm";
+import { count, like, asc, eq, sql, and } from "drizzle-orm";
 import { masterDataSekolah } from "../../src/db/schema";
 
 export const onRequestGet = async (context: any) => {
@@ -9,6 +9,7 @@ export const onRequestGet = async (context: any) => {
     const url = new URL(context.request.url);
     const nama = url.searchParams.get("nama");
     const search = url.searchParams.get("search");
+    const jenjang = url.searchParams.get("jenjang");
 
     const rawDb = context.env.DB;
     const db = drizzle(rawDb);
@@ -36,55 +37,16 @@ export const onRequestGet = async (context: any) => {
       }
     }
 
-    if (search) {
-      // Pagination for search
-      const totalResult = await db
-        .select({ value: count() })
-        .from(masterDataSekolah)
-        .where(like(masterDataSekolah.nama, `%${search}%`));
-      const total = totalResult[0].value;
+    const conditions = [];
+    if (search) conditions.push(like(masterDataSekolah.nama, `%${search}%`));
+    if (jenjang && jenjang !== "Semua") conditions.push(eq(masterDataSekolah.jenjang, jenjang));
 
-      const result = await db
-        .select({
-          id: masterDataSekolah.id,
-          nama: masterDataSekolah.nama,
-          npsn: masterDataSekolah.npsn,
-          kecamatan: masterDataSekolah.kecamatan,
-          kabupaten: masterDataSekolah.kabupaten,
-          provinsi: masterDataSekolah.provinsi,
-          status: masterDataSekolah.status,
-          alamat: masterDataSekolah.alamat,
-          logoUrl: masterDataSekolah.logoUrl,
-          gmapUrl: masterDataSekolah.gmapUrl,
-          prm: masterDataSekolah.prm,
-          pcm: masterDataSekolah.pcm,
-          pdm: masterDataSekolah.pdm,
-          pwm: masterDataSekolah.pwm,
-          lintang: masterDataSekolah.lintang,
-          bujur: masterDataSekolah.bujur,
-        })
-        .from(masterDataSekolah)
-        .where(like(masterDataSekolah.nama, `%${search}%`))
-        .orderBy(asc(masterDataSekolah.nama))
-        .limit(limit)
-        .offset(offset);
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          data: result || [],
-          total,
-          page,
-          limit,
-        }),
-        { headers: jsonHeaders },
-      );
-    }
-
-    // Default: List all schools with pagination
     const totalResult = await db
       .select({ value: count() })
-      .from(masterDataSekolah);
+      .from(masterDataSekolah)
+      .where(whereClause);
     const total = totalResult[0].value;
 
     const result = await db
@@ -92,6 +54,7 @@ export const onRequestGet = async (context: any) => {
         id: masterDataSekolah.id,
         nama: masterDataSekolah.nama,
         npsn: masterDataSekolah.npsn,
+        jenjang: masterDataSekolah.jenjang,
         kecamatan: masterDataSekolah.kecamatan,
         kabupaten: masterDataSekolah.kabupaten,
         provinsi: masterDataSekolah.provinsi,
@@ -107,12 +70,19 @@ export const onRequestGet = async (context: any) => {
         bujur: masterDataSekolah.bujur,
       })
       .from(masterDataSekolah)
+      .where(whereClause)
       .orderBy(asc(masterDataSekolah.nama))
       .limit(limit)
       .offset(offset);
 
     return new Response(
-      JSON.stringify({ success: true, data: result || [], total, page, limit }),
+      JSON.stringify({
+        success: true,
+        data: result || [],
+        total,
+        page,
+        limit,
+      }),
       { headers: jsonHeaders },
     );
   } catch (error: any) {
