@@ -7597,11 +7597,15 @@ export function MasterSekolah() {
               </button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px", fontSize: "0.95rem" }}>
-              {viewingSchool.logoUrl && (
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
+                {viewingSchool.logoUrl ? (
                   <img src={viewingSchool.logoUrl} alt="Logo Sekolah" style={{ maxHeight: "120px", maxWidth: "100%", objectFit: "contain", borderRadius: "8px" }} />
-                </div>
-              )}
+                ) : (
+                  <div style={{ height: "120px", width: "120px", borderRadius: "8px", background: "var(--bg-secondary)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px dashed var(--border-color)", color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+                    Belum ada logo
+                  </div>
+                )}
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>NPSN</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.npsn || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Nama Sekolah</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.nama || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Jenjang</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.jenjang || "-"}</strong></div>
