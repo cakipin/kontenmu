@@ -11,11 +11,14 @@ export const onRequest = async (context: any) => {
   }
   if (
     (url.pathname === "/api/puck-data" ||
-      url.pathname.startsWith("/api/schools")) &&
+      url.pathname.startsWith("/api/schools") ||
+      url.pathname === "/api/app-data" ||
+      url.pathname === "/api/contents") &&
     request.method === "GET"
   ) {
     return next();
   }
+
 
   // Allow OPTIONS preflight requests to pass through
   if (request.method === "OPTIONS") {
