@@ -68,6 +68,9 @@ export const onRequestGet = async (context: any) => {
         pwm: masterDataSekolah.pwm,
         lintang: masterDataSekolah.lintang,
         bujur: masterDataSekolah.bujur,
+        telepon: masterDataSekolah.telepon,
+        email: masterDataSekolah.email,
+        website: masterDataSekolah.website,
       })
       .from(masterDataSekolah)
       .where(whereClause)
@@ -116,6 +119,9 @@ export const onRequestPost = async (context: any) => {
       pwm: data.pwm || "",
       lintang: data.lintang || "",
       bujur: data.bujur || "",
+      telepon: data.telepon || "",
+      email: data.email || "",
+      website: data.website || "",
     };
 
     const result = await db.insert(masterDataSekolah).values(insertData).returning();

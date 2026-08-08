@@ -6955,6 +6955,9 @@ export function MasterSekolah() {
     pwm: "",
     lintang: "",
     bujur: "",
+    telepon: "",
+    email: "",
+    website: "",
     status: "Aktif",
   });
 
@@ -6974,6 +6977,9 @@ export function MasterSekolah() {
       pwm: "",
       lintang: "",
       bujur: "",
+      telepon: "",
+      email: "",
+      website: "",
       status: "Aktif",
     });
     setEditingSchoolId(null);
@@ -7259,6 +7265,9 @@ export function MasterSekolah() {
                           pwm: school.pwm || "",
                           lintang: school.lintang || "",
                           bujur: school.bujur || "",
+                          telepon: school.telepon || "",
+                          email: school.email || "",
+                          website: school.website || "",
                           status: school.status || "Aktif",
                         });
                         setEditingSchoolId(school.id);
@@ -7457,6 +7466,44 @@ export function MasterSekolah() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>No Telepon (Opsional)</label>
+                  <input
+                    type="text"
+                    value={formSchool.telepon}
+                    onChange={(e) =>
+                      setFormSchool({ ...formSchool, telepon: e.target.value })
+                    }
+                    placeholder="Contoh: 021-1234567"
+                    style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                  />
+                </div>
+                <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Email (Opsional)</label>
+                  <input
+                    type="email"
+                    value={formSchool.email}
+                    onChange={(e) =>
+                      setFormSchool({ ...formSchool, email: e.target.value })
+                    }
+                    placeholder="Contoh: info@sekolah.sch.id"
+                    style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                  />
+                </div>
+                <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px", gridColumn: "1 / -1" }}>
+                  <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Website (Opsional)</label>
+                  <input
+                    type="url"
+                    value={formSchool.website}
+                    onChange={(e) =>
+                      setFormSchool({ ...formSchool, website: e.target.value })
+                    }
+                    placeholder="Contoh: https://www.sekolah.sch.id"
+                    style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                  />
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginTop: "16px" }}>
+                <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Latitude (Opsional)</label>
                   <input
                     type="text"
@@ -7619,6 +7666,9 @@ export function MasterSekolah() {
               {(viewingSchool.lintang || viewingSchool.bujur) && (
                 <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Koordinat</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.lintang || "-"} / {viewingSchool.bujur || "-"}</strong></div>
               )}
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Telepon</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.telepon || "-"}</strong></div>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Email</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.email || "-"}</strong></div>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Website</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.website ? <a href={viewingSchool.website} target="_blank" rel="noopener noreferrer">{viewingSchool.website}</a> : "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Organisasi</span> 
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                   <span style={{ fontSize: "0.85rem" }}>PWM: <strong>{viewingSchool.pwm || "-"}</strong></span>
