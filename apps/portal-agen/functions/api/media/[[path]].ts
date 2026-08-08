@@ -13,7 +13,13 @@ export const onRequestGet = async (context: any) => {
 
     const filename = pathArray.join("/");
 
-    const object = await MEDIA.get(filename);
+    const rangeHeader = context.request.headers.get("Range");
+    const options: any = {};
+    if (rangeHeader) {
+      options.range = context.request.headers;
+    }
+
+    const object = await MEDIA.get(filename, options);
 
     if (object === null) {
       return new Response("Object Not Found", { status: 404 });
@@ -23,7 +29,19 @@ export const onRequestGet = async (context: any) => {
     object.writeHttpMetadata(headers);
     headers.set("etag", object.httpEtag);
     headers.set("Cache-Control", "public, max-age=31536000, immutable");
+    headers.set("Accept-Ranges", "bytes");
     headers.set("Access-Control-Allow-Origin", "*");
+
+    if (rangeHeader && object.range) {
+      headers.set(
+        "Content-Range",
+        `bytes ${object.range.offset}-${
+          object.range.offset + object.range.length - 1
+        }/${object.size}`
+      );
+    }
+
+    const status = object.body && rangeHeader ? 206 : 200;
     let response: Response;
 
     headers.set("x-debug-filename", filename || "none");
@@ -33,7 +51,7 @@ export const onRequestGet = async (context: any) => {
     if (filename.endsWith(".html")) {
       headers.set("Content-Type", "text/html; charset=utf-8");
       headers.set("x-html-rewriter-ran", "true");
-      response = new Response(object.body, { headers });
+      response = new Response(object.body, { headers, status });
       response = new HTMLRewriter()
         .on("script", {
           element(element) {
@@ -47,7 +65,7 @@ export const onRequestGet = async (context: any) => {
         })
         .transform(response);
     } else {
-      response = new Response(object.body, { headers });
+      response = new Response(object.body, { headers, status });
     }
 
     return response;
