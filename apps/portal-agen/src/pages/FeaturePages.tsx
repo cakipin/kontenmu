@@ -6614,7 +6614,10 @@ function ContentPlayerStage({
 
   useEffect(() => {
     if (content?.previewMode === "video" && videoRef.current) {
-      videoRef.current.load();
+      const video = videoRef.current;
+      video.pause();
+      video.src = content.sourceUrl ?? "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
+      video.load();
     }
   }, [content?.sourceUrl, content?.previewMode]);
 
@@ -6689,10 +6692,6 @@ function ContentPlayerStage({
           playsInline
           preload="auto"
           poster={thumbnailForContent(content)}
-          src={
-            content.sourceUrl ??
-            "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
-          }
           onContextMenu={(event) => event.preventDefault()}
         />
       )}
