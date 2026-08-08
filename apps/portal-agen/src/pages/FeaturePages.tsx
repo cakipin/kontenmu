@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@repo/auth";
 import { Files, Play, Gamepad2, Image as ImageIcon, BookOpen, CheckCircle2, XCircle } from "lucide-react";
 import Select from "react-select";
+import AsyncSelect from "react-select/async";
 
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
 import { Chip } from "../../../../packages/ui/src/Chip";
@@ -6925,6 +6926,23 @@ function Progress({ value }: { value: number }) {
   );
 }
 
+const loadOrganizations = async (inputValue: string, tingkat: number) => {
+  if (!inputValue) return [];
+  try {
+    const res = await fetch(`https://staging.kawalmu.pages.dev/api/organizations?search=${encodeURIComponent(inputValue)}&tingkat=${tingkat}&limit=20`);
+    const json = await res.json();
+    if (json.success && json.data) {
+      return json.data.map((org: any) => ({
+        label: org.nama,
+        value: org.nama
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching organizations", error);
+    return [];
+  }
+};
 export function MasterSekolah() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -7533,50 +7551,70 @@ export function MasterSekolah() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PWM (Wilayah)</label>
-                    <input
-                      type="text"
-                      value={formSchool.pwm}
-                      onChange={(e) =>
-                        setFormSchool({ ...formSchool, pwm: e.target.value })
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      placeholder="Ketik untuk mencari PWM..."
+                      loadOptions={(input) => loadOrganizations(input, 2)}
+                      value={formSchool.pwm ? { label: formSchool.pwm, value: formSchool.pwm } : null}
+                      onChange={(selected: any) =>
+                        setFormSchool({ ...formSchool, pwm: selected ? selected.value : "" })
                       }
-                      placeholder="Contoh: PWM Jawa Timur"
-                      style={{ padding: "8px", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                      isClearable
+                      noOptionsMessage={({ inputValue }) => inputValue ? "Tidak ditemukan" : "Ketik untuk mencari..."}
                     />
                   </div>
                   <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PDM (Daerah)</label>
-                    <input
-                      type="text"
-                      value={formSchool.pdm}
-                      onChange={(e) =>
-                        setFormSchool({ ...formSchool, pdm: e.target.value })
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      placeholder="Ketik untuk mencari PDM..."
+                      loadOptions={(input) => loadOrganizations(input, 3)}
+                      value={formSchool.pdm ? { label: formSchool.pdm, value: formSchool.pdm } : null}
+                      onChange={(selected: any) =>
+                        setFormSchool({ ...formSchool, pdm: selected ? selected.value : "" })
                       }
-                      placeholder="Contoh: PDM Gresik"
-                      style={{ padding: "8px", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                      isClearable
+                      noOptionsMessage={({ inputValue }) => inputValue ? "Tidak ditemukan" : "Ketik untuk mencari..."}
                     />
                   </div>
                   <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PRM (Ranting)</label>
-                    <input
-                      type="text"
-                      value={formSchool.prm}
-                      onChange={(e) =>
-                        setFormSchool({ ...formSchool, prm: e.target.value })
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      placeholder="Ketik untuk mencari PRM..."
+                      loadOptions={(input) => loadOrganizations(input, 5)}
+                      value={formSchool.prm ? { label: formSchool.prm, value: formSchool.prm } : null}
+                      onChange={(selected: any) =>
+                        setFormSchool({ ...formSchool, prm: selected ? selected.value : "" })
                       }
-                      placeholder="Contoh: PRM Panceng"
-                      style={{ padding: "8px", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                      isClearable
+                      noOptionsMessage={({ inputValue }) => inputValue ? "Tidak ditemukan" : "Ketik untuk mencari..."}
                     />
                   </div>
                   <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PCM (Cabang)</label>
-                    <input
-                      type="text"
-                      value={formSchool.pcm}
-                      onChange={(e) =>
-                        setFormSchool({ ...formSchool, pcm: e.target.value })
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      placeholder="Ketik untuk mencari PCM..."
+                      loadOptions={(input) => loadOrganizations(input, 4)}
+                      value={formSchool.pcm ? { label: formSchool.pcm, value: formSchool.pcm } : null}
+                      onChange={(selected: any) =>
+                        setFormSchool({ ...formSchool, pcm: selected ? selected.value : "" })
                       }
-                      placeholder="Contoh: PCM Panceng"
-                      style={{ padding: "8px", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                      isClearable
+                      noOptionsMessage={({ inputValue }) => inputValue ? "Tidak ditemukan" : "Ketik untuk mencari..."}
                     />
                   </div>
                 </div>
