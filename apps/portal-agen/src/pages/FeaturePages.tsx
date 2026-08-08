@@ -1866,7 +1866,7 @@ export function UploadContent() {
 }
 
 export function PlayKonten() {
-  const { data, setData, isLoading, isBgLoading } = useAppData();
+  const { data, setData } = useAppData();
   const [selectedContentId, setSelectedContentId] = useState<string>("");
   const [search, setSearch] = useState("");
   const [kelasFilter, setKelasFilter] = useState("");
@@ -1986,6 +1986,7 @@ export function PlayKonten() {
             typeof value === "string" && value.toLowerCase().includes(query),
         );
       return (
+        content.status !== "Siap Review" &&
         matchesSearch &&
         (!kelasFilter || normalizeTingkat(content.target) === kelasFilter) &&
         (!mapelFilter || content.mapel === mapelFilter) &&
@@ -2005,11 +2006,11 @@ export function PlayKonten() {
 
   const stats = useMemo(
     () => ({
-      total: data.contents.length,
-      video: data.contents.filter((c) => c.kategori === "Video").length,
-      games: data.contents.filter((c) => c.kategori === "Games HTML5").length,
+      total: data.contents.filter((c) => c.status !== "Siap Review").length,
+      video: data.contents.filter((c) => c.kategori === "Video" && c.status !== "Siap Review").length,
+      games: data.contents.filter((c) => c.kategori === "Games HTML5" && c.status !== "Siap Review").length,
       teksInfo: data.contents.filter(
-        (c) => c.kategori === "Teks" || c.kategori === "Infografi",
+        (c) => (c.kategori === "Teks" || c.kategori === "Infografi") && c.status !== "Siap Review",
       ).length,
     }),
     [data.contents],
@@ -2116,7 +2117,7 @@ export function PlayKonten() {
   };
 
   return (
-    <Page title="Play Konten">
+    <Page title="Play Konten" hideHeader>
       {!isMobile && (
         <div className="dashboard-grid" style={{ marginBottom: 24 }}>
           <MetricCard
@@ -2263,33 +2264,7 @@ export function PlayKonten() {
               "center",
             ]}
           >
-            {(isLoading || isBgLoading) && data.contents.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={6}
-                  style={{
-                    textAlign: "center",
-                    padding: "60px 40px",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "inline-block",
-                      width: "24px",
-                      height: "24px",
-                      border: "3px solid var(--border-subtle)",
-                      borderTopColor: "var(--brand-primary)",
-                      borderRadius: "50%",
-                      animation: "spin 1s linear infinite",
-                      marginBottom: "12px",
-                    }}
-                  />
-                  <div>Memuat data konten...</div>
-                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                </td>
-              </tr>
-            ) : paginatedContents.length === 0 ? (
+            {paginatedContents.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
@@ -2441,29 +2416,7 @@ export function PlayKonten() {
 
       {isMobile && (
         <div className="player-mobile-list" style={{ marginBottom: 16 }}>
-          {isLoading ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "60px 40px",
-                color: "var(--text-secondary)",
-              }}
-            >
-              <div
-                style={{
-                  display: "inline-block",
-                  width: "24px",
-                  height: "24px",
-                  border: "3px solid var(--border-subtle)",
-                  borderTopColor: "var(--brand-primary)",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                  marginBottom: "12px",
-                }}
-              />
-              <div>Memuat data konten...</div>
-            </div>
-          ) : paginatedContents.length === 0 ? (
+          {paginatedContents.length === 0 ? (
             <div
               style={{
                 display: "flex",
