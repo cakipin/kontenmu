@@ -6937,6 +6937,7 @@ export function MasterSekolah() {
   const [editingSchoolId, setEditingSchoolId] = useState<number | null>(null);
   const [viewingSchool, setViewingSchool] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [formSchool, setFormSchool] = useState({
     npsn: "",
     nama: "",
@@ -6960,11 +6961,13 @@ export function MasterSekolah() {
       status: "Aktif",
     });
     setEditingSchoolId(null);
+    setErrorMessage("");
   };
 
   const handleSaveSchool = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setErrorMessage("");
     try {
       const method = editingSchoolId ? "PUT" : "POST";
       const url = editingSchoolId ? `/api/schools/${editingSchoolId}` : "/api/schools";
@@ -6980,10 +6983,12 @@ export function MasterSekolah() {
         clearForm();
         setRefreshKey((k) => k + 1);
       } else {
-        alert(data.error || "Terjadi kesalahan");
+        setErrorMessage(data.error || "Terjadi kesalahan");
+        console.error("Save error:", data.error);
       }
     } catch (err) {
-      alert("Gagal menyimpan data sekolah");
+      setErrorMessage("Gagal menyimpan data sekolah");
+      console.error(err);
     } finally {
       setIsSaving(false);
     }
@@ -6997,10 +7002,10 @@ export function MasterSekolah() {
       if (data.success) {
         setRefreshKey((k) => k + 1);
       } else {
-        alert(data.error || "Gagal menghapus");
+        console.error("Delete error:", data.error);
       }
     } catch (err) {
-      alert("Terjadi kesalahan jaringan");
+      console.error(err);
     }
   };
 
@@ -7016,10 +7021,10 @@ export function MasterSekolah() {
       if (data.success) {
         setRefreshKey((k) => k + 1);
       } else {
-        alert(data.error || "Gagal mengubah status");
+        console.error("Status toggle error:", data.error);
       }
     } catch (err) {
-      alert("Terjadi kesalahan jaringan");
+      console.error(err);
     }
   };
 
@@ -7223,9 +7228,9 @@ export function MasterSekolah() {
             clearForm();
           }}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ padding: "24px", maxWidth: "500px", width: "100%" }}>
+            <div className="modal-header" style={{ marginBottom: "16px" }}>
+              <h3 style={{ margin: 0 }}>
                 {editingSchoolId ? "Edit Master Sekolah" : "Tambah Sekolah Baru"}
               </h3>
               <button
@@ -7239,9 +7244,19 @@ export function MasterSekolah() {
                 ×
               </button>
             </div>
-            <form onSubmit={handleSaveSchool} className="modal-form">
-              <div className="form-group">
-                <label>NPSN</label>
+            
+            {errorMessage && (
+              <div
+                className="status-message error"
+                style={{ marginBottom: "16px", padding: "12px", borderRadius: "8px", background: "var(--danger-color, #ef4444)", color: "white", fontSize: "0.9rem" }}
+              >
+                {errorMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveSchool} className="modal-form" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>NPSN</label>
                 <input
                   type="text"
                   required
@@ -7250,10 +7265,11 @@ export function MasterSekolah() {
                     setFormSchool({ ...formSchool, npsn: e.target.value })
                   }
                   placeholder="Masukkan NPSN"
+                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
                 />
               </div>
-              <div className="form-group">
-                <label>Nama Sekolah</label>
+              <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Nama Sekolah</label>
                 <input
                   type="text"
                   required
@@ -7262,16 +7278,17 @@ export function MasterSekolah() {
                     setFormSchool({ ...formSchool, nama: e.target.value })
                   }
                   placeholder="Nama Sekolah"
+                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
                 />
               </div>
-              <div className="form-group">
-                <label>Jenjang</label>
+              <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Jenjang</label>
                 <select
                   value={formSchool.jenjang}
                   onChange={(e) =>
                     setFormSchool({ ...formSchool, jenjang: e.target.value })
                   }
-                  style={{ width: "100%", padding: "8px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)" }}
+                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
                 >
                   <option value="SD">SD</option>
                   <option value="SMP">SMP</option>
@@ -7282,8 +7299,8 @@ export function MasterSekolah() {
                   <option value="MA">MA</option>
                 </select>
               </div>
-              <div className="form-group">
-                <label>Kota / Kabupaten</label>
+              <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Kota / Kabupaten</label>
                 <input
                   type="text"
                   value={formSchool.kabupaten}
@@ -7291,10 +7308,11 @@ export function MasterSekolah() {
                     setFormSchool({ ...formSchool, kabupaten: e.target.value, kota: e.target.value })
                   }
                   placeholder="Contoh: Kab. Gresik"
+                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
                 />
               </div>
-              <div className="form-group">
-                <label>Provinsi</label>
+              <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Provinsi</label>
                 <input
                   type="text"
                   value={formSchool.provinsi}
@@ -7302,22 +7320,23 @@ export function MasterSekolah() {
                     setFormSchool({ ...formSchool, provinsi: e.target.value })
                   }
                   placeholder="Provinsi"
+                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
                 />
               </div>
-              <div className="form-group">
-                <label>Status</label>
+              <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Status</label>
                 <select
                   value={formSchool.status}
                   onChange={(e) =>
                     setFormSchool({ ...formSchool, status: e.target.value })
                   }
-                  style={{ width: "100%", padding: "8px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)" }}
+                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
                 >
                   <option value="Aktif">Aktif</option>
                   <option value="Tidak Aktif">Tidak Aktif</option>
                 </select>
               </div>
-              <div className="modal-footer" style={{ marginTop: "24px" }}>
+              <div className="modal-footer" style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
                 <button
                   type="button"
                   className="secondary-button"
@@ -7344,9 +7363,9 @@ export function MasterSekolah() {
           style={{ zIndex: 99999 }}
           onClick={() => setViewingSchool(null)}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Detail Master Sekolah</h3>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ padding: "24px", maxWidth: "500px", width: "100%" }}>
+            <div className="modal-header" style={{ marginBottom: "20px" }}>
+              <h3 style={{ margin: 0 }}>Detail Master Sekolah</h3>
               <button
                 type="button"
                 className="close-button"
@@ -7355,17 +7374,23 @@ export function MasterSekolah() {
                 ×
               </button>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "0.95rem" }}>
-              <div><strong>NPSN:</strong> {viewingSchool.npsn || "-"}</div>
-              <div><strong>Nama Sekolah:</strong> {viewingSchool.nama || "-"}</div>
-              <div><strong>Jenjang:</strong> {viewingSchool.jenjang || "-"}</div>
-              <div><strong>Kota/Kabupaten:</strong> {viewingSchool.kota || viewingSchool.kabupaten || "-"}</div>
-              <div><strong>Kecamatan:</strong> {viewingSchool.kecamatan || "-"}</div>
-              <div><strong>Provinsi:</strong> {viewingSchool.provinsi || "-"}</div>
-              <div><strong>Alamat:</strong> {viewingSchool.alamat || "-"}</div>
-              <div><strong>Status DB:</strong> {viewingSchool.status || "Aktif"}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px", fontSize: "0.95rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>NPSN</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.npsn || "-"}</strong></div>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Nama Sekolah</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.nama || "-"}</strong></div>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Jenjang</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.jenjang || "-"}</strong></div>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Kota/Kabupaten</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.kota || viewingSchool.kabupaten || "-"}</strong></div>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Kecamatan</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.kecamatan || "-"}</strong></div>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Provinsi</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.provinsi || "-"}</strong></div>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Alamat</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.alamat || "-"}</strong></div>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Status DB</span> <strong style={{ color: "var(--text-color)" }}>
+                {viewingSchool.status === "Aktif" ? (
+                  <span style={{ color: "var(--success-color, #22c55e)", background: "var(--success-bg, rgba(34, 197, 94, 0.1))", padding: "4px 8px", borderRadius: "12px", fontSize: "0.85rem" }}>Aktif</span>
+                ) : (
+                  <span style={{ color: "var(--text-secondary)", background: "var(--bg-secondary)", padding: "4px 8px", borderRadius: "12px", fontSize: "0.85rem" }}>{viewingSchool.status || "Tidak Aktif"}</span>
+                )}
+              </strong></div>
             </div>
-            <div className="modal-footer" style={{ marginTop: "24px" }}>
+            <div className="modal-footer" style={{ marginTop: "32px", display: "flex", justifyContent: "flex-end" }}>
               <ButtonPromax onClick={() => setViewingSchool(null)}>Tutup</ButtonPromax>
             </div>
           </div>
