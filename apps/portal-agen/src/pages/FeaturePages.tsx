@@ -6929,15 +6929,31 @@ function Progress({ value }: { value: number }) {
 const loadOrganizations = async (inputValue: string, tingkat: number) => {
   if (!inputValue) return [];
   try {
-    const res = await fetch(`https://staging.kawalmu.pages.dev/api/organizations?search=${encodeURIComponent(inputValue)}&tingkat=${tingkat}&limit=20`);
-    const json = await res.json();
-    if (json.success && json.data) {
-      return json.data.map((org: any) => ({
-        label: org.nama,
-        value: org.nama
-      }));
+    const urls = [`https://staging.kawalmu.pages.dev/api/organizations?tingkat=${tingkat}&limit=1000`];
+    // Workaround: PWM data in the API sometimes ends up in tingkat=1 (e.g. "Jawa Timur")
+    if (tingkat === 2) {
+      urls.push(`https://staging.kawalmu.pages.dev/api/organizations?tingkat=1&limit=100`);
     }
-    return [];
+
+    const responses = await Promise.all(urls.map(url => fetch(url)));
+    let allData: any[] = [];
+    
+    for (const res of responses) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        allData = [...allData, ...json.data];
+      }
+    }
+
+    const lowerInput = inputValue.toLowerCase();
+    const filteredData = allData.filter((org: any) => 
+      org.nama.toLowerCase().includes(lowerInput)
+    );
+
+    return filteredData.map((org: any) => ({
+      label: org.nama,
+      value: org.nama
+    }));
   } catch (error) {
     console.error("Error fetching organizations", error);
     return [];
