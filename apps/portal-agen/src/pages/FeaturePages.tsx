@@ -6978,6 +6978,9 @@ export function MasterSekolah() {
             Daftar sekolah yang terdaftar di sistem KontenMu.
           </p>
         </div>
+        <div className="button-row">
+          <ButtonPromax onClick={() => {}}>+ Tambah Sekolah</ButtonPromax>
+        </div>
       </div>
 
       <div style={{ marginBottom: "16px" }}>
