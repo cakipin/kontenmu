@@ -53,6 +53,7 @@ export const onRequestGet = async (context: any) => {
           kota: masterDataSekolah.kota,
           kabupaten: masterDataSekolah.kabupaten,
           provinsi: masterDataSekolah.provinsi,
+          status: masterDataSekolah.status,
         })
         .from(masterDataSekolah)
         .where(like(masterDataSekolah.nama, `%${search}%`))
@@ -87,6 +88,7 @@ export const onRequestGet = async (context: any) => {
         kota: masterDataSekolah.kota,
         kabupaten: masterDataSekolah.kabupaten,
         provinsi: masterDataSekolah.provinsi,
+        status: masterDataSekolah.status,
       })
       .from(masterDataSekolah)
       .orderBy(asc(masterDataSekolah.nama))
@@ -102,5 +104,31 @@ export const onRequestGet = async (context: any) => {
       status: 500,
       headers: jsonHeaders,
     });
+  }
+};
+
+export const onRequestPost = async (context: any) => {
+  try {
+    const data = await context.request.json();
+    const db = drizzle(context.env.DB);
+    
+    // Add default values if required fields are missing
+    const insertData = {
+      nama: data.nama || "Sekolah Baru",
+      jenjang: data.jenjang || "SD",
+      alamat: data.alamat || "",
+      kota: data.kota || "",
+      kecamatan: data.kecamatan || "",
+      kabupaten: data.kabupaten || "",
+      provinsi: data.provinsi || "",
+      npsn: data.npsn || "",
+      status: data.status || "Aktif",
+    };
+
+    const result = await db.insert(masterDataSekolah).values(insertData).returning();
+
+    return new Response(JSON.stringify({ success: true, data: result[0] }), { headers: jsonHeaders });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: jsonHeaders });
   }
 };

@@ -6926,12 +6926,102 @@ function Progress({ value }: { value: number }) {
 }
 
 export function MasterSekolah() {
-  const { data } = useAppData();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [schools, setSchools] = useState<any[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
+  const [editingSchoolId, setEditingSchoolId] = useState<number | null>(null);
+  const [viewingSchool, setViewingSchool] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formSchool, setFormSchool] = useState({
+    npsn: "",
+    nama: "",
+    jenjang: "SD",
+    kota: "",
+    kabupaten: "",
+    provinsi: "",
+    alamat: "",
+    status: "Aktif",
+  });
+
+  const clearForm = () => {
+    setFormSchool({
+      npsn: "",
+      nama: "",
+      jenjang: "SD",
+      kota: "",
+      kabupaten: "",
+      provinsi: "",
+      alamat: "",
+      status: "Aktif",
+    });
+    setEditingSchoolId(null);
+  };
+
+  const handleSaveSchool = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const method = editingSchoolId ? "PUT" : "POST";
+      const url = editingSchoolId ? `/api/schools/${editingSchoolId}` : "/api/schools";
+      
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formSchool),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsSchoolModalOpen(false);
+        clearForm();
+        setRefreshKey((k) => k + 1);
+      } else {
+        alert(data.error || "Terjadi kesalahan");
+      }
+    } catch (err) {
+      alert("Gagal menyimpan data sekolah");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteSchool = async (id: number) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus sekolah ini?")) return;
+    try {
+      const res = await fetch(`/api/schools/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setRefreshKey((k) => k + 1);
+      } else {
+        alert(data.error || "Gagal menghapus");
+      }
+    } catch (err) {
+      alert("Terjadi kesalahan jaringan");
+    }
+  };
+
+  const handleToggleStatus = async (school: any) => {
+    try {
+      const newStatus = school.status === "Aktif" ? "Tidak Aktif" : "Aktif";
+      const res = await fetch(`/api/schools/${school.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRefreshKey((k) => k + 1);
+      } else {
+        alert(data.error || "Gagal mengubah status");
+      }
+    } catch (err) {
+      alert("Terjadi kesalahan jaringan");
+    }
+  };
 
   useEffect(() => {
     setIsLoading(true);
@@ -6951,7 +7041,7 @@ export function MasterSekolah() {
         .finally(() => setIsLoading(false));
     }, 400); // debounce
     return () => clearTimeout(timer);
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, refreshKey]);
 
   return (
     <GlassCard>
@@ -6979,7 +7069,7 @@ export function MasterSekolah() {
           </p>
         </div>
         <div className="button-row">
-          <ButtonPromax onClick={() => {}}>+ Tambah Sekolah</ButtonPromax>
+          <ButtonPromax onClick={() => { clearForm(); setIsSchoolModalOpen(true); }}>+ Tambah Sekolah</ButtonPromax>
         </div>
       </div>
 
@@ -7017,15 +7107,6 @@ export function MasterSekolah() {
           headerAligns={["left", "left", "left", "left", "center", "right"]}
         >
           {schools.map((school) => {
-            // Find if this school has a matching sales record (since the database ID might not match exactly, we could match by npsn or nama. For now we use the ID assuming they map)
-            // Note: If Master Sekolah ID from DB is used in sales, match by ID. If not, match by name.
-            const hasSubscription = data.sales.some(
-              (s) =>
-                s.schoolId === school.id ||
-                data.schools.find((ds) => ds.id === s.schoolId)?.npsn ===
-                  school.npsn,
-            );
-
             return (
               <tr key={school.id}>
                 <td>
@@ -7048,13 +7129,13 @@ export function MasterSekolah() {
                 <td style={{ color: "var(--text-secondary)" }}>
                   {school.agen || "-"}
                 </td>
-                <td style={{ textAlign: "center" }}>
-                  {hasSubscription ? (
-                    <div title="Aktif" style={{ color: "var(--success-color, #22c55e)", display: "flex", justifyContent: "center" }}>
+                <td style={{ textAlign: "center", cursor: "pointer" }} onClick={() => handleToggleStatus(school)}>
+                  {school.status === "Aktif" ? (
+                    <div title="Aktif (Klik untuk ubah)" style={{ color: "var(--success-color, #22c55e)", display: "flex", justifyContent: "center" }}>
                       <CheckCircle2 size={20} />
                     </div>
                   ) : (
-                    <div title="Tidak Aktif" style={{ color: "var(--text-secondary)", display: "flex", justifyContent: "center" }}>
+                    <div title="Tidak Aktif (Klik untuk ubah)" style={{ color: "var(--text-secondary)", display: "flex", justifyContent: "center" }}>
                       <XCircle size={20} opacity={0.5} />
                     </div>
                   )}
@@ -7066,6 +7147,7 @@ export function MasterSekolah() {
                       className="icon-action-button"
                       aria-label="Lihat"
                       title="Lihat"
+                      onClick={() => setViewingSchool(school)}
                     >
                       <ActionSvg name="view" />
                     </button>
@@ -7074,6 +7156,20 @@ export function MasterSekolah() {
                       className="icon-action-button"
                       aria-label="Edit"
                       title="Edit"
+                      onClick={() => {
+                        setFormSchool({
+                          npsn: school.npsn || "",
+                          nama: school.nama || "",
+                          jenjang: school.jenjang || "SD",
+                          kota: school.kota || "",
+                          kabupaten: school.kabupaten || "",
+                          provinsi: school.provinsi || "",
+                          alamat: school.alamat || "",
+                          status: school.status || "Aktif",
+                        });
+                        setEditingSchoolId(school.id);
+                        setIsSchoolModalOpen(true);
+                      }}
                     >
                       <ActionSvg name="edit" />
                     </button>
@@ -7082,6 +7178,7 @@ export function MasterSekolah() {
                       className="icon-action-button danger"
                       aria-label="Hapus"
                       title="Hapus"
+                      onClick={() => handleDeleteSchool(school.id)}
                     >
                       <ActionSvg name="delete" />
                     </button>
@@ -7114,6 +7211,164 @@ export function MasterSekolah() {
             totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
+        </div>
+      )}
+
+      {isSchoolModalOpen && (
+        <div
+          className="modal-backdrop"
+          style={{ zIndex: 99999 }}
+          onClick={() => {
+            setIsSchoolModalOpen(false);
+            clearForm();
+          }}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                {editingSchoolId ? "Edit Master Sekolah" : "Tambah Sekolah Baru"}
+              </h3>
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => {
+                  setIsSchoolModalOpen(false);
+                  clearForm();
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleSaveSchool} className="modal-form">
+              <div className="form-group">
+                <label>NPSN</label>
+                <input
+                  type="text"
+                  required
+                  value={formSchool.npsn}
+                  onChange={(e) =>
+                    setFormSchool({ ...formSchool, npsn: e.target.value })
+                  }
+                  placeholder="Masukkan NPSN"
+                />
+              </div>
+              <div className="form-group">
+                <label>Nama Sekolah</label>
+                <input
+                  type="text"
+                  required
+                  value={formSchool.nama}
+                  onChange={(e) =>
+                    setFormSchool({ ...formSchool, nama: e.target.value })
+                  }
+                  placeholder="Nama Sekolah"
+                />
+              </div>
+              <div className="form-group">
+                <label>Jenjang</label>
+                <select
+                  value={formSchool.jenjang}
+                  onChange={(e) =>
+                    setFormSchool({ ...formSchool, jenjang: e.target.value })
+                  }
+                  style={{ width: "100%", padding: "8px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)" }}
+                >
+                  <option value="SD">SD</option>
+                  <option value="SMP">SMP</option>
+                  <option value="SMA">SMA</option>
+                  <option value="SMK">SMK</option>
+                  <option value="MI">MI</option>
+                  <option value="MTs">MTs</option>
+                  <option value="MA">MA</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Kota / Kabupaten</label>
+                <input
+                  type="text"
+                  value={formSchool.kabupaten}
+                  onChange={(e) =>
+                    setFormSchool({ ...formSchool, kabupaten: e.target.value, kota: e.target.value })
+                  }
+                  placeholder="Contoh: Kab. Gresik"
+                />
+              </div>
+              <div className="form-group">
+                <label>Provinsi</label>
+                <input
+                  type="text"
+                  value={formSchool.provinsi}
+                  onChange={(e) =>
+                    setFormSchool({ ...formSchool, provinsi: e.target.value })
+                  }
+                  placeholder="Provinsi"
+                />
+              </div>
+              <div className="form-group">
+                <label>Status</label>
+                <select
+                  value={formSchool.status}
+                  onChange={(e) =>
+                    setFormSchool({ ...formSchool, status: e.target.value })
+                  }
+                  style={{ width: "100%", padding: "8px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)" }}
+                >
+                  <option value="Aktif">Aktif</option>
+                  <option value="Tidak Aktif">Tidak Aktif</option>
+                </select>
+              </div>
+              <div className="modal-footer" style={{ marginTop: "24px" }}>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    setIsSchoolModalOpen(false);
+                    clearForm();
+                  }}
+                  disabled={isSaving}
+                >
+                  Batal
+                </button>
+                <ButtonPromax type="submit" disabled={isSaving}>
+                  {isSaving ? "Menyimpan..." : "Simpan"}
+                </ButtonPromax>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {viewingSchool && (
+        <div
+          className="modal-backdrop"
+          style={{ zIndex: 99999 }}
+          onClick={() => setViewingSchool(null)}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Detail Master Sekolah</h3>
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => setViewingSchool(null)}
+              >
+                ×
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "0.95rem" }}>
+              <div><strong>NPSN:</strong> {viewingSchool.npsn || "-"}</div>
+              <div><strong>Nama Sekolah:</strong> {viewingSchool.nama || "-"}</div>
+              <div><strong>Jenjang:</strong> {viewingSchool.jenjang || "-"}</div>
+              <div><strong>Kota/Kabupaten:</strong> {viewingSchool.kota || viewingSchool.kabupaten || "-"}</div>
+              <div><strong>Kecamatan:</strong> {viewingSchool.kecamatan || "-"}</div>
+              <div><strong>Provinsi:</strong> {viewingSchool.provinsi || "-"}</div>
+              <div><strong>Alamat:</strong> {viewingSchool.alamat || "-"}</div>
+              <div><strong>Status DB:</strong> {viewingSchool.status || "Aktif"}</div>
+            </div>
+            <div className="modal-footer" style={{ marginTop: "24px" }}>
+              <ButtonPromax onClick={() => setViewingSchool(null)}>Tutup</ButtonPromax>
+            </div>
+          </div>
         </div>
       )}
     </GlassCard>
