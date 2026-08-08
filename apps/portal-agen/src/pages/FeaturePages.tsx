@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "@repo/auth";
-import { Files, Play, Gamepad2, Image as ImageIcon } from "lucide-react";
+import { Files, Play, Gamepad2, Image as ImageIcon, BookOpen } from "lucide-react";
 import Select from "react-select";
 
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
@@ -2299,26 +2299,21 @@ export function PlayKonten() {
                     color: "var(--text-secondary)",
                   }}
                 >
-                  <div>Tidak ada konten untuk diputar.</div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      window.dispatchEvent(
-                        new Event("kontenmu-appdata-updated"),
-                      )
-                    }
+                  <div
                     style={{
-                      marginTop: 12,
-                      padding: "8px 16px",
-                      borderRadius: 8,
-                      background: "var(--bg-tertiary)",
-                      border: "1px solid var(--border-subtle)",
-                      cursor: "pointer",
-                      fontSize: "0.85rem",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "var(--primary-color)",
+                      animation: "pulse 1.5s infinite"
                     }}
                   >
-                    Muat Ulang Data
-                  </button>
+                    <BookOpen size={48} />
+                    <div style={{ marginTop: 12, color: "var(--text-secondary)", animation: "none" }}>
+                      Membuka konten...
+                    </div>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -2471,12 +2466,19 @@ export function PlayKonten() {
           ) : paginatedContents.length === 0 ? (
             <div
               style={{
-                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
                 padding: "40px",
-                color: "var(--text-secondary)",
+                color: "var(--primary-color)",
+                animation: "pulse 1.5s infinite"
               }}
             >
-              Tidak ada konten untuk diputar.
+              <BookOpen size={48} />
+              <div style={{ marginTop: 12, color: "var(--text-secondary)", animation: "none" }}>
+                Membuka konten...
+              </div>
             </div>
           ) : (
             paginatedContents.map((content) => {
