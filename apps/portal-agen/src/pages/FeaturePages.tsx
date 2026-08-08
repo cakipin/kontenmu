@@ -7129,7 +7129,7 @@ export function MasterSekolah() {
                   {school.nama}
                 </td>
                 <td style={{ color: "var(--text-secondary)" }}>
-                  {school.kota || school.kabupaten}
+                  {school.kabupaten || (school.kota !== "kota" ? school.kota : "-")}
                 </td>
                 <td style={{ color: "var(--text-secondary)" }}>
                   {school.agen || "-"}
@@ -7339,12 +7339,23 @@ export function MasterSekolah() {
               <div className="modal-footer" style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
                 <button
                   type="button"
-                  className="secondary-button"
                   onClick={() => {
                     setIsSchoolModalOpen(false);
                     clearForm();
                   }}
                   disabled={isSaving}
+                  style={{
+                    padding: "10px 16px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-color)",
+                    background: "transparent",
+                    color: "var(--text-secondary)",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    transition: "all 0.2s ease"
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = "var(--bg-secondary)"}
+                  onMouseOut={(e) => e.currentTarget.style.background = "transparent"}
                 >
                   Batal
                 </button>
