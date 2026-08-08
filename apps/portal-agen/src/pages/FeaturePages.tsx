@@ -6938,6 +6938,7 @@ export function MasterSekolah() {
   const [editingSchoolId, setEditingSchoolId] = useState<number | null>(null);
   const [viewingSchool, setViewingSchool] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [formSchool, setFormSchool] = useState({
     npsn: "",
@@ -6977,6 +6978,39 @@ export function MasterSekolah() {
     });
     setEditingSchoolId(null);
     setErrorMessage("");
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Ukuran logo maksimal 2MB!");
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.url) {
+        setFormSchool((prev) => ({ ...prev, logoUrl: data.url }));
+      } else {
+        alert(data.error || "Gagal mengunggah logo");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan saat mengunggah logo");
+    } finally {
+      setIsUploadingLogo(false);
+    }
   };
 
   const handleSaveSchool = async (e: React.FormEvent) => {
@@ -7391,16 +7425,23 @@ export function MasterSekolah() {
                 />
               </div>
               <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>URL Logo Sekolah</label>
-                <input
-                  type="text"
-                  value={formSchool.logoUrl}
-                  onChange={(e) =>
-                    setFormSchool({ ...formSchool, logoUrl: e.target.value })
-                  }
-                  placeholder="https://..."
-                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
-                />
+                <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Upload Logo Sekolah (Max 2MB)</label>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    disabled={isUploadingLogo}
+                    style={{ padding: "8px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", flex: 1 }}
+                  />
+                  {isUploadingLogo && <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Mengunggah...</span>}
+                </div>
+                {formSchool.logoUrl && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                    <img src={formSchool.logoUrl} alt="Logo" style={{ width: "32px", height: "32px", objectFit: "cover", borderRadius: "4px" }} />
+                    <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", wordBreak: "break-all" }}>{formSchool.logoUrl}</span>
+                  </div>
+                )}
               </div>
               <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Paste Lokasi Google Map</label>
