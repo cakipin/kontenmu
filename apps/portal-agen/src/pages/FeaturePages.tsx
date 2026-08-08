@@ -2254,7 +2254,8 @@ export function PlayKonten() {
               "Judul",
               "Kategori",
               "Target",
-              "Status",
+              "Dilihat",
+              "AVD",
               "Aksi",
             ]}
             headerAligns={[
@@ -2264,12 +2265,13 @@ export function PlayKonten() {
               "left",
               "center",
               "center",
+              "center",
             ]}
           >
             {paginatedContents.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   style={{
                     textAlign: "center",
                     padding: "40px",
@@ -2335,7 +2337,8 @@ export function PlayKonten() {
                       {content.target}
                     </span>
                   </td>
-                  <td>{content.status}</td>
+                  <td style={{ textAlign: "center" }}>0</td>
+                  <td style={{ textAlign: "center" }}>0 detik</td>
                   <td>
                     <div className="action-group">
                       <button
@@ -6671,6 +6674,7 @@ function ContentPlayerStage({
       </button>
       {content.previewMode === "video" && (
         <video
+          key={content.id}
           className="preview-media"
           controls
           controlsList="nodownload noplaybackrate noremoteplayback"

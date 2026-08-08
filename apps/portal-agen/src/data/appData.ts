@@ -570,13 +570,12 @@ export function loadRemoteAppData(): Promise<AppData | null> {
       const result = normalizeAppData(payload.data);
       
       // FIX: Jangan hapus contents dan users jika sudah ada di cache!
-      if (cachedRemoteData) {
-        if (cachedRemoteData.contents.length > 0) {
-          result.contents = cachedRemoteData.contents;
-        }
-        if (cachedRemoteData.users.length > 0) {
-          result.users = cachedRemoteData.users;
-        }
+      const local = loadAppData();
+      if (local.contents.length > 0) {
+        result.contents = local.contents;
+      }
+      if (local.users.length > 0) {
+        result.users = local.users;
       }
       
       cachedRemoteData = result;
