@@ -6609,7 +6609,14 @@ function ContentPlayerStage({
   featured?: boolean;
 }) {
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    if (content?.previewMode === "video" && videoRef.current) {
+      videoRef.current.load();
+    }
+  }, [content?.sourceUrl, content?.previewMode]);
 
   useEffect(() => {
     const syncFullscreen = () =>
@@ -6674,7 +6681,7 @@ function ContentPlayerStage({
       </button>
       {content.previewMode === "video" && (
         <video
-          key={content.id}
+          ref={videoRef}
           className="preview-media"
           controls
           controlsList="nodownload noplaybackrate noremoteplayback"
