@@ -6942,13 +6942,13 @@ export function MasterSekolah() {
     npsn: "",
     nama: "",
     jenjang: "SD",
-    kota: "",
     kabupaten: "",
     provinsi: "",
     alamat: "",
     logoUrl: "",
     gmapUrl: "",
     prm: "",
+    pcm: "",
     pdm: "",
     pwm: "",
     lintang: "",
@@ -6961,13 +6961,13 @@ export function MasterSekolah() {
       npsn: "",
       nama: "",
       jenjang: "SD",
-      kota: "",
       kabupaten: "",
       provinsi: "",
       alamat: "",
       logoUrl: "",
       gmapUrl: "",
       prm: "",
+      pcm: "",
       pdm: "",
       pwm: "",
       lintang: "",
@@ -7143,7 +7143,7 @@ export function MasterSekolah() {
                   {school.nama}
                 </td>
                 <td style={{ color: "var(--text-secondary)" }}>
-                  {school.kabupaten || (school.kota !== "kota" ? school.kota : "-")}
+                  {school.kabupaten || "-"}
                 </td>
                 <td style={{ color: "var(--text-secondary)" }}>
                   {school.agen || "-"}
@@ -7180,13 +7180,13 @@ export function MasterSekolah() {
                           npsn: school.npsn || "",
                           nama: school.nama || "",
                           jenjang: school.jenjang || "SD",
-                          kota: school.kota || "",
                           kabupaten: school.kabupaten || "",
                           provinsi: school.provinsi || "",
                           alamat: school.alamat || "",
                           logoUrl: school.logoUrl || "",
                           gmapUrl: school.gmapUrl || "",
                           prm: school.prm || "",
+                          pcm: school.pcm || "",
                           pdm: school.pdm || "",
                           pwm: school.pwm || "",
                           lintang: school.lintang || "",
@@ -7326,7 +7326,7 @@ export function MasterSekolah() {
                   type="text"
                   value={formSchool.kabupaten}
                   onChange={(e) =>
-                    setFormSchool({ ...formSchool, kabupaten: e.target.value, kota: e.target.value })
+                    setFormSchool({ ...formSchool, kabupaten: e.target.value })
                   }
                   placeholder="Contoh: Kab. Gresik"
                   style={{ padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
@@ -7445,6 +7445,18 @@ export function MasterSekolah() {
                       style={{ padding: "8px", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
                     />
                   </div>
+                  <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PCM (Cabang)</label>
+                    <input
+                      type="text"
+                      value={formSchool.pcm}
+                      onChange={(e) =>
+                        setFormSchool({ ...formSchool, pcm: e.target.value })
+                      }
+                      placeholder="Contoh: PCM Panceng"
+                      style={{ padding: "8px", borderRadius: "6px", border: "1px solid var(--border-color)", background: "var(--bg-color)", width: "100%" }}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -7513,7 +7525,7 @@ export function MasterSekolah() {
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>NPSN</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.npsn || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Nama Sekolah</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.nama || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Jenjang</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.jenjang || "-"}</strong></div>
-              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Kota/Kabupaten</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.kota || viewingSchool.kabupaten || "-"}</strong></div>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Kota/Kabupaten</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.kabupaten || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Kecamatan</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.kecamatan || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Provinsi</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.provinsi || "-"}</strong></div>
               <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}><span style={{ color: "var(--text-secondary)" }}>Alamat</span> <strong style={{ color: "var(--text-color)" }}>{viewingSchool.alamat || "-"}</strong></div>
@@ -7530,6 +7542,7 @@ export function MasterSekolah() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                   <span style={{ fontSize: "0.85rem" }}>PWM: <strong>{viewingSchool.pwm || "-"}</strong></span>
                   <span style={{ fontSize: "0.85rem" }}>PDM: <strong>{viewingSchool.pdm || "-"}</strong></span>
+                  <span style={{ fontSize: "0.85rem" }}>PCM: <strong>{viewingSchool.pcm || "-"}</strong></span>
                   <span style={{ fontSize: "0.85rem" }}>PRM: <strong>{viewingSchool.prm || "-"}</strong></span>
                 </div>
               </div>
