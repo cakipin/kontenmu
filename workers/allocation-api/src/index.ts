@@ -64,6 +64,12 @@ async function getLicenseQuota(env: Env, sekolahId: number, isbn: string) {
   };
 }
 
+function resolveSchoolId(authUser: AuthUser, requested: unknown) {
+  const rawSchoolId = authUser.role === "sekolah" ? authUser.sekolahId : requested;
+  const schoolId = Number(rawSchoolId);
+  return Number.isInteger(schoolId) && schoolId > 0 ? schoolId : 0;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === "OPTIONS") {
@@ -82,18 +88,10 @@ export default {
     if (!authUser) return json({ success: false, error: "Unauthorized" }, 401);
     if (!route.roles.includes(authUser.role)) return json({ success: false, error: "Forbidden" }, 403);
 
-    const requestedSchoolId = url.searchParams.get("sekolahId");
-    if (
-      authUser.role === "sekolah" &&
-      requestedSchoolId &&
-      String(authUser.sekolahId || "") !== requestedSchoolId
-    ) {
-      return json({ success: false, error: "Forbidden" }, 403);
-    }
-
     if (url.pathname === "/api/inventory" && request.method === "GET") {
       try {
-        const sekolahId = url.searchParams.get("sekolahId") || "1";
+        const sekolahId = resolveSchoolId(authUser, url.searchParams.get("sekolahId"));
+        if (!sekolahId) return json({ success: false, error: "sekolahId tidak valid" }, 400);
         const { results } = await env.DB.prepare(
           `SELECT b.isbn, b.judul,
                   COALESCE(SUM(p.jumlah_lisensi), 0) as total_lisensi,
@@ -117,7 +115,8 @@ export default {
 
     if (url.pathname === "/api/allocations" && request.method === "GET") {
       try {
-        const sekolahId = url.searchParams.get("sekolahId") || "1";
+        const sekolahId = resolveSchoolId(authUser, url.searchParams.get("sekolahId"));
+        if (!sekolahId) return json({ success: false, error: "sekolahId tidak valid" }, 400);
         const { results } = await env.DB.prepare(
           `SELECT a.id, a.siswa_id, a.isbn, b.judul, a.tanggal_alokasi
            FROM Alokasi_Siswa a
@@ -138,15 +137,13 @@ export default {
 
     if (url.pathname === "/api/allocate" && request.method === "POST") {
       try {
-        const { sekolahId, isbn, siswaId } = (await request.json()) as {
+        const body = (await request.json()) as {
           sekolahId: number;
           isbn: string;
           siswaId: string;
         };
-
-        if (authUser.role === "sekolah" && String(authUser.sekolahId || "") !== String(sekolahId)) {
-          return json({ success: false, error: "Forbidden" }, 403);
-        }
+        const sekolahId = resolveSchoolId(authUser, body.sekolahId);
+        const { isbn, siswaId } = body;
 
         if (!sekolahId || !isbn || !siswaId?.trim()) {
           return json(
@@ -156,6 +153,15 @@ export default {
             },
             400,
           );
+        }
+
+        const student = await env.DB.prepare(
+          "SELECT id FROM users WHERE (id = ? OR username = ?) AND sekolah_id = ? AND role_slug = 'siswa' LIMIT 1",
+        )
+          .bind(siswaId.trim(), siswaId.trim(), sekolahId)
+          .first();
+        if (!student) {
+          return json({ success: false, error: "Siswa tidak terdaftar pada sekolah sesi" }, 403);
         }
 
         const existing = await env.DB.prepare(

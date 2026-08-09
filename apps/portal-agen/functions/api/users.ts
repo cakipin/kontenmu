@@ -1,9 +1,10 @@
 const jsonHeaders = { "Content-Type": "application/json" };
 
 import { drizzle } from "drizzle-orm/d1";
-import { desc, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { users } from "../../src/db/schema";
 import bcrypt from "bcryptjs";
+import { getTenantSchoolId, tenantError } from "./_tenant";
 
 export const onRequestGet = async (context: any) => {
   try {
@@ -12,9 +13,12 @@ export const onRequestGet = async (context: any) => {
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "1000", 10);
     const offset = (page - 1) * limit;
+    const tenantSchoolId = getTenantSchoolId(context);
+    if (tenantSchoolId === 0) return tenantError();
+    const tenantWhere = tenantSchoolId ? eq(users.sekolahId, tenantSchoolId) : undefined;
 
     const [totalResult, result] = await Promise.all([
-      ormDb.select({ value: sql`count(*)` }).from(users),
+      ormDb.select({ value: sql`count(*)` }).from(users).where(tenantWhere),
       ormDb.select({
         id: users.id,
         username: users.username,
@@ -36,6 +40,7 @@ export const onRequestGet = async (context: any) => {
         sekolahId: users.sekolahId,
       })
       .from(users)
+      .where(tenantWhere)
       .orderBy(desc(users.updatedAt), desc(users.createdAt))
       .limit(limit)
       .offset(offset)
@@ -69,6 +74,8 @@ export const onRequestPost = async (context: any) => {
     }
 
     const ormDb = drizzle(context.env.DB);
+    const tenantSchoolId = getTenantSchoolId(context);
+    if (tenantSchoolId === 0) return tenantError();
     const passwordHash = user.password ? await bcrypt.hash(user.password, 10) : "";
     const insertData = {
       id: user.id,
@@ -84,7 +91,7 @@ export const onRequestPost = async (context: any) => {
       nis: user.nis ?? null,
       newUserSource:
         user.newUserSource !== undefined ? user.newUserSource : "sso",
-      sekolahId: user.sekolahId ?? null,
+      sekolahId: tenantSchoolId || user.sekolahId || user.sekolah_id || null,
       requestedRole: user.requestedRole ?? null,
       suratTugas: user.suratTugas ?? null,
       masaAktif: user.masaAktif ?? null,

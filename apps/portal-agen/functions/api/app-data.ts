@@ -1,6 +1,12 @@
 import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import { appState } from "../../src/db/schema";
+import {
+  filterTenantState,
+  getTenantSchoolId,
+  mergeTenantState,
+  tenantError,
+} from "./_tenant";
 
 const STATE_ID = "portal-agen:simulation:v1";
 const jsonHeaders = { "Content-Type": "application/json" };
@@ -38,6 +44,8 @@ export const onRequestGet = async (context: any) => {
     }
 
     const data: any = stateString ? JSON.parse(stateString) : {};
+    const tenantSchoolId = getTenantSchoolId(context);
+    if (tenantSchoolId === 0) return tenantError();
     let responseData = data;
 
     // Respons bootstrap hanya membawa konfigurasi publik yang dibutuhkan untuk
@@ -55,6 +63,8 @@ export const onRequestGet = async (context: any) => {
         aiProvider: data.aiProvider,
         roleAccessPermissions: data.roleAccessPermissions,
       };
+    } else if (tenantSchoolId) {
+      responseData = filterTenantState(data, tenantSchoolId);
     }
 
     return new Response(JSON.stringify({ found: true, data: responseData }), {
@@ -70,9 +80,21 @@ export const onRequestGet = async (context: any) => {
 
 export const onRequestPut = async (context: any) => {
   try {
-    const payload = await context.request.json();
+    let payload = await context.request.json();
     const rawDb = context.env.DB;
     const db = drizzle(rawDb);
+    const tenantSchoolId = getTenantSchoolId(context);
+    if (tenantSchoolId === 0) return tenantError();
+
+    if (tenantSchoolId) {
+      const existing = await db
+        .select()
+        .from(appState)
+        .where(eq(appState.id, STATE_ID))
+        .get();
+      const existingData = existing?.content ? JSON.parse(existing.content) : {};
+      payload = mergeTenantState(existingData, payload, tenantSchoolId);
+    }
 
     // Safety check: Jangan izinkan menyimpan schools kosong jika sebelumnya ada schools,
     // karena frontend mungkin mengirim payload dari fetch(lite=true)

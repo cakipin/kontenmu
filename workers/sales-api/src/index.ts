@@ -16,7 +16,7 @@ type AuthUser = {
   sub: string;
   username: string;
   role: string;
-  sekolahId?: string | null;
+  sekolahId?: string | number | null;
 };
 
 const AUTH_TOKEN_TTL_SECONDS = 24 * 60 * 60;
@@ -60,6 +60,12 @@ async function authenticate(request: Request, env: Env): Promise<AuthUser | null
 
 function hasRole(user: AuthUser | null, roles: string[]) {
   return !!user && roles.includes(user.role);
+}
+
+function tenantSchoolId(user: AuthUser | null) {
+  if (user?.role !== "sekolah") return 0;
+  const schoolId = Number(user.sekolahId);
+  return Number.isInteger(schoolId) && schoolId > 0 ? schoolId : -1;
 }
 
 function json(data: unknown, status = 200) {
@@ -328,9 +334,17 @@ export default {
 
     if (url.pathname === "/api/users" && request.method === "GET") {
       try {
-        const { results } = await env.DB.prepare(
-          "SELECT id, username, nama, role_slug, wilayah, status, kelas, nis, npsn, nuptk, nip, email, sekolah_id, picture, sso_id, requested_role, surat_tugas, masa_aktif, new_user_source, initial, color, terakhir_login, created_at, updated_at FROM users ORDER BY created_at DESC",
-        ).all();
+        const schoolId = tenantSchoolId(authUser);
+        if (schoolId === -1) return json({ success: false, error: "Tenant sekolah pada token tidak valid" }, 403);
+        const baseQuery =
+          "SELECT id, username, nama, role_slug, wilayah, status, kelas, nis, npsn, nuptk, nip, email, sekolah_id, picture, sso_id, requested_role, surat_tugas, masa_aktif, new_user_source, initial, color, terakhir_login, created_at, updated_at FROM users";
+        const query = schoolId
+          ? `${baseQuery} WHERE sekolah_id = ? ORDER BY created_at DESC`
+          : `${baseQuery} ORDER BY created_at DESC`;
+        const statement = schoolId
+          ? env.DB.prepare(query).bind(schoolId)
+          : env.DB.prepare(query);
+        const { results } = await statement.all();
         const mappedResults = results.map((row: any) => ({
           ...row,
           role: row.role_slug,
@@ -363,8 +377,11 @@ export default {
           sekolah_id,
         } = body;
 
+        const schoolId = tenantSchoolId(authUser);
+        if (schoolId === -1) return json({ success: false, error: "Tenant sekolah pada token tidak valid" }, 403);
         const safeRole = authUser ? role : "pending";
         const safeStatus = authUser ? (status || "Aktif") : "Menunggu";
+        const safeSchoolId = schoolId || sekolah_id || null;
         const passwordHash = password ? await bcrypt.hash(password, 10) : null;
 
         const result = await env.DB.prepare(
@@ -384,7 +401,7 @@ export default {
             nip || null,
             email || null,
             passwordHash,
-            sekolah_id || null,
+            safeSchoolId,
           )
           .run();
         if (!result.success) throw new Error("Insert failed silently");
@@ -423,6 +440,9 @@ export default {
           password,
           sekolah_id,
         } = body;
+        const schoolId = tenantSchoolId(authUser);
+        if (schoolId === -1) return json({ success: false, error: "Tenant sekolah pada token tidak valid" }, 403);
+        const safeSchoolId = schoolId || sekolah_id || null;
 
         const commonValues = [
           username, nama, role, wilayah || "", status || "Aktif", kelas || null,
@@ -432,11 +452,11 @@ export default {
           const passwordHash = await bcrypt.hash(password, 10);
           await env.DB.prepare(
             "UPDATE users SET username = ?, nama = ?, role_slug = ?, wilayah = ?, status = ?, kelas = ?, nis = ?, npsn = ?, nuptk = ?, nip = ?, email = ?, password = ?, sekolah_id = ? WHERE id = ?",
-          ).bind(...commonValues, passwordHash, sekolah_id || null, id).run();
+          ).bind(...commonValues, passwordHash, safeSchoolId, id).run();
         } else {
           await env.DB.prepare(
             "UPDATE users SET username = ?, nama = ?, role_slug = ?, wilayah = ?, status = ?, kelas = ?, nis = ?, npsn = ?, nuptk = ?, nip = ?, email = ?, sekolah_id = ? WHERE id = ?",
-          ).bind(...commonValues, sekolah_id || null, id).run();
+          ).bind(...commonValues, safeSchoolId, id).run();
         }
 
         return json({ success: true, message: "User berhasil diupdate" });

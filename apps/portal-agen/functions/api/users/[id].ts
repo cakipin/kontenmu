@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { eq, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { users } from "../../../src/db/schema";
+import { getTenantSchoolId, tenantError } from "../_tenant";
 
 const jsonHeaders = { "Content-Type": "application/json" };
 
@@ -19,7 +20,9 @@ export const onRequestPut = async (context: any) => {
 
     const payload = context.data?.auth || {};
     const role = String(payload.role || "");
-    const sessionSchoolId = String(payload.sekolahId || payload.sekolah_id || "");
+    const tenantSchoolId = getTenantSchoolId(context);
+    if (tenantSchoolId === 0) return tenantError();
+    const sessionSchoolId = String(tenantSchoolId || "");
     if (
       role !== "superadmin" &&
       !(role === "sekolah" && sessionSchoolId && sessionSchoolId === String(existing.sekolahId || ""))
@@ -51,7 +54,11 @@ export const onRequestPut = async (context: any) => {
       if (data[inputKey] !== undefined) updateData[columnKey] = data[inputKey];
     }
     const requestedSchoolId = data.sekolah_id ?? data.sekolahId;
-    if (requestedSchoolId !== undefined) updateData.sekolahId = requestedSchoolId || null;
+    if (tenantSchoolId) {
+      updateData.sekolahId = tenantSchoolId;
+    } else if (requestedSchoolId !== undefined) {
+      updateData.sekolahId = requestedSchoolId || null;
+    }
     if (typeof data.password === "string" && data.password.trim()) {
       updateData.password = await bcrypt.hash(data.password, 10);
     }
