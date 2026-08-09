@@ -4,7 +4,7 @@ export default function SimSekolah() {
       style={{
         position: "relative",
         minHeight: "calc(100vh - 140px)",
-        backgroundImage: 'url("/assets/ai_school.jpg")',
+        backgroundImage: 'url("/assets/ai_school.webp")',
         backgroundSize: "cover",
         backgroundPosition: "center",
         borderRadius: "20px",

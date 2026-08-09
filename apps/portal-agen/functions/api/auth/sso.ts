@@ -1,3 +1,5 @@
+import { sign } from "@tsndr/cloudflare-worker-jwt";
+
 export const onRequestPost = async (context: any) => {
   const jsonHeaders = { "Content-Type": "application/json" };
 
@@ -167,7 +169,22 @@ export const onRequestPost = async (context: any) => {
       ? existingUser.id
       : `USR-${Date.now().toString().slice(-4)}`;
 
-    return new Response(JSON.stringify({ userData }), { headers: jsonHeaders });
+    if (!context.env.JWT_SECRET) {
+      return new Response(JSON.stringify({ error: "Konfigurasi autentikasi server belum tersedia." }), {
+        status: 503,
+        headers: jsonHeaders,
+      });
+    }
+    const now = Math.floor(Date.now() / 1000);
+    const appToken = await sign({
+      sub: userData.internal_id,
+      username,
+      role: finalRole,
+      iat: now,
+      exp: now + 24 * 60 * 60,
+    }, context.env.JWT_SECRET);
+
+    return new Response(JSON.stringify({ userData, token: appToken }), { headers: jsonHeaders });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,

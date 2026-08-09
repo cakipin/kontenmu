@@ -3,6 +3,7 @@ export {
   getSession,
   getSessionTimeLeft,
   isSessionValid,
+  installAuthenticatedFetch,
   saveSession,
   SESSION_DURATION_MS,
   type AppId,

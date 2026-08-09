@@ -8,23 +8,11 @@ jobs:
   rollback-prod:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       deployments: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Git Config
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Revert Last Commit
-        run: |
-          git revert HEAD --no-edit
-          git push origin main
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -34,28 +22,18 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Build Application
-        run: |
-          echo "VITE_API_URL=https://kontenmu-prod-api.1912.workers.dev" > apps/portal-agen/.env.production
-          echo "VITE_CLIENT_ID=client_svRBFbrf9AK7GMPAAOMZrXRa" >> apps/portal-agen/.env.production
-          npm run build
+      - name: Rollback Frontend Deployment
         env:
-          VITE_API_URL: https://kontenmu-prod-api.1912.workers.dev
-      - name: Apply Production Bindings Configuration
-        run: cp apps/portal-agen/wrangler-prod.toml apps/portal-agen/wrangler.toml
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node .github/scripts/rollback-pages.mjs kontenmu-prod
 
-      - name: Deploy Frontend to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name kontenmu-prod --branch main
-          workingDirectory: apps/portal-agen
+      - name: Rollback Backend Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler rollback --env production --yes --message "Production rollback"
+        working-directory: workers/sales-api
 
-      - name: Deploy Backend Worker
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env production
-          workingDirectory: workers/sales-api
+      - name: Smoke Test Rolled Back Production
+        run: node .github/scripts/smoke-test.mjs https://kontenmu-prod.pages.dev https://kontenmu-prod-api.1912.workers.dev

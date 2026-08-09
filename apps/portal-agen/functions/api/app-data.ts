@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/d1";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { appState } from "../../src/db/schema";
 
 const STATE_ID = "portal-agen:simulation:v1";
@@ -91,17 +91,23 @@ export const onRequestPut = async (context: any) => {
 
     const content = JSON.stringify(payload);
 
-    await db.insert(appState).values({
-      id: STATE_ID,
-      content: content,
-      updatedAt: sql`CURRENT_TIMESTAMP`
-    }).onConflictDoUpdate({
-      target: appState.id,
-      set: {
-        content: content,
-        updatedAt: sql`CURRENT_TIMESTAMP`
-      }
-    });
+    // Database staging lama tidak memiliki kolom created_at yang terdapat
+    // pada schema Drizzle. Gunakan SQL yang kompatibel dengan kedua schema.
+    const updateResult = await rawDb
+      .prepare(
+        "UPDATE app_state SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      )
+      .bind(content, STATE_ID)
+      .run();
+
+    if (!updateResult.meta?.changes) {
+      await rawDb
+        .prepare(
+          "INSERT INTO app_state (id, content, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
+        )
+        .bind(STATE_ID, content)
+        .run();
+    }
 
     // Invalidate KV Cache karena data berubah
     const KV = context.env.PUCK_DATA;

@@ -233,6 +233,97 @@
   height: 16px;
 }
 
+.users-table-fixed {
+  width: 100%;
+  min-width: 1080px;
+  table-layout: fixed;
+}
+
+.user-management-card .users-table-edge-to-edge {
+  width: calc(100% + 68px);
+  margin-right: -34px;
+  margin-left: -34px;
+}
+
+.users-table-fixed th:nth-child(1) { width: 220px; }
+.users-table-fixed th:nth-child(2) { width: 250px; }
+.users-table-fixed th:nth-child(3) { width: 130px; }
+.users-table-fixed th:nth-child(4) { width: 180px; }
+.users-table-fixed th:nth-child(5) { width: 120px; }
+.users-table-fixed th:nth-child(6) { width: 80px; }
+.users-table-fixed th:nth-child(7) { width: 140px; }
+
+.users-table-fixed .users-name-text,
+.users-table-fixed .users-username-text {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.users-table-fixed tbody td {
+  font-size: 0.8rem;
+}
+
+.users-table-fixed .users-institution-cell,
+.users-table-fixed .users-last-login-cell {
+  font-size: 0.75rem !important;
+  line-height: 1.35;
+}
+
+.users-table-fixed .users-actions-column,
+.users-table-fixed .users-actions-column .action-group {
+  min-width: 140px;
+  white-space: nowrap;
+}
+
+.player-content-card .card-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.player-content-card .card-view-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #6B7280;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+@media (max-width: 768px) {
+  .player-mobile-list {
+    width: calc(100% + 32px);
+    margin-right: -16px;
+    margin-left: -16px;
+    gap: 0;
+  }
+
+  .player-content-card {
+    padding: 16px 0;
+    border: 0;
+    border-bottom: 1px solid #E5E7EB;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .player-content-card .card-header,
+  .player-content-card .card-actions-row {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .player-content-card .card-thumbnail {
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 6px;
+  }
+}
+
 /* Modal Styles */
 .modal-backdrop, .content-modal-backdrop {
   position: fixed;
@@ -304,6 +395,100 @@
   padding: 24px;
   flex: 1;
   overflow-y: auto;
+}
+
+.teacher-detail-modal {
+  max-width: 580px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle, #e2e8f0);
+}
+
+.teacher-detail-modal .modal-header {
+  padding: 22px 24px;
+}
+
+.teacher-detail-modal .modal-header p {
+  margin: 4px 0 0;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.8rem;
+}
+
+.teacher-detail-body {
+  display: grid;
+  gap: 20px;
+}
+
+.teacher-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.teacher-detail-item {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  border-radius: 10px;
+  background: var(--bg-secondary, #f8fafc);
+}
+
+.teacher-detail-item-wide {
+  grid-column: 1 / -1;
+}
+
+.teacher-detail-item span,
+.teacher-detail-label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.teacher-detail-item strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--text-primary, #0f172a);
+  font-size: 0.9rem;
+}
+
+.teacher-detail-books ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teacher-detail-books li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  border-radius: 9px;
+  color: var(--text-primary, #0f172a);
+  font-size: 0.85rem;
+}
+
+.teacher-detail-books li svg {
+  flex: 0 0 auto;
+  color: var(--primary-main, #40aef0);
+}
+
+.teacher-detail-books .teacher-detail-empty {
+  color: var(--text-secondary, #64748b);
+  font-style: italic;
+}
+
+@media (max-width: 560px) {
+  .teacher-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-detail-item-wide {
+    grid-column: auto;
+  }
 }
 
 @keyframes modal-fade-in {

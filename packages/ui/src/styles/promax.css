@@ -703,9 +703,14 @@ textarea:focus-visible {
 
 .upload-editor-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: start;
+}
+
+.upload-cover-panel,
+.upload-meta-panel {
+  width: 100%;
 }
 
 @media (max-width: 860px) {
@@ -1054,6 +1059,30 @@ textarea:focus-visible {
   }
 }
 
+@media (display-mode: standalone) and (max-width: 860px) {
+  .play-content-modal-backdrop {
+    inset: 0;
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .play-content-modal {
+    width: 100dvw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: max(12px, env(safe-area-inset-top)) 12px
+      max(12px, env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+  }
+
+  .play-content-modal .protected-preview-stage {
+    flex: 0 0 auto;
+    border-radius: 0;
+  }
+}
+
 .status-message {
   margin: 0;
   font-size: 0.875rem;
@@ -1138,6 +1167,18 @@ textarea:focus-visible {
     radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 34rem),
     radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.1), transparent 30rem),
     var(--bg-primary);
+}
+
+@media (display-mode: standalone) {
+  html,
+  body,
+  #root,
+  .admin-layout,
+  .admin-main {
+    width: 100%;
+    min-height: 100dvh;
+    height: 100dvh;
+  }
 }
 
 .admin-sidebar {
@@ -1909,13 +1950,116 @@ button.admin-nav-item {
   z-index: 2;
   padding: 6px 10px;
   border-radius: 999px;
-  color: white;
-  background: rgba(15, 23, 42, 0.72);
+  color: rgba(255, 255, 255, 0.58);
+  background: transparent;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(15, 23, 42, 0.45);
   pointer-events: none;
+}
+
+.preview-watermark-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  color: rgba(255, 255, 255, 0.2);
+  background: transparent;
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 4px rgba(15, 23, 42, 0.28);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  user-select: none;
+}
+
+.content-disclaimer {
+  display: flex;
+  width: min(100%, 620px);
+  height: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+}
+
+.content-disclaimer-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.content-disclaimer strong {
+  margin-top: 8px;
+  font-size: 1rem;
+}
+
+.content-disclaimer p {
+  max-width: 540px;
+  margin: 8px 0 14px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.content-disclaimer-button {
+  min-height: 38px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  background: #10b981;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.content-disclaimer-button:active {
+  opacity: 0.8;
+}
+
+.session-disclaimer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  padding: 20px;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.76);
+  backdrop-filter: blur(6px);
+}
+
+.session-disclaimer-panel {
+  display: flex;
+  width: min(100%, 520px);
+  padding: 28px;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  color: white;
+  background: #0f172a;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.4);
+  text-align: center;
+}
+
+.session-disclaimer-panel strong {
+  margin-top: 10px;
+  font-size: 1.1rem;
+}
+
+.session-disclaimer-panel p {
+  margin: 10px 0 18px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.88rem;
+  line-height: 1.55;
 }
 
 .preview-media {
@@ -2111,7 +2255,7 @@ button.admin-nav-item {
 
   .admin-topbar {
     min-height: 64px;
-    padding: 0 16px;
+    padding: env(safe-area-inset-top) 16px 0;
   }
 
   .topbar-kicker,

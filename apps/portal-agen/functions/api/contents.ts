@@ -21,7 +21,7 @@ export const onRequestGet = async (context: any) => {
       const limit = parseInt(url.searchParams.get("limit") || "1000", 10);
       const offset = (page - 1) * limit;
 
-      const result = await rawDb.prepare("SELECT id, judul, kategori, mapel, target, file_name, deskripsi, status, tanggal, preview_mode, thumbnail_key, protected_preview, source_url, isbn, created_at, updated_at, dilihat, total_watch_time FROM contents ORDER BY updated_at DESC, created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
+      const result = await rawDb.prepare("SELECT id, judul, kategori, mapel, bab, target, file_name, deskripsi, status, tanggal, preview_mode, thumbnail_key, protected_preview, source_url, isbn, created_at, updated_at, dilihat, total_watch_time FROM contents ORDER BY updated_at DESC, created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
       const totalResult = await rawDb.prepare("SELECT COUNT(*) as value FROM contents").first();
 
       const rowToContent = (row: any) => ({
@@ -29,6 +29,7 @@ export const onRequestGet = async (context: any) => {
         judul: row.judul,
         kategori: row.kategori,
         mapel: row.mapel,
+        bab: row.bab ?? undefined,
         target: row.target,
         fileName: row.file_name,
         deskripsi: row.deskripsi ?? undefined,
@@ -90,6 +91,7 @@ export const onRequestPost = async (context: any) => {
       judul: content.judul,
       kategori: content.kategori,
       mapel: content.mapel ?? "",
+      bab: content.bab ?? null,
       target: content.target ?? "",
       fileName: content.fileName ?? "",
       deskripsi: content.deskripsi ?? "",
@@ -108,6 +110,7 @@ export const onRequestPost = async (context: any) => {
         judul: content.judul,
         kategori: content.kategori,
         mapel: content.mapel ?? "",
+        bab: content.bab ?? null,
         target: content.target ?? "",
         fileName: content.fileName ?? "",
         deskripsi: content.deskripsi ?? "",

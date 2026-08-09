@@ -1244,6 +1244,7 @@ function AppContent() {
               <Route path="/teacher-allocation" element={<TeacherAccess />} />
               <Route path="/school-users" element={<SchoolUsers />} />
               <Route path="/library" element={<Library />} />
+              <Route path="/learning" element={<LearningHistory />} />
               <Route path="/play-content" element={<PlayKonten />} />
               <Route path="/learning-history" element={<LearningHistory />} />
               <Route path="/sim-sekolah" element={<SimSekolah />} />
@@ -1353,6 +1354,55 @@ function EditorRoute() {
   return <Editor />;
 }
 
+function SessionDisclaimerGate({ children }: { children: ReactNode }) {
+  const { session } = useAuth();
+  const disclaimerSessionKey = `kontenmu:login-disclaimer:${session?.username ?? "anonymous"}:${session?.loginAt ?? 0}`;
+  const [hasAcceptedDisclaimer, setHasAcceptedDisclaimer] = useState(() =>
+    sessionStorage.getItem(disclaimerSessionKey) === "accepted",
+  );
+
+  useEffect(() => {
+    setHasAcceptedDisclaimer(
+      sessionStorage.getItem(disclaimerSessionKey) === "accepted",
+    );
+  }, [disclaimerSessionKey]);
+
+  return (
+    <>
+      {children}
+      {!hasAcceptedDisclaimer && (
+        <div
+          className="session-disclaimer-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="session-disclaimer-title"
+        >
+          <div className="session-disclaimer-panel">
+            <span className="content-disclaimer-icon" aria-hidden="true">⚠️</span>
+            <strong id="session-disclaimer-title">Peringatan Hak Cipta</strong>
+            <p>
+              Dilarang menyalin, mengunduh, memperbanyak, atau menyebarluaskan
+              konten ini tanpa izin tertulis dari KontenMu dan/atau pemegang hak
+              cipta. Pelanggaran dapat dikenai tindakan sesuai ketentuan hukum
+              yang berlaku.
+            </p>
+            <button
+              type="button"
+              className="content-disclaimer-button"
+              onClick={() => {
+                sessionStorage.setItem(disclaimerSessionKey, "accepted");
+                setHasAcceptedDisclaimer(true);
+              }}
+            >
+              Saya Mengerti
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function AppRoutes() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -1362,7 +1412,9 @@ function AppRoutes() {
 
   return isAuthenticated ? (
     <Suspense fallback={<LoadingScreen />}>
-      <AppContent />
+      <SessionDisclaimerGate>
+        <AppContent />
+      </SessionDisclaimerGate>
     </Suspense>
   ) : (
     <Navigate to="/login" replace />

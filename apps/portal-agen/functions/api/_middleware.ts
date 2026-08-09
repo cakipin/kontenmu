@@ -1,3 +1,24 @@
+import { decode, verify } from "@tsndr/cloudflare-worker-jwt";
+
+const AUTH_VERIFY_URL = "https://kontenmu-prod-api.1912.workers.dev/api/auth/verify";
+
+async function isTokenValid(token: string, env: any) {
+  try {
+    if (env.JWT_SECRET && (await verify(token, env.JWT_SECRET))) return true;
+  } catch {
+    // Preview may have a different or unavailable secret; verify with issuer.
+  }
+  try {
+    const response = await fetch(AUTH_VERIFY_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export const onRequest = async (context: any) => {
   const { request, next } = context;
   const url = new URL(request.url);
@@ -18,70 +39,39 @@ export const onRequest = async (context: any) => {
   ) {
     return next();
   }
-
-
   // Allow OPTIONS preflight requests to pass through
   if (request.method === "OPTIONS") {
     return next();
   }
 
-  // Allow registration of new users during SSO login (from OAuthCallback)
-  // We'll trust the client for POST /api/users for now, ideally it should be signed,
-  // but since we removed the superadmin override, the risk is mitigated.
-  if (url.pathname === "/api/users" && request.method === "POST") {
-    return next();
-  }
-
-  const cookieHeader = request.headers.get("Cookie");
   let isAuthenticated = false;
-
-  if (cookieHeader) {
-    const cookies = cookieHeader
-      .split(";")
-      .reduce((acc: any, cookieString: string) => {
-        const trimmed = cookieString.trim();
-        const eqIdx = trimmed.indexOf("=");
-        if (eqIdx === -1) return acc;
-        const key = trimmed.substring(0, eqIdx).trim();
-        const val = trimmed.substring(eqIdx + 1);
-        if (key) {
-          try {
-            acc[key] = decodeURIComponent(val);
-          } catch {
-            acc[key] = val;
-          }
-          try {
-            acc[decodeURIComponent(key)] = acc[key];
-          } catch {}
-        }
-        return acc;
-      }, {});
-
-    // Try both possible cookie key formats
-    const sessionRaw =
-      cookies["kontenmu_session_portal_agen"] ||
-      cookies["kontenmu_session_portal-agen"];
-    if (sessionRaw) {
-      try {
-        const session = JSON.parse(sessionRaw);
-        if (
-          session &&
-          typeof session === "object" &&
-          session.expiresAt &&
-          Date.now() < session.expiresAt
-        ) {
-          isAuthenticated = true;
-          // You could also set context.data.user = session here for downstream use
-        }
-      } catch (e) {
-        // ignore JSON parse error
-      }
-    }
+  let authRole = "";
+  const authHeader = request.headers.get("Authorization") || "";
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const authCookie = cookieHeader
+    .split(";")
+    .map((part: string) => part.trim())
+    .find((part: string) => part.startsWith("__Host-kontenmu_auth=") || part.startsWith("kontenmu_auth="));
+  const cookieToken = authCookie ? authCookie.slice(authCookie.indexOf("=") + 1) : "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : cookieToken;
+  if (token) {
+    const valid = await isTokenValid(token, context.env);
+    isAuthenticated = !!valid;
+    if (valid) authRole = String(decode(token).payload.role || "");
   }
 
   if (!isAuthenticated) {
     return new Response(
-      JSON.stringify({ error: "Unauthorized: Session is invalid or missing" }),
+      JSON.stringify({ 
+        error: "Unauthorized: Session is invalid or missing",
+        debug: {
+          hasToken: !!token,
+          hasSecret: !!context.env.JWT_SECRET,
+          tokenStart: token ? token.substring(0, 10) : null,
+          cookieHeader: !!cookieHeader,
+          authHeader: !!authHeader
+        }
+      }),
       {
         status: 401,
         headers: {
@@ -90,6 +80,25 @@ export const onRequest = async (context: any) => {
         },
       },
     );
+  }
+
+  const allowed = (...roles: string[]) => roles.includes(authRole);
+  const isMutation = request.method !== "GET";
+  const isSchoolProfileCompletion =
+    request.method === "PUT" && /^\/api\/schools\/[^/]+$/.test(url.pathname);
+  if (
+    isMutation &&
+    url.pathname.startsWith("/api/schools") &&
+    !allowed("superadmin", "agen") &&
+    !(isSchoolProfileCompletion && allowed("sekolah"))
+  ) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { "Content-Type": "application/json" } });
+  }
+  if (isMutation && (url.pathname.startsWith("/api/contents") || url.pathname.startsWith("/api/upload")) && !allowed("superadmin", "uploader")) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { "Content-Type": "application/json" } });
+  }
+  if (isMutation && url.pathname === "/api/puck-data" && !allowed("superadmin")) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { "Content-Type": "application/json" } });
   }
 
   return next();

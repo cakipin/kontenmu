@@ -1,6 +1,6 @@
 import type { Config } from "@puckeditor/core";
 import { Link } from "react-router-dom";
-import dashboardPreview from "../assets/landing/student-content.png";
+import dashboardPreview from "../assets/landing/student-content.webp";
 import { useRef, useEffect, useState } from "react";
 
 type HeroProps = {

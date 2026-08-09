@@ -56,18 +56,26 @@ export function AuthProvider({
             ? ""
             : import.meta.env.VITE_API_URL ||
               "https://sales-api.1912.workers.dev";
-          const res = await fetch(`${apiUrl}/api/users`, { cache: "no-store" });
+          const res = await fetch(`${apiUrl}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: username.trim(), password }),
+            cache: "no-store",
+          });
           const json = await res.json();
-          if (json.success && json.data) {
-            const user = json.data.find(
-              (u: any) =>
-                u.username === username.trim() && u.password === password,
-            );
+          if (json.success && json.user && json.token) {
+            const user = json.user;
             if (user) {
               if (user.status !== "Aktif")
                 return "Akun belum aktif atau menunggu approval";
               if (allowedRoles && !allowedRoles.includes(user.role))
                 return "Akses ditolak untuk role ini";
+
+              const sessionResponse = await fetch("/api/auth/session", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${json.token}` },
+              });
+              if (!sessionResponse.ok) return "Gagal membuat sesi aman.";
 
               const now = Date.now();
               const nextSession = {
@@ -86,13 +94,14 @@ export function AuthProvider({
                 loginAt: now,
                 expiresAt: now + 24 * 60 * 60 * 1000,
                 isSso: !!user.sso_id,
+                token: json.token,
               };
 
               saveSession(appId, nextSession as any);
               setSession(nextSession as any);
               return null;
             }
-          }
+          } else if (json.error) return json.error;
         } catch (e) {
           console.error(e);
         }
@@ -100,6 +109,7 @@ export function AuthProvider({
         return "Username atau password salah.";
       },
       logout: () => {
+        void fetch("/api/auth/session", { method: "DELETE" }).catch(() => undefined);
         clearSession(appId);
         setSession(null);
       },

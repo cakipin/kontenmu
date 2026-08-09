@@ -163,6 +163,7 @@ export const mapContentRow = (row: any): SimContent => ({
   kategori: row.kategori,
   judul: row.judul,
   mapel: row.mapel,
+  bab: row.bab ?? undefined,
   target: row.target,
   fileName: row.fileName,
   deskripsi: row.deskripsi,
@@ -182,6 +183,7 @@ export interface SimContent {
   isbn?: string;
   kategori: ContentCategory;
   mapel: string;
+  bab?: number;
   target: string;
   fileName: string;
   deskripsi?: string;
@@ -655,20 +657,16 @@ export function loadRemoteAppData(): Promise<AppData | null> {
 }
 
 export async function saveAppData(data: AppData) {
-  try {
-    const res = await fetch("/api/app-data", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const errText = await res.text();
-      console.warn(
-        `Sistem gagal menyimpan perubahan data (Error ${res.status}): ${errText}`,
-      );
-    }
-  } catch (err) {
-    console.warn("Error saving app data:", err);
+  const res = await fetch("/api/app-data", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(
+      `Sistem gagal menyimpan perubahan data (Error ${res.status}): ${errText}`,
+    );
   }
 }
 

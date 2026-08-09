@@ -1,14 +1,50 @@
 import bcrypt from "bcryptjs";
+import { decode, sign, verify } from "@tsndr/cloudflare-worker-jwt";
 
 export interface Env {
   DB: D1Database;
+  JWT_SECRET: string;
 }
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
+
+type AuthUser = {
+  sub: string;
+  username: string;
+  role: string;
+  sekolahId?: string | null;
+};
+
+const AUTH_TOKEN_TTL_SECONDS = 24 * 60 * 60;
+
+function bearerToken(request: Request) {
+  const header = request.headers.get("Authorization") || "";
+  return header.startsWith("Bearer ") ? header.slice(7).trim() : null;
+}
+
+async function authenticate(request: Request, env: Env): Promise<AuthUser | null> {
+  const token = bearerToken(request);
+  if (!token || !env.JWT_SECRET) return null;
+  try {
+    const valid = await verify(token, env.JWT_SECRET);
+    if (!valid) return null;
+    const payload = decode(token).payload;
+    if (!payload.sub || !payload.role || !payload.exp || payload.exp <= Math.floor(Date.now() / 1000)) {
+      return null;
+    }
+    return payload as AuthUser;
+  } catch {
+    return null;
+  }
+}
+
+function hasRole(user: AuthUser | null, roles: string[]) {
+  return !!user && roles.includes(user.role);
+}
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -24,6 +60,108 @@ export default {
     }
 
     const url = new URL(request.url);
+    const authUser = await authenticate(request, env);
+
+    if (url.pathname === "/api/auth/login" && request.method === "POST") {
+      if (!env.JWT_SECRET) return json({ success: false, error: "Konfigurasi autentikasi server belum tersedia" }, 503);
+      try {
+        const { username, password } = (await request.json()) as { username?: string; password?: string };
+        if (!username || !password) return json({ success: false, error: "Username dan password wajib diisi" }, 400);
+
+        const user = await env.DB.prepare(
+          "SELECT id, username, nama, role_slug, wilayah, status, initial, sekolah_id, picture, sso_id, password FROM users WHERE username = ? LIMIT 1",
+        ).bind(username.trim()).first<any>();
+
+        const storedPassword = user?.password || "";
+        const passwordMatches = storedPassword.startsWith("$2")
+          ? await bcrypt.compare(password, storedPassword)
+          : storedPassword === password;
+        if (!user || !passwordMatches) return json({ success: false, error: "Username atau password salah" }, 401);
+        if (user.status !== "Aktif") return json({ success: false, error: "Akun belum aktif atau menunggu approval" }, 403);
+
+        // Upgrade legacy plaintext passwords in place after a successful login.
+        if (!storedPassword.startsWith("$2")) {
+          const passwordHash = await bcrypt.hash(password, 10);
+          await env.DB.prepare("UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+            .bind(passwordHash, user.id)
+            .run();
+        }
+
+        const now = Math.floor(Date.now() / 1000);
+        const token = await sign({
+          sub: user.id,
+          username: user.username,
+          role: user.role_slug,
+          sekolahId: user.sekolah_id,
+          iat: now,
+          exp: now + AUTH_TOKEN_TTL_SECONDS,
+        }, env.JWT_SECRET);
+
+        const { password: _password, ...safeUser } = user;
+        return json({ success: true, token, user: { ...safeUser, role: user.role_slug } });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return json({ success: false, error: message }, 500);
+      }
+    }
+
+    const isPublicRead = request.method === "GET" && [
+      "/api/sekolah", "/api/master/stats", "/api/stats", "/api/buku", "/api/books",
+    ].includes(url.pathname);
+    const isPublicRegistration = url.pathname === "/api/users" && request.method === "POST" && !authUser;
+
+    if (!isPublicRead && !isPublicRegistration && !authUser) {
+      return json({ success: false, error: "Unauthorized" }, 401);
+    }
+
+    if (url.pathname === "/api/auth/verify" && request.method === "POST") {
+      return json({ success: true });
+    }
+
+    const isSchoolMutation = url.pathname.startsWith("/api/sekolah") && request.method !== "GET";
+    const isBookMutation = url.pathname.startsWith("/api/books") && request.method !== "GET";
+    const isSalesRoute = url.pathname.startsWith("/api/sales");
+    if (isSchoolMutation && !hasRole(authUser, ["superadmin", "agen"])) return json({ success: false, error: "Forbidden" }, 403);
+    if (isBookMutation && !hasRole(authUser, ["superadmin", "uploader"])) return json({ success: false, error: "Forbidden" }, 403);
+    if (isSalesRoute && !hasRole(authUser, ["superadmin", "agen"])) return json({ success: false, error: "Forbidden" }, 403);
+    if (url.pathname === "/api/users" && request.method === "POST" && authUser && !hasRole(authUser, ["superadmin", "sekolah"])) {
+      return json({ success: false, error: "Forbidden" }, 403);
+    }
+    const userRouteMatch = url.pathname.match(/^\/api\/users\/([^/]+)(?:\/(password|picture))?$/);
+    if (userRouteMatch && request.method !== "GET") {
+      const targetId = userRouteMatch[1];
+      const action = userRouteMatch[2];
+      const isSuperadmin = hasRole(authUser, ["superadmin"]);
+      const isSelf = authUser?.sub === targetId;
+      let isSameSchool = false;
+      if (authUser?.role === "sekolah" && authUser.sekolahId) {
+        const target = await env.DB.prepare("SELECT sekolah_id FROM users WHERE id = ? LIMIT 1").bind(targetId).first<any>();
+        isSameSchool = String(target?.sekolah_id || "") === String(authUser.sekolahId);
+      }
+
+      if (request.method === "DELETE" && !isSuperadmin && !isSameSchool) {
+        return json({ success: false, error: "Forbidden" }, 403);
+      }
+      if ((action === "password" || action === "picture") && !isSuperadmin && !isSelf && !isSameSchool) {
+        return json({ success: false, error: "Forbidden" }, 403);
+      }
+      if (!action && request.method === "PUT" && !isSuperadmin && !isSameSchool && !isSelf) {
+        return json({ success: false, error: "Forbidden" }, 403);
+      }
+      if (!action && request.method === "PUT" && isSelf && !isSuperadmin && !isSameSchool) {
+        const existing = await env.DB.prepare("SELECT role_slug, sekolah_id FROM users WHERE id = ? LIMIT 1").bind(targetId).first<any>();
+        const proposed = await request.clone().json<any>();
+        if (proposed.role !== existing?.role_slug || String(proposed.sekolah_id || "") !== String(existing?.sekolah_id || "")) {
+          return json({ success: false, error: "Role dan sekolah tidak dapat diubah sendiri" }, 403);
+        }
+      }
+      if (!action && request.method === "PUT" && isSameSchool) {
+        const proposed = await request.clone().json<any>();
+        if (["superadmin", "agen", "uploader"].includes(proposed.role)) {
+          return json({ success: false, error: "Role tidak diizinkan" }, 403);
+        }
+      }
+    }
 
     if (url.pathname === "/api/sekolah" && request.method === "GET") {
       try {
@@ -167,7 +305,7 @@ export default {
     if (url.pathname === "/api/users" && request.method === "GET") {
       try {
         const { results } = await env.DB.prepare(
-          "SELECT * FROM users ORDER BY created_at DESC",
+          "SELECT id, username, nama, role_slug, wilayah, status, kelas, nis, npsn, nuptk, nip, email, sekolah_id, picture, sso_id, requested_role, surat_tugas, masa_aktif, new_user_source, initial, color, terakhir_login, created_at, updated_at FROM users ORDER BY created_at DESC",
         ).all();
         const mappedResults = results.map((row: any) => ({
           ...row,
@@ -184,7 +322,6 @@ export default {
     if (url.pathname === "/api/users" && request.method === "POST") {
       try {
         const body = (await request.json()) as any;
-        console.log("USERS POST BODY:", JSON.stringify(body));
         const id = crypto.randomUUID();
         const {
           username,
@@ -202,6 +339,10 @@ export default {
           sekolah_id,
         } = body;
 
+        const safeRole = authUser ? role : "pending";
+        const safeStatus = authUser ? (status || "Aktif") : "Menunggu";
+        const passwordHash = password ? await bcrypt.hash(password, 10) : null;
+
         const result = await env.DB.prepare(
           "INSERT INTO users (id, username, nama, role_slug, wilayah, status, kelas, nis, npsn, nuptk, nip, email, password, sekolah_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
@@ -209,20 +350,19 @@ export default {
             id,
             username,
             nama,
-            role,
+            safeRole,
             wilayah || "",
-            status || "Aktif",
+            safeStatus,
             kelas || null,
             nis || null,
             npsn || null,
             nuptk || null,
             nip || null,
             email || null,
-            password || null,
+            passwordHash,
             sekolah_id || null,
           )
           .run();
-        console.log("INSERT RESULT:", JSON.stringify(result));
         if (!result.success) throw new Error("Insert failed silently");
 
         return json({
@@ -260,26 +400,20 @@ export default {
           sekolah_id,
         } = body;
 
-        await env.DB.prepare(
-          "UPDATE users SET username = ?, nama = ?, role_slug = ?, wilayah = ?, status = ?, kelas = ?, nis = ?, npsn = ?, nuptk = ?, nip = ?, email = ?, password = ?, sekolah_id = ? WHERE id = ?",
-        )
-          .bind(
-            username,
-            nama,
-            role,
-            wilayah || "",
-            status || "Aktif",
-            kelas || null,
-            nis || null,
-            npsn || null,
-            nuptk || null,
-            nip || null,
-            email || null,
-            password || null,
-            sekolah_id || null,
-            id,
-          )
-          .run();
+        const commonValues = [
+          username, nama, role, wilayah || "", status || "Aktif", kelas || null,
+          nis || null, npsn || null, nuptk || null, nip || null, email || null,
+        ];
+        if (password) {
+          const passwordHash = await bcrypt.hash(password, 10);
+          await env.DB.prepare(
+            "UPDATE users SET username = ?, nama = ?, role_slug = ?, wilayah = ?, status = ?, kelas = ?, nis = ?, npsn = ?, nuptk = ?, nip = ?, email = ?, password = ?, sekolah_id = ? WHERE id = ?",
+          ).bind(...commonValues, passwordHash, sekolah_id || null, id).run();
+        } else {
+          await env.DB.prepare(
+            "UPDATE users SET username = ?, nama = ?, role_slug = ?, wilayah = ?, status = ?, kelas = ?, nis = ?, npsn = ?, nuptk = ?, nip = ?, email = ?, sekolah_id = ? WHERE id = ?",
+          ).bind(...commonValues, sekolah_id || null, id).run();
+        }
 
         return json({ success: true, message: "User berhasil diupdate" });
       } catch (error: unknown) {
@@ -298,8 +432,13 @@ export default {
         const body = (await request.json()) as any;
         const { newPassword } = body;
 
+        if (!newPassword || typeof newPassword !== "string") {
+          return json({ success: false, error: "Password baru wajib diisi" }, 400);
+        }
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+
         await env.DB.prepare("UPDATE users SET password = ? WHERE id = ?")
-          .bind(newPassword, id)
+          .bind(passwordHash, id)
           .run();
 
         return json({ success: true, message: "Password berhasil diubah" });

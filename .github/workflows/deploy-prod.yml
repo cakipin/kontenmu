@@ -22,6 +22,12 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Migrate and Verify Production Database
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node .github/scripts/migrate-d1.mjs KONTENMU_PROD_DB
+
       - name: Build Application
         run: |
           echo "VITE_API_URL=https://kontenmu-prod-api.1912.workers.dev" > apps/portal-agen/.env.production
@@ -33,15 +39,13 @@ jobs:
       - name: Apply Production Bindings Configuration
         run: cp apps/portal-agen/wrangler-prod.toml apps/portal-agen/wrangler.toml
 
-      - name: Deploy Frontend to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name kontenmu-prod --branch main
-          workingDirectory: apps/portal-agen
+      - name: Set Pages Authentication Secret
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: echo -n "${{ secrets.JWT_SECRET }}" | npx wrangler pages secret put JWT_SECRET --project-name kontenmu-prod
 
-      - name: Set R2 Secrets on Cloudflare Pages (Production)
+      - name: Set R2 Secrets on Cloudflare Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -49,129 +53,13 @@ jobs:
           echo -n "${{ secrets.R2_ACCESS_KEY_ID }}" | npx wrangler pages secret put R2_ACCESS_KEY_ID --project-name kontenmu-prod
           echo -n "${{ secrets.R2_SECRET_ACCESS_KEY }}" | npx wrangler pages secret put R2_SECRET_ACCESS_KEY --project-name kontenmu-prod
           echo -n "${{ secrets.R2_ACCOUNT_ID }}" | npx wrangler pages secret put R2_ACCOUNT_ID --project-name kontenmu-prod
-        continue-on-error: true
 
-      - name: Migrate Database Schema - npsn
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN npsn TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - nuptk
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN nuptk TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - nip
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN nip TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - password
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN password TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - sekolah_id
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN sekolah_id TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - app_data
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "CREATE TABLE IF NOT EXISTS app_data (id TEXT PRIMARY KEY, value TEXT); INSERT OR IGNORE INTO app_data (id, value) VALUES ('app_state', '{}');"
-        continue-on-error: true
-
-
-      - name: Migrate Database Schema - email
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN email TEXT;"
-        continue-on-error: true
-
-
-      - name: Migrate Database Schema - kelas
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN kelas TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - nis
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN nis TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - new_user_source
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN new_user_source TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - sso_id
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN sso_id TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - requested_role
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN requested_role TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - surat_tugas
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN surat_tugas TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - masa_aktif
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN masa_aktif TEXT;"
-        continue-on-error: true
-
-      - name: Migrate Database Schema - picture
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute KONTENMU_PROD_DB --remote --command "ALTER TABLE users ADD COLUMN picture TEXT;"
-        continue-on-error: true
+      - name: Set Backend Authentication Secret
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: echo -n "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --env production
+        working-directory: workers/sales-api
 
       - name: Deploy Backend Worker
         uses: cloudflare/wrangler-action@v3
@@ -180,3 +68,14 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --env production
           workingDirectory: workers/sales-api
+
+      - name: Deploy Frontend to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name kontenmu-prod --branch main
+          workingDirectory: apps/portal-agen
+
+      - name: Smoke Test Production
+        run: node .github/scripts/smoke-test.mjs https://kontenmu-prod.pages.dev https://kontenmu-prod-api.1912.workers.dev

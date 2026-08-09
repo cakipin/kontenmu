@@ -1,7 +1,50 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@repo/auth";
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
 import { useAppData } from "../data/appData";
+import AsyncSelect from "react-select/async";
+import { Camera } from "lucide-react";
+
+const normalizeSchoolProfile = (school: any) => ({
+  ...school,
+  bentuk_pendidikan: school?.bentuk_pendidikan ?? school?.jenjang,
+  status_sekolah: school?.status_sekolah ?? school?.status,
+  alamat_jalan: school?.alamat_jalan ?? school?.alamat,
+  nama_dusun: school?.nama_dusun ?? school?.dusun,
+  desa_kelurahan: school?.desa_kelurahan ?? school?.desaKelurahan,
+  nomor_telepon: school?.nomor_telepon ?? school?.telepon,
+  nomor_fax: school?.nomor_fax ?? school?.fax,
+  pd_total: school?.pd_total ?? school?.jumlahSiswa,
+  ptk_total: school?.ptk_total ?? school?.jumlahGuru,
+});
+
+const loadProfileOrganizations = async (
+  inputValue: string,
+  tingkat: number,
+  parentId?: number | null,
+) => {
+  if (!inputValue && !parentId) return [];
+  try {
+    let url = `https://staging.kawalmu.pages.dev/api/organizations?tingkat=${tingkat}&limit=100`;
+    if (inputValue) url += `&search=${encodeURIComponent(inputValue)}`;
+    if (parentId) url += `&parent_id=${parentId}`;
+    const urls = [url];
+    if (tingkat === 2) {
+      let fallback = "https://staging.kawalmu.pages.dev/api/organizations?tingkat=1&limit=100";
+      if (inputValue) fallback += `&search=${encodeURIComponent(inputValue)}`;
+      urls.push(fallback);
+    }
+    const responses = await Promise.all(urls.map((item) => fetch(item)));
+    const rows: any[] = [];
+    for (const response of responses) {
+      const json = await response.json();
+      if (json.success && Array.isArray(json.data)) rows.push(...json.data);
+    }
+    return rows.map((org) => ({ label: org.nama, value: org.nama, id: org.id }));
+  } catch {
+    return [];
+  }
+};
 
 export default function SchoolProfile() {
   const { session } = useAuth();
@@ -15,6 +58,15 @@ export default function SchoolProfile() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
+  const [isEditingMissing, setIsEditingMissing] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+  const [profileForm, setProfileForm] = useState<Record<string, string>>({});
+  const [selectedPwmId, setSelectedPwmId] = useState<number | null>(null);
+  const [selectedPdmId, setSelectedPdmId] = useState<number | null>(null);
+  const [selectedPcmId, setSelectedPcmId] = useState<number | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   const currentUser = session
     ? data.users?.find(
@@ -29,33 +81,36 @@ export default function SchoolProfile() {
   const isGuru = session?.role === "guru";
   const hasAccess = isSchoolAdmin || isStudent || isGuru;
   const schoolName = currentUser?.wilayah || "";
+  const linkedSchoolId =
+    session?.sekolahId || currentUser?.sekolahId || currentUser?.sekolah_id;
   const school = hasAccess
     ? (data.schools || []).find((s) => s.nama === schoolName)
     : null;
 
   useEffect(() => {
     if (hasAccess) {
-      fetch(`${import.meta.env.VITE_API_URL || ""}/api/users`, {
+      fetch(`/api/users?limit=2000`, {
         cache: "no-store",
       })
         .then((res) => res.json())
         .then((res) => {
-          if (res.users) setUsers(res.users);
+          if (res.data) setUsers(res.data);
         })
         .catch((err) => console.error(err));
     }
 
-    if (hasAccess && schoolName) {
+    if (hasAccess && (linkedSchoolId || schoolName)) {
       setIsLoadingSchool(true);
       fetch(
-        `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/sekolah?nama=` +
-          encodeURIComponent(schoolName),
+        linkedSchoolId
+          ? `/api/schools?id=${encodeURIComponent(linkedSchoolId)}`
+          : `/api/schools?nama=${encodeURIComponent(schoolName)}`,
         { cache: "no-store" },
       )
         .then((res) => res.json())
         .then((resData) => {
           if (resData.success && resData.data) {
-            setMasterSchool(resData.data);
+            setMasterSchool(normalizeSchoolProfile(resData.data));
           }
         })
         .catch((err) => console.error(err))
@@ -63,14 +118,27 @@ export default function SchoolProfile() {
           setIsLoadingSchool(false);
         });
     }
-  }, [hasAccess, schoolName]);
+  }, [hasAccess, linkedSchoolId, schoolName]);
+
+  useEffect(() => {
+    if (!masterSchool) return;
+    const fields = [
+      "nama", "npsn", "jenjang", "status", "alamat", "rt", "rw", "dusun",
+      "desaKelurahan", "kecamatan", "kabupaten", "provinsi", "telepon", "fax",
+      "email", "website", "akreditasi", "logoUrl", "gmapUrl", "prm", "pcm",
+      "pdm", "pwm", "lintang", "bujur",
+    ];
+    setProfileForm(
+      Object.fromEntries(fields.map((key) => [key, String(masterSchool[key] ?? "")])),
+    );
+  }, [masterSchool]);
 
   useEffect(() => {
     if (searchQuery.length >= 3) {
       setIsSearching(true);
       const timer = setTimeout(() => {
         fetch(
-          `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/sekolah?search=` +
+          `/api/schools?search=` +
             encodeURIComponent(searchQuery),
         )
           .then((res) => res.json())
@@ -125,6 +193,86 @@ export default function SchoolProfile() {
     }
 
     setIsLinking(false);
+  };
+
+  const profileFields = [
+    ["alamat", "Alamat Lengkap"],
+    ["rt", "RT"],
+    ["rw", "RW"],
+    ["dusun", "Dusun"],
+    ["desaKelurahan", "Desa/Kelurahan"],
+    ["kecamatan", "Kecamatan"],
+    ["kabupaten", "Kabupaten/Kota"],
+    ["provinsi", "Provinsi"],
+    ["telepon", "Nomor Telepon"],
+    ["fax", "Nomor Fax"],
+    ["email", "Email Sekolah"],
+    ["website", "Website"],
+    ["pwm", "PWM"],
+    ["pdm", "PDM"],
+    ["pcm", "PCM"],
+    ["prm", "PRM"],
+    ["lintang", "Lintang"],
+    ["bujur", "Bujur"],
+    ["gmapUrl", "Tautan Google Maps"],
+  ] as const;
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !masterSchool?.id) return;
+    setProfileMessage("");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setProfileMessage("Logo harus berformat JPG, PNG, atau WebP.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setProfileMessage("Ukuran logo maksimal 2 MB.");
+      return;
+    }
+    setIsUploadingLogo(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const response = await fetch(`/api/school-logo/${masterSchool.id}`, { method: "POST", body });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "Upload logo gagal.");
+      setMasterSchool((current: any) => ({ ...current, logoUrl: result.url }));
+      setProfileForm((current) => ({ ...current, logoUrl: result.url }));
+      setProfileMessage("Logo sekolah berhasil diperbarui.");
+    } catch (error) {
+      setProfileMessage(error instanceof Error ? error.message : "Upload logo gagal.");
+    } finally {
+      setIsUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  };
+
+  const saveMissingProfile = async () => {
+    if (!masterSchool?.id) return;
+    setIsSavingProfile(true);
+    setProfileMessage("");
+    try {
+      const payload = Object.fromEntries(
+        profileFields.map(([key]) => [key, String(profileForm[key] ?? "").trim()]),
+      );
+      const response = await fetch(`/api/schools/${masterSchool.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Gagal menyimpan profil sekolah.");
+      }
+      const refreshed = await fetch(`/api/schools?id=${masterSchool.id}`, { cache: "no-store" }).then((res) => res.json());
+      if (refreshed.success) setMasterSchool(normalizeSchoolProfile(refreshed.data));
+      setIsEditingMissing(false);
+      setProfileMessage("Data sekolah berhasil dilengkapi.");
+    } catch (error) {
+      setProfileMessage(error instanceof Error ? error.message : "Gagal menyimpan profil sekolah.");
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   return (
@@ -207,8 +355,26 @@ export default function SchoolProfile() {
                 ></div>
 
                 <div style={{ position: "relative", zIndex: 10 }}>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleLogoUpload}
+                    style={{ display: "none" }}
+                  />
                   <div
+                    role={isSchoolAdmin ? "button" : undefined}
+                    tabIndex={isSchoolAdmin ? 0 : undefined}
+                    title={isSchoolAdmin ? "Ubah logo sekolah" : undefined}
+                    onClick={() => isSchoolAdmin && !isUploadingLogo && logoInputRef.current?.click()}
+                    onKeyDown={(event) => {
+                      if (isSchoolAdmin && !isUploadingLogo && (event.key === "Enter" || event.key === " ")) {
+                        event.preventDefault();
+                        logoInputRef.current?.click();
+                      }
+                    }}
                     style={{
+                      position: "relative",
                       width: "4rem",
                       height: "4rem",
                       background: "#eff6ff",
@@ -221,9 +387,20 @@ export default function SchoolProfile() {
                       fontSize: "1.5rem",
                       boxShadow: "inset 0 2px 4px 0 rgba(0,0,0,0.06)",
                       border: "1px solid #dbeafe",
+                      cursor: isSchoolAdmin && !isUploadingLogo ? "pointer" : "default",
+                      opacity: isUploadingLogo ? 0.55 : 1,
                     }}
                   >
-                    <i className="fa-solid fa-school"></i>
+                    {masterSchool.logoUrl ? (
+                      <img src={masterSchool.logoUrl} alt={`Logo ${masterSchool.nama}`} style={{ width: "100%", height: "100%", borderRadius: "inherit", objectFit: "cover" }} />
+                    ) : (
+                      <i className="fa-solid fa-school"></i>
+                    )}
+                    {isSchoolAdmin && (
+                      <span style={{ position: "absolute", right: "-3px", bottom: "-3px", width: "22px", height: "22px", borderRadius: "9999px", background: "#0ea5e9", color: "white", display: "grid", placeItems: "center", boxShadow: "0 2px 5px rgba(0,0,0,.22)" }}>
+                        <Camera size={12} />
+                      </span>
+                    )}
                   </div>
                   <h2
                     style={{
@@ -637,6 +814,165 @@ export default function SchoolProfile() {
                   </div>
                 </div>
               </div>
+
+              <GlassCard style={{ padding: "24px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    gap: "16px",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <div>
+                    <h3 style={{ margin: 0, color: "var(--text-primary)", fontSize: "1rem" }}>
+                      Data Lengkap Sekolah
+                    </h3>
+                    <p style={{ margin: "5px 0 0", color: "var(--text-secondary)", fontSize: "0.8rem" }}>
+                      Data yang dapat dikelola admin sekolah.
+                    </p>
+                  </div>
+                  {isSchoolAdmin && !isEditingMissing && (
+                    <button
+                      type="button"
+                      className="button-promax"
+                      onClick={() => {
+                        setProfileMessage("");
+                        setIsEditingMissing(true);
+                      }}
+                    >
+                      Edit Data
+                    </button>
+                  )}
+                </div>
+
+                {profileMessage && (
+                  <div
+                    className={`status-message ${profileMessage.includes("berhasil") ? "success" : "error"}`}
+                    style={{ marginBottom: "16px" }}
+                  >
+                    {profileMessage}
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                    gap: "14px",
+                  }}
+                >
+                  {profileFields.map(([key, label]) => {
+                    const currentValue = masterSchool[key];
+                    const isMissing =
+                      currentValue === null ||
+                      currentValue === undefined ||
+                      String(currentValue).trim() === "";
+                    const canEdit = isSchoolAdmin && isEditingMissing;
+                    const isOrganizationField = ["pwm", "pdm", "pcm", "prm"].includes(key);
+                    return (
+                      <label key={key} style={{ display: "grid", gap: "6px", minWidth: 0 }}>
+                        <span style={{ color: "var(--text-secondary)", fontSize: "0.75rem", fontWeight: 600 }}>
+                          {label}
+                        </span>
+                        {canEdit && isOrganizationField ? (
+                          <AsyncSelect
+                            key={`${key}-${selectedPwmId || "all"}-${selectedPdmId || "all"}-${selectedPcmId || "all"}`}
+                            cacheOptions
+                            defaultOptions
+                            placeholder={`Cari ${label}...`}
+                            loadOptions={(input) => {
+                              if (key === "pwm") return loadProfileOrganizations(input, 2);
+                              if (key === "pdm") return loadProfileOrganizations(input, 3, selectedPwmId);
+                              if (key === "pcm") return loadProfileOrganizations(input, 4, selectedPdmId);
+                              return loadProfileOrganizations(input, 5, selectedPcmId);
+                            }}
+                            value={profileForm[key] ? { label: profileForm[key], value: profileForm[key] } : null}
+                            onChange={(selected: any) => {
+                              const value = selected?.value || "";
+                              if (key === "pwm") {
+                                setSelectedPwmId(selected?.id || null);
+                                setSelectedPdmId(null);
+                                setSelectedPcmId(null);
+                                setProfileForm((current) => ({ ...current, pwm: value, pdm: "", pcm: "", prm: "" }));
+                              } else if (key === "pdm") {
+                                setSelectedPdmId(selected?.id || null);
+                                setSelectedPcmId(null);
+                                setProfileForm((current) => ({ ...current, pdm: value, pcm: "", prm: "" }));
+                              } else if (key === "pcm") {
+                                setSelectedPcmId(selected?.id || null);
+                                setProfileForm((current) => ({ ...current, pcm: value, prm: "" }));
+                              } else {
+                                setProfileForm((current) => ({ ...current, prm: value }));
+                              }
+                            }}
+                            className="react-select-container"
+                            classNamePrefix="react-select"
+                            isClearable
+                            isDisabled={
+                              (key === "pdm" && !selectedPwmId) ||
+                              (key === "pcm" && !selectedPdmId) ||
+                              (key === "prm" && !selectedPcmId)
+                            }
+                            noOptionsMessage={({ inputValue }) =>
+                              inputValue ? "Tidak ditemukan" : "Ketik untuk mencari..."
+                            }
+                          />
+                        ) : canEdit ? (
+                          <input
+                            className="input-control"
+                            value={profileForm[key] || ""}
+                            onChange={(event) =>
+                              setProfileForm((current) => ({
+                                ...current,
+                                [key]: event.target.value,
+                              }))
+                            }
+                            placeholder={`Lengkapi ${label.toLowerCase()}`}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              minHeight: "42px",
+                              padding: "10px 12px",
+                              border: "1px solid var(--border-subtle)",
+                              borderRadius: "8px",
+                              background: "var(--bg-tertiary)",
+                              color: isMissing ? "var(--text-secondary)" : "var(--text-primary)",
+                              fontSize: "0.85rem",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {isMissing ? "Belum diisi" : String(currentValue)}
+                          </div>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {isEditingMissing && (
+                  <div className="button-row" style={{ marginTop: "20px", justifyContent: "flex-end" }}>
+                    <button
+                      type="button"
+                      className="action-button"
+                      onClick={() => setIsEditingMissing(false)}
+                      disabled={isSavingProfile}
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="button"
+                      className="button-promax"
+                      onClick={saveMissingProfile}
+                      disabled={isSavingProfile}
+                    >
+                      {isSavingProfile ? "Menyimpan..." : "Simpan Data"}
+                    </button>
+                  </div>
+                )}
+              </GlassCard>
             </>
           ) : hasAccess ? (
             <GlassCard

@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "@repo/auth";
-import { Files, Play, Gamepad2, Image as ImageIcon, BookOpen, CheckCircle2, XCircle } from "lucide-react";
+import { Files, Play, Gamepad2, Image as ImageIcon, BookOpen, CheckCircle2, XCircle, Eye } from "lucide-react";
 import Select from "react-select";
 import AsyncSelect from "react-select/async";
 
@@ -27,12 +27,15 @@ import {
   type SimContent,
   type SimSchoolUser,
   formatCurrency,
+  formatNumber,
   getBook,
   getSchool,
   nextId,
   useAppData,
   getSchoolLevel,
 } from "../data/appData";
+
+export const FEATURE_PAGES_BUILD = "2026-08-09-cache-recovery-1";
 
 const contentCategories: ContentCategory[] = [
   "Teks",
@@ -1081,8 +1084,9 @@ export function UploadContent() {
   ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   const [isbn, setIsbn] = useState("");
   const [judul, setJudul] = useState("");
-  const [kategori, setKategori] = useState<ContentCategory>("Teks");
+  const [kategori, setKategori] = useState<ContentCategory>("Video");
   const [mapel, setMapel] = useState("");
+  const [bab, setBab] = useState("");
   const [target, setTarget] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -1133,6 +1137,7 @@ export function UploadContent() {
     setKategori(existing.kategori);
     setIsbn(existing.isbn ?? "");
     setMapel(existing.mapel);
+    setBab(existing.bab ? String(existing.bab) : "");
     setTarget(existing.target);
     setDeskripsi(existing.deskripsi ?? "");
     setThumbnailUrl(existing.thumbnailUrl ?? "");
@@ -1142,9 +1147,10 @@ export function UploadContent() {
   const clearContentForm = () => {
     setEditingContentId(null);
     setJudul("");
-    setKategori("Teks");
+    setKategori("Video");
     setIsbn("");
     setMapel("");
+    setBab("");
     setTarget("");
     setDeskripsi("");
     setThumbnailUrl("");
@@ -1351,6 +1357,7 @@ export function UploadContent() {
         judul: judul.trim(),
         kategori,
         mapel: mapel.trim() || "Umum",
+        bab: bab ? Number(bab) : undefined,
         target: target.trim() || "Semua jenjang",
         fileName: finalFileName || `${judul.trim()}.bin`,
         deskripsi: deskripsi.trim() || undefined,
@@ -1745,6 +1752,19 @@ export function UploadContent() {
                     ))}
                   </select>
                 </label>
+                <label>
+                  Bab
+                  <select
+                    className="input-control"
+                    value={bab}
+                    onChange={(event) => setBab(event.target.value)}
+                  >
+                    <option value="">Tanpa Bab</option>
+                    {Array.from({ length: 10 }, (_, index) => index + 1).map((item) => (
+                      <option key={item} value={item}>Bab {item}</option>
+                    ))}
+                  </select>
+                </label>
                 <label style={{ gridColumn: "1 / -1" }}>
                   Kelas
                   <select
@@ -1878,6 +1898,7 @@ export function PlayKonten() {
   const [editingContent, setEditingContent] = useState<SimContent | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editCategory, setEditCategory] = useState<ContentCategory>("Teks");
+  const [editBab, setEditBab] = useState("");
   const [editMapel, setEditMapel] = useState("");
   const [editTarget, setEditTarget] = useState("");
   const [editIsbn, setEditIsbn] = useState("");
@@ -1917,6 +1938,13 @@ export function PlayKonten() {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 768,
   );
+  const [isStandalonePwa, setIsStandalonePwa] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      (window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as Navigator & { standalone?: boolean }).standalone ===
+          true),
+  );
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
     const handler = (e: MediaQueryListEvent | MediaQueryList) =>
@@ -1928,6 +1956,19 @@ export function PlayKonten() {
         "change",
         handler as (e: MediaQueryListEvent) => void,
       );
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(display-mode: standalone)");
+    const syncStandalone = () =>
+      setIsStandalonePwa(
+        mq.matches ||
+          (window.navigator as Navigator & { standalone?: boolean })
+            .standalone === true,
+      );
+    syncStandalone();
+    mq.addEventListener("change", syncStandalone);
+    return () => mq.removeEventListener("change", syncStandalone);
   }, []);
 
   useEffect(() => {
@@ -2031,6 +2072,7 @@ export function PlayKonten() {
     setEditingContent(content);
     setEditTitle(content.judul);
     setEditCategory(content.kategori);
+    setEditBab(content.bab ? String(content.bab) : "");
     setEditMapel(content.mapel);
     setEditTarget(content.target);
     setEditIsbn(content.isbn || "");
@@ -2082,6 +2124,7 @@ export function PlayKonten() {
           ...editingContent,
           judul: editTitle.trim(),
           kategori: editCategory,
+          bab: editBab ? Number(editBab) : null,
           mapel: editMapel.trim() || "Umum",
           target: editTarget.trim() || "Umum",
           thumbnailUrl: finalThumbnailUrl,
@@ -2102,6 +2145,7 @@ export function PlayKonten() {
                 ...c,
                 judul: editTitle.trim(),
                 kategori: editCategory,
+                bab: editBab ? Number(editBab) : undefined,
                 mapel: editMapel.trim() || "Umum",
                 target: editTarget.trim() || "Umum",
                 thumbnailUrl: finalThumbnailUrl,
@@ -2324,7 +2368,7 @@ export function PlayKonten() {
                         color: "var(--text-secondary)",
                       }}
                     >
-                      {content.mapel}
+                      {content.mapel}{content.bab ? ` · Bab ${content.bab}` : ""}
                     </div>
                   </td>
                   <td>
@@ -2452,7 +2496,7 @@ export function PlayKonten() {
                 <div key={content.id} className="player-content-card">
                   <div className="card-header">
                     <div className="card-title">{content.judul}</div>
-                    <div className="card-subtitle">{content.mapel}</div>
+                    <div className="card-subtitle">{content.mapel}{content.bab ? ` · Bab ${content.bab}` : ""}</div>
                   </div>
                   <div
                     className="card-thumbnail"
@@ -2474,7 +2518,7 @@ export function PlayKonten() {
                         objectFit: "cover",
                       }}
                     />
-                    {isAutoVideo && (
+                    {isAutoVideo && !isStandalonePwa && (
                       <video
                         src={`${content.sourceUrl}#t=2`}
                         style={{
@@ -2500,38 +2544,39 @@ export function PlayKonten() {
                     </div>
                   </div>
                   <div
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      marginTop: 10,
-                      justifyContent: "flex-end",
-                    }}
+                    className="card-actions-row"
                   >
-                    <button
-                      type="button"
-                      className="card-action-btn edit"
-                      aria-label={`Edit ${content.judul}`}
-                      title="Edit"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditModal(content);
-                      }}
-                    >
-                      <ActionSvg name="edit" />
-                    </button>
-                    <button
-                      type="button"
-                      className="card-action-btn play"
-                      aria-label={`Putar ${content.judul}`}
-                      title="Putar"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedContentId(content.id);
-                        setPlayingContent(content);
-                      }}
-                    >
-                      <ActionSvg name="play" />
-                    </button>
+                    <span className="card-view-count">
+                      <Eye size={14} aria-hidden="true" />
+                      <span>{formatNumber(content.dilihat ?? 0)}</span>
+                    </span>
+                    <div className="card-actions">
+                      <button
+                        type="button"
+                        className="card-action-btn edit"
+                        aria-label={`Edit ${content.judul}`}
+                        title="Edit"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(content);
+                        }}
+                      >
+                        <ActionSvg name="edit" />
+                      </button>
+                      <button
+                        type="button"
+                        className="card-action-btn play"
+                        aria-label={`Putar ${content.judul}`}
+                        title="Putar"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedContentId(content.id);
+                          setPlayingContent(content);
+                        }}
+                      >
+                        <ActionSvg name="play" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -2645,6 +2690,20 @@ export function PlayKonten() {
                     <option key={category} value={category}>
                       {category}
                     </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Bab
+                <select
+                  className="input-control"
+                  value={editBab}
+                  onChange={(event) => setEditBab(event.target.value)}
+                  disabled={isSaving}
+                >
+                  <option value="">Tanpa Bab</option>
+                  {Array.from({ length: 10 }, (_, index) => index + 1).map((item) => (
+                    <option key={item} value={item}>Bab {item}</option>
                   ))}
                 </select>
               </label>
@@ -4254,7 +4313,7 @@ export function Inventory() {
                         color: "var(--text-secondary)",
                       }}
                     >
-                      {content.mapel}
+                      {content.mapel}{content.bab ? ` · Bab ${content.bab}` : ""}
                     </div>
                   </td>
                   <td>
@@ -4350,7 +4409,7 @@ export function Inventory() {
                 <div key={content.id} className="player-content-card">
                   <div className="card-header">
                     <div className="card-title">{content.judul}</div>
-                    <div className="card-subtitle">{content.mapel}</div>
+                    <div className="card-subtitle">{content.mapel}{content.bab ? ` · Bab ${content.bab}` : ""}</div>
                   </div>
                   <div
                     className="card-thumbnail"
@@ -4632,39 +4691,37 @@ export function Allocation() {
   );
   const [previewAllocation, setPreviewAllocation] = useState<any>(null);
 
-  const allocate = (event: FormEvent) => {
+  const allocate = async (event: FormEvent) => {
     event.preventDefault();
-    setData((current) => {
-      const schoolId = 1;
+    if (!studentUsername || !isbn) {
+      setMessage("Silakan pilih siswa dan buku.");
+      return;
+    }
+
+    const isDuplicate = data.allocations.some(
+      (item) =>
+        item.id !== editingAllocationId &&
+        item.studentUsername === studentUsername &&
+        item.isbn === isbn,
+    );
+    if (isDuplicate) {
+      setMessage("Siswa sudah punya akses buku ini.");
+      return;
+    }
+
+    try {
+      await setData((current) => {
 
       if (editingAllocationId) {
-        const isDuplicate = current.allocations.some(
-          (a) =>
-            a.id !== editingAllocationId &&
-            a.studentUsername === studentUsername &&
-            a.isbn === isbn,
-        );
-        if (isDuplicate) {
-          setMessage("Siswa sudah punya akses buku ini.");
-          return current;
-        }
-
         return {
           ...current,
           allocations: current.allocations.map((a) =>
-            a.id === editingAllocationId ? { ...a, studentUsername, isbn } : a,
+            a.id === editingAllocationId
+              ? { ...a, studentUsername, isbn, schoolId }
+              : a,
           ),
         };
       } else {
-        const duplicate = current.allocations.some(
-          (item) =>
-            item.studentUsername === studentUsername && item.isbn === isbn,
-        );
-        if (duplicate) {
-          setMessage("Siswa sudah punya akses buku ini.");
-          return current;
-        }
-
         return {
           ...current,
           allocations: [
@@ -4694,21 +4751,25 @@ export function Allocation() {
               ],
         };
       }
-    });
+      });
 
-    setMessage(
-      editingAllocationId
-        ? "Akses siswa berhasil diperbarui."
-        : "Akses siswa berhasil dialokasikan.",
-    );
-
-    if (editingAllocationId) {
-      setEditingAllocationId(null);
-      setStudentUsername(
-        users.filter((u) => u.role === "siswa")[0]?.username || "",
+      setMessage(
+        editingAllocationId
+          ? "Akses siswa berhasil diperbarui."
+          : "Akses siswa berhasil dialokasikan.",
       );
-      setIsbn("");
-      setBookSearchQuery("");
+
+      if (editingAllocationId) {
+        setEditingAllocationId(null);
+        setStudentUsername(
+          users.filter((u) => u.role === "siswa")[0]?.username || "",
+        );
+        setIsbn("");
+        setBookSearchQuery("");
+      }
+    } catch (error) {
+      console.error("Gagal menyimpan alokasi siswa:", error);
+      setMessage("Alokasi gagal disimpan. Silakan coba lagi.");
     }
   };
 
@@ -5335,6 +5396,7 @@ export function TeacherAccess() {
   }, [allBooks]);
 
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
+  const [viewingTeacher, setViewingTeacher] = useState<any>(null);
   const [selectedMapel, setSelectedMapel] = useState<string>("");
   const [selectedBuku, setSelectedBuku] = useState<any[]>([]);
   const [message, setMessage] = useState("");
@@ -5362,18 +5424,15 @@ export function TeacherAccess() {
 
     try {
       const payload = { ...editingTeacher, kelas: selectedMapel };
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}`}/api/users/${editingTeacher.id}`,
-        {
+      const res = await fetch(`/api/users/${editingTeacher.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        },
-      );
+        });
       const json = await res.json();
       if (json.success) {
         if (selectedBuku && selectedBuku.length > 0) {
-          setData((current) => {
+          await setData((current) => {
             const newAllocations = [...current.allocations];
             selectedBuku.forEach((b: any) => {
               const duplicate = newAllocations.some(
@@ -5386,7 +5445,7 @@ export function TeacherAccess() {
                   id: "ALC" + Date.now() + Math.random(),
                   studentUsername: editingTeacher.username,
                   isbn: b.value,
-                  schoolId: current.allocations[0]?.schoolId || 1,
+                  schoolId,
                   tanggal: new Date().toISOString().slice(0, 10),
                 });
               }
@@ -5404,7 +5463,7 @@ export function TeacherAccess() {
         setMessage(json.error || "Gagal menyimpan data.");
       }
     } catch (e: any) {
-      setMessage("Terjadi kesalahan koneksi.");
+      setMessage(e instanceof Error ? e.message : "Terjadi kesalahan koneksi.");
     } finally {
       setIsSubmitting(false);
     }
@@ -5512,6 +5571,78 @@ export function TeacherAccess() {
                 </ButtonPromax>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {viewingTeacher && (
+        <div
+          className="modal-backdrop"
+          style={{ zIndex: 99999 }}
+          onClick={() => setViewingTeacher(null)}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Preview Alokasi Guru</h3>
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => setViewingTeacher(null)}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "auto 1fr",
+                  gap: "16px 24px",
+                  alignItems: "start",
+                  fontSize: "0.95rem",
+                }}
+              >
+                <div style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
+                  Guru
+                </div>
+                <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                  {viewingTeacher.nama}
+                </div>
+
+                <div style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
+                  Username
+                </div>
+                <div style={{ fontWeight: 500, color: "var(--text-primary)" }}>
+                  {viewingTeacher.username}
+                </div>
+
+                <div style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
+                  Mata Pelajaran
+                </div>
+                <div style={{ fontWeight: 500, color: "var(--text-primary)" }}>
+                  {viewingTeacher.kelas || "-"}
+                </div>
+
+                <div style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
+                  Buku Spesifik
+                </div>
+                <div style={{ display: "grid", gap: "8px" }}>
+                  {data.allocations
+                    .filter((a) => a.studentUsername === viewingTeacher.username)
+                    .map((a) => {
+                      const book = allBooks.find((b) => b.isbn === a.isbn);
+                      return (
+                        <div key={a.id} style={{ fontWeight: 500, color: "var(--text-primary)" }}>
+                          {book?.judul || a.isbn}
+                        </div>
+                      );
+                    })}
+                  {!data.allocations.some(
+                    (a) => a.studentUsername === viewingTeacher.username,
+                  ) && <div style={{ color: "var(--text-secondary)" }}>-</div>}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -5643,6 +5774,15 @@ export function TeacherAccess() {
                   <button
                     type="button"
                     className="icon-action-button"
+                    title="Lihat Akses"
+                    aria-label={`Lihat akses ${teacher.nama}`}
+                    onClick={() => setViewingTeacher(teacher)}
+                  >
+                    <Eye size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-action-button"
                     title="Edit Akses"
                     onClick={() => handleEdit(teacher)}
                   >
@@ -5724,12 +5864,32 @@ export function Library() {
     if (!session) return [];
 
     if (session.role === "siswa") {
+      const sessionSchoolId = session.sekolahId || (session as any).sekolah_id;
+      const studentSchool = sessionSchoolId
+        ? data.schools.find((school: any) => String(school.id) === String(sessionSchoolId))
+        : null;
+      const schoolLevel = getSchoolLevel(
+        studentSchool?.nama || (session as any).wilayah || "",
+      ).toLowerCase();
+      const matchesSchoolLevel = (target: string) => {
+        const normalizedTarget = String(target || "").toLowerCase();
+        if (!schoolLevel || !normalizedTarget || normalizedTarget === "umum" || normalizedTarget.includes("semua")) return true;
+        if (schoolLevel === "sd/mi") return normalizedTarget.includes("sd") || normalizedTarget.includes("mi");
+        if (schoolLevel === "smp/mts") return normalizedTarget.includes("smp") || normalizedTarget.includes("mts");
+        if (schoolLevel === "sma/ma/smk") return normalizedTarget.includes("sma") || normalizedTarget.includes("ma") || normalizedTarget.includes("smk");
+        return false;
+      };
       const allocatedIsbns = new Set(
         data.allocations
           .filter((a) => a.studentUsername === session.username)
           .map((a) => a.isbn),
       );
-      return data.contents.filter((c) => c.isbn && allocatedIsbns.has(c.isbn));
+      return data.contents.filter(
+        (content) =>
+          content.isbn &&
+          allocatedIsbns.has(content.isbn) &&
+          matchesSchoolLevel(content.target),
+      );
     }
 
     if (session.role === "guru") {
@@ -5872,7 +6032,7 @@ export function Library() {
                         color: "var(--text-secondary)",
                       }}
                     >
-                      {content.mapel}
+                      {content.mapel}{content.bab ? ` · Bab ${content.bab}` : ""}
                     </div>
                   </td>
                   <td>
@@ -5946,7 +6106,7 @@ export function Library() {
                 <div key={content.id} className="player-content-card">
                   <div className="card-header">
                     <div className="card-title">{content.judul}</div>
-                    <div className="card-subtitle">{content.mapel}</div>
+                    <div className="card-subtitle">{content.mapel}{content.bab ? ` · Bab ${content.bab}` : ""}</div>
                   </div>
                   <div
                     className="card-thumbnail"
@@ -6042,7 +6202,7 @@ export function Library() {
               <ContentPlayerStage content={playingContent} />
               <RelatedContents
                 currentContent={playingContent}
-                allContents={data.contents}
+                allContents={libraryContents}
                 onPlay={setPlayingContent}
               />
             </div>
@@ -6747,7 +6907,8 @@ function ContentPlayerStage({
       className={`protected-preview-stage ${featured ? "featured" : ""}`}
       onContextMenu={(event) => event.preventDefault()}
     >
-      <div className="preview-watermark">KontenMu Protected Preview</div>
+      <div className="preview-watermark">KontenMu Protected</div>
+      <div className="preview-watermark-center">KontenMu</div>
       <button
         type="button"
         className={`player-fullscreen-button ${isFullscreen ? "active" : ""}`}
@@ -6764,6 +6925,7 @@ function ContentPlayerStage({
           controls
           controlsList="nodownload noplaybackrate noremoteplayback"
           disablePictureInPicture
+          disableRemotePlayback
           playsInline
           preload="auto"
           poster={thumbnailForContent(content)}
@@ -6926,13 +7088,19 @@ function Progress({ value }: { value: number }) {
   );
 }
 
-const loadOrganizations = async (inputValue: string, tingkat: number) => {
-  if (!inputValue) return [];
+const loadOrganizations = async (inputValue: string, tingkat: number, parentId?: number | null) => {
+  if (!inputValue && !parentId) return [];
   try {
-    const urls = [`https://staging.kawalmu.pages.dev/api/organizations?tingkat=${tingkat}&limit=1000`];
+    let baseUrl = `https://staging.kawalmu.pages.dev/api/organizations?tingkat=${tingkat}&limit=100`;
+    if (inputValue) baseUrl += `&search=${encodeURIComponent(inputValue)}`;
+    if (parentId) baseUrl += `&parent_id=${parentId}`;
+
+    const urls = [baseUrl];
     // Workaround: PWM data in the API sometimes ends up in tingkat=1 (e.g. "Jawa Timur")
     if (tingkat === 2) {
-      urls.push(`https://staging.kawalmu.pages.dev/api/organizations?tingkat=1&limit=100`);
+      let pwmFallback = `https://staging.kawalmu.pages.dev/api/organizations?tingkat=1&limit=100`;
+      if (inputValue) pwmFallback += `&search=${encodeURIComponent(inputValue)}`;
+      urls.push(pwmFallback);
     }
 
     const responses = await Promise.all(urls.map(url => fetch(url)));
@@ -6945,14 +7113,10 @@ const loadOrganizations = async (inputValue: string, tingkat: number) => {
       }
     }
 
-    const lowerInput = inputValue.toLowerCase();
-    const filteredData = allData.filter((org: any) => 
-      org.nama.toLowerCase().includes(lowerInput)
-    );
-
-    return filteredData.map((org: any) => ({
+    return allData.map((org: any) => ({
       label: org.nama,
-      value: org.nama
+      value: org.nama,
+      id: org.id
     }));
   } catch (error) {
     console.error("Error fetching organizations", error);
@@ -6960,6 +7124,8 @@ const loadOrganizations = async (inputValue: string, tingkat: number) => {
   }
 };
 export function MasterSekolah() {
+  const { session } = useAuth();
+  const isSuperadmin = session?.role === "superadmin";
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [schools, setSchools] = useState<any[]>([]);
@@ -6974,6 +7140,9 @@ export function MasterSekolah() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedPwmId, setSelectedPwmId] = useState<number | null>(null);
+  const [selectedPdmId, setSelectedPdmId] = useState<number | null>(null);
+  const [selectedPcmId, setSelectedPcmId] = useState<number | null>(null);
   const [formSchool, setFormSchool] = useState({
     npsn: "",
     nama: "",
@@ -7017,6 +7186,9 @@ export function MasterSekolah() {
       status: "Aktif",
     });
     setEditingSchoolId(null);
+    setSelectedPwmId(null);
+    setSelectedPdmId(null);
+    setSelectedPcmId(null);
     setErrorMessage("");
   };
 
@@ -7055,6 +7227,18 @@ export function MasterSekolah() {
 
   const handleSaveSchool = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validasi manual agar muncul pesan error yang jelas (menghindari error diam HTML5)
+    if (!formSchool.npsn || !formSchool.nama) {
+      setErrorMessage("NPSN dan Nama Sekolah wajib diisi!");
+      // scroll ke atas agar pesan error terlihat
+      const modalElement = document.querySelector(".modal-content");
+      if (modalElement) {
+        modalElement.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      return;
+    }
+
     setIsSaving(true);
     setErrorMessage("");
     try {
@@ -7063,7 +7247,11 @@ export function MasterSekolah() {
       
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {})
+        },
+        credentials: "include",
         body: JSON.stringify(formSchool),
       });
       const data = await res.json();
@@ -7072,7 +7260,7 @@ export function MasterSekolah() {
         clearForm();
         setRefreshKey((k) => k + 1);
       } else {
-        setErrorMessage(data.error || "Terjadi kesalahan");
+        setErrorMessage((data.error || "Terjadi kesalahan") + (data.debug ? " | Debug: " + JSON.stringify(data.debug) : ""));
         console.error("Save error:", data.error);
       }
     } catch (err) {
@@ -7086,7 +7274,13 @@ export function MasterSekolah() {
   const handleDeleteSchool = async (id: number) => {
     if (!window.confirm("Apakah Anda yakin ingin menghapus sekolah ini?")) return;
     try {
-      const res = await fetch(`/api/schools/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/schools/${id}`, { 
+        method: "DELETE",
+        headers: {
+          ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {})
+        },
+        credentials: "include",
+      });
       const data = await res.json();
       if (data.success) {
         setRefreshKey((k) => k + 1);
@@ -7103,7 +7297,11 @@ export function MasterSekolah() {
       const newStatus = school.status === "Aktif" ? "Tidak Aktif" : "Aktif";
       const res = await fetch(`/api/schools/${school.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {})
+        },
+        credentials: "include",
         body: JSON.stringify({ status: newStatus }),
       });
       const data = await res.json();
@@ -7163,9 +7361,11 @@ export function MasterSekolah() {
             Daftar sekolah yang terdaftar di sistem KontenMu.
           </p>
         </div>
-        <div className="button-row">
-          <ButtonPromax onClick={() => { clearForm(); setIsSchoolModalOpen(true); }}>+ Tambah Sekolah</ButtonPromax>
-        </div>
+        {isSuperadmin && (
+          <div className="button-row">
+            <ButtonPromax onClick={() => { clearForm(); setIsSchoolModalOpen(true); }}>+ Tambah Sekolah</ButtonPromax>
+          </div>
+        )}
       </div>
 
       <div style={{ marginBottom: "16px", display: "flex", gap: "12px", alignItems: "center" }}>
@@ -7256,13 +7456,13 @@ export function MasterSekolah() {
                 <td style={{ color: "var(--text-secondary)" }}>
                   {school.agen || "-"}
                 </td>
-                <td style={{ textAlign: "center", cursor: "pointer" }} onClick={() => handleToggleStatus(school)}>
+                <td style={{ textAlign: "center", cursor: isSuperadmin ? "pointer" : "default" }} onClick={() => isSuperadmin && handleToggleStatus(school)}>
                   {school.status === "Aktif" ? (
-                    <div title="Aktif (Klik untuk ubah)" style={{ color: "var(--success-color, #22c55e)", display: "flex", justifyContent: "center" }}>
+                    <div title={isSuperadmin ? "Aktif (Klik untuk ubah)" : "Aktif"} style={{ color: "var(--success-color, #22c55e)", display: "flex", justifyContent: "center" }}>
                       <CheckCircle2 size={20} />
                     </div>
                   ) : (
-                    <div title="Tidak Aktif (Klik untuk ubah)" style={{ color: "var(--text-secondary)", display: "flex", justifyContent: "center" }}>
+                    <div title={isSuperadmin ? "Tidak Aktif (Klik untuk ubah)" : "Tidak Aktif"} style={{ color: "var(--text-secondary)", display: "flex", justifyContent: "center" }}>
                       <XCircle size={20} opacity={0.5} />
                     </div>
                   )}
@@ -7278,47 +7478,51 @@ export function MasterSekolah() {
                     >
                       <ActionSvg name="view" />
                     </button>
-                    <button
-                      type="button"
-                      className="icon-action-button"
-                      aria-label="Edit"
-                      title="Edit"
-                      onClick={() => {
-                        setFormSchool({
-                          npsn: school.npsn || "",
-                          nama: school.nama || "",
-                          jenjang: school.jenjang || "SD",
-                          kabupaten: school.kabupaten || "",
-                          provinsi: school.provinsi || "",
-                          alamat: school.alamat || "",
-                          logoUrl: school.logoUrl || "",
-                          gmapUrl: school.gmapUrl || "",
-                          prm: school.prm || "",
-                          pcm: school.pcm || "",
-                          pdm: school.pdm || "",
-                          pwm: school.pwm || "",
-                          lintang: school.lintang || "",
-                          bujur: school.bujur || "",
-                          telepon: school.telepon || "",
-                          email: school.email || "",
-                          website: school.website || "",
-                          status: school.status || "Aktif",
-                        });
-                        setEditingSchoolId(school.id);
-                        setIsSchoolModalOpen(true);
-                      }}
-                    >
-                      <ActionSvg name="edit" />
-                    </button>
-                    <button
-                      type="button"
-                      className="icon-action-button danger"
-                      aria-label="Hapus"
-                      title="Hapus"
-                      onClick={() => handleDeleteSchool(school.id)}
-                    >
-                      <ActionSvg name="delete" />
-                    </button>
+                    {isSuperadmin && (
+                      <>
+                        <button
+                          type="button"
+                          className="icon-action-button"
+                          aria-label="Edit"
+                          title="Edit"
+                          onClick={() => {
+                            setFormSchool({
+                              npsn: school.npsn || "",
+                              nama: school.nama || "",
+                              jenjang: school.jenjang || "SD",
+                              kabupaten: school.kabupaten || "",
+                              provinsi: school.provinsi || "",
+                              alamat: school.alamat || "",
+                              logoUrl: school.logoUrl || "",
+                              gmapUrl: school.gmapUrl || "",
+                              prm: school.prm || "",
+                              pcm: school.pcm || "",
+                              pdm: school.pdm || "",
+                              pwm: school.pwm || "",
+                              lintang: school.lintang || "",
+                              bujur: school.bujur || "",
+                              telepon: school.telepon || "",
+                              email: school.email || "",
+                              website: school.website || "",
+                              status: school.status || "Aktif",
+                            });
+                            setEditingSchoolId(school.id);
+                            setIsSchoolModalOpen(true);
+                          }}
+                        >
+                          <ActionSvg name="edit" />
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-action-button danger"
+                          aria-label="Hapus"
+                          title="Hapus"
+                          onClick={() => handleDeleteSchool(school.id)}
+                        >
+                          <ActionSvg name="delete" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -7391,7 +7595,6 @@ export function MasterSekolah() {
                 <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>NPSN</label>
                 <input
                   type="text"
-                  required
                   value={formSchool.npsn}
                   onChange={(e) =>
                     setFormSchool({ ...formSchool, npsn: e.target.value })
@@ -7404,7 +7607,6 @@ export function MasterSekolah() {
                 <label style={{ fontSize: "0.9rem", fontWeight: 500 }}>Nama Sekolah</label>
                 <input
                   type="text"
-                  required
                   value={formSchool.nama}
                   onChange={(e) =>
                     setFormSchool({ ...formSchool, nama: e.target.value })
@@ -7573,9 +7775,12 @@ export function MasterSekolah() {
                       placeholder="Ketik untuk mencari PWM..."
                       loadOptions={(input) => loadOrganizations(input, 2)}
                       value={formSchool.pwm ? { label: formSchool.pwm, value: formSchool.pwm } : null}
-                      onChange={(selected: any) =>
-                        setFormSchool({ ...formSchool, pwm: selected ? selected.value : "" })
-                      }
+                      onChange={(selected: any) => {
+                        setSelectedPwmId(selected ? selected.id : null);
+                        setFormSchool({ ...formSchool, pwm: selected ? selected.value : "", pdm: "", pcm: "", prm: "" });
+                        setSelectedPdmId(null);
+                        setSelectedPcmId(null);
+                      }}
                       className="react-select-container"
                       classNamePrefix="react-select"
                       isClearable
@@ -7585,31 +7790,17 @@ export function MasterSekolah() {
                   <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PDM (Daerah)</label>
                     <AsyncSelect
+                      key={`pdm-${selectedPwmId || 'all'}`}
                       cacheOptions
                       defaultOptions
                       placeholder="Ketik untuk mencari PDM..."
-                      loadOptions={(input) => loadOrganizations(input, 3)}
+                      loadOptions={(input) => loadOrganizations(input, 3, selectedPwmId)}
                       value={formSchool.pdm ? { label: formSchool.pdm, value: formSchool.pdm } : null}
-                      onChange={(selected: any) =>
-                        setFormSchool({ ...formSchool, pdm: selected ? selected.value : "" })
-                      }
-                      className="react-select-container"
-                      classNamePrefix="react-select"
-                      isClearable
-                      noOptionsMessage={({ inputValue }) => inputValue ? "Tidak ditemukan" : "Ketik untuk mencari..."}
-                    />
-                  </div>
-                  <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PRM (Ranting)</label>
-                    <AsyncSelect
-                      cacheOptions
-                      defaultOptions
-                      placeholder="Ketik untuk mencari PRM..."
-                      loadOptions={(input) => loadOrganizations(input, 5)}
-                      value={formSchool.prm ? { label: formSchool.prm, value: formSchool.prm } : null}
-                      onChange={(selected: any) =>
-                        setFormSchool({ ...formSchool, prm: selected ? selected.value : "" })
-                      }
+                      onChange={(selected: any) => {
+                        setSelectedPdmId(selected ? selected.id : null);
+                        setFormSchool({ ...formSchool, pdm: selected ? selected.value : "", pcm: "", prm: "" });
+                        setSelectedPcmId(null);
+                      }}
                       className="react-select-container"
                       classNamePrefix="react-select"
                       isClearable
@@ -7619,13 +7810,33 @@ export function MasterSekolah() {
                   <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PCM (Cabang)</label>
                     <AsyncSelect
+                      key={`pcm-${selectedPdmId || 'all'}`}
                       cacheOptions
                       defaultOptions
                       placeholder="Ketik untuk mencari PCM..."
-                      loadOptions={(input) => loadOrganizations(input, 4)}
+                      loadOptions={(input) => loadOrganizations(input, 4, selectedPdmId)}
                       value={formSchool.pcm ? { label: formSchool.pcm, value: formSchool.pcm } : null}
+                      onChange={(selected: any) => {
+                        setSelectedPcmId(selected ? selected.id : null);
+                        setFormSchool({ ...formSchool, pcm: selected ? selected.value : "", prm: "" });
+                      }}
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                      isClearable
+                      noOptionsMessage={({ inputValue }) => inputValue ? "Tidak ditemukan" : "Ketik untuk mencari..."}
+                    />
+                  </div>
+                  <div className="form-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 500 }}>PRM (Ranting)</label>
+                    <AsyncSelect
+                      key={`prm-${selectedPcmId || 'all'}`}
+                      cacheOptions
+                      defaultOptions
+                      placeholder="Ketik untuk mencari PRM..."
+                      loadOptions={(input) => loadOrganizations(input, 5, selectedPcmId)}
+                      value={formSchool.prm ? { label: formSchool.prm, value: formSchool.prm } : null}
                       onChange={(selected: any) =>
-                        setFormSchool({ ...formSchool, pcm: selected ? selected.value : "" })
+                        setFormSchool({ ...formSchool, prm: selected ? selected.value : "" })
                       }
                       className="react-select-container"
                       classNamePrefix="react-select"

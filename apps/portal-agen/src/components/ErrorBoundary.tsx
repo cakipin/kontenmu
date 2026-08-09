@@ -49,7 +49,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleReload = () => {
-    this.setState({ hasError: false, error: null });
+    sessionStorage.removeItem("vite-reload");
+    const url = new URL(window.location.href);
+    url.searchParams.set("reload", Date.now().toString());
+    window.location.replace(url.toString());
   };
 
   render() {

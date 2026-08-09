@@ -56,6 +56,12 @@ export default function OAuthCallback() {
         const data = await response.json();
         const userData = data.userData;
 
+        const sessionResponse = await fetch("/api/auth/session", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${data.token}` },
+        });
+        if (!sessionResponse.ok) throw new Error("Gagal membuat sesi aman.");
+
         setStatus(
           `Berhasil terhubung sebagai ${userData.name || userData.email}. Memasuki sistem...`,
         );
@@ -75,6 +81,7 @@ export default function OAuthCallback() {
           picture: userData.picture,
           loginAt: Date.now(),
           isSso: true,
+          token: data.token,
         });
 
         // Navigate to dashboard

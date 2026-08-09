@@ -1,8 +1,10 @@
 const CACHE_PREFIX = 'kontenmu-shell-';
+const WORKER_VERSION = '2026-08-09-chunk-recovery-1';
 
 // The PWA must not delay live D1 data, R2 media, or route navigation.
 // Clearing prior shell caches prevents older workers from serving stale assets.
 self.addEventListener('install', (event) => {
+  void WORKER_VERSION;
   event.waitUntil(self.skipWaiting());
 });
 

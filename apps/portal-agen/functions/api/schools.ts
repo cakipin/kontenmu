@@ -8,6 +8,7 @@ export const onRequestGet = async (context: any) => {
   try {
     const url = new URL(context.request.url);
     const nama = url.searchParams.get("nama");
+    const id = url.searchParams.get("id");
     const search = url.searchParams.get("search");
     const jenjang = url.searchParams.get("jenjang");
 
@@ -17,6 +18,23 @@ export const onRequestGet = async (context: any) => {
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "15", 10);
     const offset = (page - 1) * limit;
+
+    if (id) {
+      const result = await db
+        .select()
+        .from(masterDataSekolah)
+        .where(eq(masterDataSekolah.id, parseInt(id, 10)))
+        .get();
+
+      return new Response(
+        JSON.stringify(
+          result
+            ? { success: true, data: result }
+            : { success: false, error: "Sekolah tidak ditemukan" },
+        ),
+        { status: result ? 200 : 404, headers: jsonHeaders },
+      );
+    }
 
     if (nama) {
       const result = await db

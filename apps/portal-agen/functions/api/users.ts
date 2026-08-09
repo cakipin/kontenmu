@@ -3,6 +3,7 @@ const jsonHeaders = { "Content-Type": "application/json" };
 import { drizzle } from "drizzle-orm/d1";
 import { desc, sql } from "drizzle-orm";
 import { users } from "../../src/db/schema";
+import bcrypt from "bcryptjs";
 
 export const onRequestGet = async (context: any) => {
   try {
@@ -68,6 +69,7 @@ export const onRequestPost = async (context: any) => {
     }
 
     const ormDb = drizzle(context.env.DB);
+    const passwordHash = user.password ? await bcrypt.hash(user.password, 10) : "";
     const insertData = {
       id: user.id,
       username: user.username,
@@ -87,7 +89,7 @@ export const onRequestPost = async (context: any) => {
       suratTugas: user.suratTugas ?? null,
       masaAktif: user.masaAktif ?? null,
       updatedAt: sql`CURRENT_TIMESTAMP`,
-      password: "", // Dummy since it was omitted in raw SQL
+      password: passwordHash,
     };
     await ormDb
       .insert(users)

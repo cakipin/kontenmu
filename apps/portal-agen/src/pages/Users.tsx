@@ -15,9 +15,10 @@ import {
   Wand2,
   Eye,
   EyeOff,
+  CircleCheck,
+  CircleX,
 } from "lucide-react";
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
-import { Chip } from "../../../../packages/ui/src/Chip";
 import { ButtonPromax } from "../../../../packages/ui/src/ButtonPromax";
 import {
   TableSearch,
@@ -911,24 +912,17 @@ export default function Users() {
           </div>
         </div>
 
-        <div className="table-scroll desktop-only">
-          <table className="table-promax">
+        <div className="table-scroll desktop-only users-table-edge-to-edge">
+          <table className="table-promax users-table-fixed">
             <thead>
               <tr>
                 <th style={{ textAlign: "left" }}>User</th>
                 <th style={{ textAlign: "left" }}>Username</th>
                 <th style={{ textAlign: "left" }}>Role</th>
-                <th style={{ textAlign: "center" }}>
-                  {activeFilter === "guru"
-                    ? "NUPTK / NIP"
-                    : activeFilter === "siswa"
-                      ? "Kelas / NIS"
-                      : "Info Khusus"}
-                </th>
                 <th style={{ textAlign: "left" }}>Institusi</th>
                 <th style={{ textAlign: "center" }}>Terakhir Login</th>
                 <th style={{ textAlign: "center" }}>Status</th>
-                <th style={{ textAlign: "center" }}>Aksi</th>
+                <th className="users-actions-column" style={{ textAlign: "center" }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -937,9 +931,10 @@ export default function Users() {
                   <td>
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "14px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "14px",
+                          minWidth: 0,
                       }}
                     >
                       <div
@@ -953,18 +948,27 @@ export default function Users() {
                           alignItems: "center",
                           justifyContent: "center",
                           fontWeight: 700,
+                          flexShrink: 0,
                         }}
                       >
                         {user.initial}
                       </div>
-                      <div>
-                        <div style={{ color: "var(--text-primary)" }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div
+                          className="users-name-text"
+                          title={user.nama}
+                          style={{ color: "var(--text-primary)" }}
+                        >
                           {user.nama}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td style={{ color: "var(--text-secondary)" }}>
+                  <td
+                    className="users-username-text"
+                    title={user.username}
+                    style={{ color: "var(--text-secondary)" }}
+                  >
                     {user.username}
                   </td>
                   <td>
@@ -983,26 +987,7 @@ export default function Users() {
                     </span>
                   </td>
                   <td
-                    style={{
-                      textAlign: "center",
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    {user.role === "guru" && (user.nuptk || user.nip) ? (
-                      <>
-                        {user.nuptk && <div>{user.nuptk}</div>}
-                        {user.nip && <div>{user.nip}</div>}
-                      </>
-                    ) : user.role === "siswa" && (user.kelas || user.nis) ? (
-                      <>
-                        {user.kelas && <div>{user.kelas}</div>}
-                        {user.nis && <div>{user.nis}</div>}
-                      </>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                  <td
+                    className="users-institution-cell"
                     style={{
                       color: "var(--text-secondary)",
                       maxWidth: "150px",
@@ -1022,6 +1007,7 @@ export default function Users() {
                     </div>
                   </td>
                   <td
+                    className="users-last-login-cell"
                     style={{
                       color: "var(--text-secondary)",
                       fontSize: "0.875rem",
@@ -1030,11 +1016,25 @@ export default function Users() {
                   >
                     {user.terakhirLogin}
                   </td>
-                  <td style={{ textAlign: "center" }}>
-                    <Chip
-                      type={user.status === "Aktif" ? "success" : "warning"}
-                      label={user.status}
-                    />
+                  <td className="users-actions-column" style={{ textAlign: "center" }}>
+                    <span
+                      role="img"
+                      aria-label={user.status}
+                      title={user.status}
+                      style={{
+                        display: "inline-flex",
+                        color:
+                          user.status === "Aktif"
+                            ? "var(--success-color, #22c55e)"
+                            : "var(--warning-color, #f59e0b)",
+                      }}
+                    >
+                      {user.status === "Aktif" ? (
+                        <CircleCheck size={21} />
+                      ) : (
+                        <CircleX size={21} />
+                      )}
+                    </span>
                   </td>
                   <td style={{ textAlign: "center" }}>
                     <div
