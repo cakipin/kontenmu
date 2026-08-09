@@ -1418,6 +1418,37 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
         </div>
       )}
 
+      {currentRole === "guru" && (
+        <div className="dashboard-grid">
+          <MetricCard
+            icon={<BookOpen size={24} />}
+            color="#4f46e5"
+            title="Buku Saya"
+            value={formatNumber(libraryRows.length)}
+            subtitle="Buku untuk mengajar"
+          />
+          <MetricCard
+            icon={<Clock size={24} />}
+            color="#10b981"
+            title="Jam Mengajar"
+            value={formatNumber(
+              (data.learning || []).reduce(
+                (sum, row) => sum + row.durasiJam,
+                0,
+              ),
+            )}
+            subtitle="Total jam pakai konten"
+          />
+          <MetricCard
+            icon={<TrendingUp size={24} />}
+            color="#f59e0b"
+            title="Status"
+            value="Aktif"
+            subtitle="Guru terdaftar"
+          />
+        </div>
+      )}
+
       {currentRole === "uploader" && (
         <div className="dashboard-grid">
           <MetricCard
@@ -1460,6 +1491,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                 {currentRole === "agen" && "Daftar Sekolah Rekanan"}
                 {currentRole === "sekolah" && "Daftar Siswa Aktif"}
                 {currentRole === "siswa" && "Koleksi Buku Terakhir Dibaca"}
+                {currentRole === "guru" && "Buku yang Dialokasikan"}
                 {currentRole === "uploader" && "Konten yang Sudah Terupload"}
               </h3>
               <p>
@@ -1471,6 +1503,8 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                   "Alokasikan lisensi dan pantau progress belajar siswa."}
                 {currentRole === "siswa" &&
                   "Lanjutkan membaca buku terakhir Anda."}
+                {currentRole === "guru" &&
+                  "Buku yang sudah dialokasikan ke akun Anda untuk mengajar."}
                 {currentRole === "uploader" &&
                   "Daftar materi digital yang telah Anda unggah."}
               </p>
@@ -1513,7 +1547,9 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                         ? "/allocation"
                         : currentRole === "uploader"
                           ? "/catalog"
-                          : "/library"
+                          : currentRole === "guru"
+                            ? "/library"
+                            : "/library"
                   }
                   className="btn-promax"
                   style={{ textDecoration: "none" }}
@@ -1607,6 +1643,14 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                     <th style={{ textAlign: "left" }}>Kategori & Mapel</th>
                     <th style={{ textAlign: "center" }}>Status</th>
                     <th style={{ textAlign: "center" }}>Tanggal</th>
+                  </tr>
+                )}
+                {currentRole === "guru" && (
+                  <tr>
+                    <th style={{ textAlign: "left" }}>Judul Buku</th>
+                    <th style={{ textAlign: "left" }}>Mata Pelajaran</th>
+                    <th style={{ textAlign: "center" }}>Kelas</th>
+                    <th style={{ textAlign: "center" }}>Status</th>
                   </tr>
                 )}
               </thead>
@@ -1748,6 +1792,51 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                         <Chip type="success" label="Lanjutkan" />
                       </td>
                     </tr>
+                  ))}
+
+                {currentRole === "guru" &&
+                  (libraryRows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        style={{
+                          textAlign: "center",
+                          color: "var(--text-secondary)",
+                          padding: "32px 16px",
+                        }}
+                      >
+                        Belum ada buku yang dialokasikan ke akun Anda.
+                        <br />
+                        <small>Minta Admin Sekolah untuk mengalokasikan buku mengajar Anda.</small>
+                      </td>
+                    </tr>
+                  ) : (
+                    libraryRows.map(({ learning, book }) => (
+                      <tr key={`${learning.studentUsername}-${learning.isbn}`}>
+                        <td>
+                          <Identity
+                            initial="BK"
+                            color="#4f46e5"
+                            title={book!.judul}
+                            subtitle={book!.penerbit}
+                          />
+                        </td>
+                        <td style={{ color: "var(--text-secondary)" }}>
+                          {book!.mapel || "—"}
+                        </td>
+                        <td
+                          style={{
+                            textAlign: "center",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          {book!.jenjang || "—"}
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <Chip type="success" label="Tersedia" />
+                        </td>
+                      </tr>
+                    ))
                   ))}
 
                 {currentRole === "uploader" &&

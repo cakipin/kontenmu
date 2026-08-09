@@ -65,7 +65,7 @@ async function getLicenseQuota(env: Env, sekolahId: number, isbn: string) {
 }
 
 function resolveSchoolId(authUser: AuthUser, requested: unknown) {
-  const rawSchoolId = authUser.role === "sekolah" ? authUser.sekolahId : requested;
+  const rawSchoolId = (authUser.role === "sekolah" || authUser.role === "guru") ? authUser.sekolahId : requested;
   const schoolId = Number(rawSchoolId);
   return Number.isInteger(schoolId) && schoolId > 0 ? schoolId : 0;
 }
@@ -78,8 +78,8 @@ export default {
 
     const url = new URL(request.url);
     const route = [
-      { path: "/api/inventory", method: "GET", roles: ["superadmin", "sekolah"] },
-      { path: "/api/allocations", method: "GET", roles: ["superadmin", "sekolah"] },
+    { path: "/api/inventory", method: "GET", roles: ["superadmin", "sekolah", "guru"] },
+      { path: "/api/allocations", method: "GET", roles: ["superadmin", "sekolah", "guru"] },
       { path: "/api/allocate", method: "POST", roles: ["superadmin", "sekolah"] },
     ].find((item) => item.path === url.pathname && item.method === request.method);
     if (!route) return json({ success: false, error: "Not Found" }, 404);
