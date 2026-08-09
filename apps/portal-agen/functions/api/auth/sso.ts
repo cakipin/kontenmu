@@ -1,5 +1,7 @@
 import { sign } from "@tsndr/cloudflare-worker-jwt";
 
+const TENANT_ROLES = new Set(["sekolah", "guru", "siswa"]);
+
 export const onRequestPost = async (context: any) => {
   const jsonHeaders = { "Content-Type": "application/json" };
 
@@ -94,7 +96,9 @@ export const onRequestPost = async (context: any) => {
     let existingUser = null;
     if (userId) {
       existingUser = await db
-        .prepare("SELECT id, role_slug, nama, initial FROM users WHERE id = ?")
+        .prepare(
+          "SELECT id, role_slug, nama, initial, sekolah_id, status FROM users WHERE id = ?",
+        )
         .bind(userId)
         .first();
     }
@@ -102,7 +106,7 @@ export const onRequestPost = async (context: any) => {
     if (!existingUser) {
       existingUser = await db
         .prepare(
-          "SELECT id, role_slug, nama, initial FROM users WHERE sso_id = ? OR email = ? OR username = ?",
+          "SELECT id, role_slug, nama, initial, sekolah_id, status FROM users WHERE sso_id = ? OR email = ? OR username = ?",
         )
         .bind(ssoId, email, username)
         .first();
@@ -111,6 +115,30 @@ export const onRequestPost = async (context: any) => {
     let finalRole = existingUser ? existingUser.role_slug : "pending";
     let finalNama =
       userData.name || (existingUser ? existingUser.nama : username);
+    if (existingUser && existingUser.status !== "Aktif") {
+      return new Response(
+        JSON.stringify({ error: "Akun belum aktif atau menunggu approval." }),
+        { status: 403, headers: jsonHeaders },
+      );
+    }
+
+    let validatedSchoolId: number | null = null;
+    if (existingUser?.sekolah_id != null) {
+      const schoolId = Number(existingUser.sekolah_id);
+      if (Number.isInteger(schoolId) && schoolId > 0) {
+        const school = await db
+          .prepare("SELECT id FROM master_data_sekolah WHERE id = ? LIMIT 1")
+          .bind(schoolId)
+          .first<{ id: number }>();
+        if (Number(school?.id) === schoolId) validatedSchoolId = schoolId;
+      }
+    }
+    if (TENANT_ROLES.has(finalRole) && !validatedSchoolId) {
+      return new Response(
+        JSON.stringify({ error: "Akun belum terhubung dengan sekolah yang valid." }),
+        { status: 403, headers: jsonHeaders },
+      );
+    }
 
     // Create initial
     let finalInitial = existingUser?.initial;
@@ -168,6 +196,7 @@ export const onRequestPost = async (context: any) => {
     userData.internal_id = existingUser
       ? existingUser.id
       : `USR-${Date.now().toString().slice(-4)}`;
+    userData.sekolahId = validatedSchoolId;
 
     if (!context.env.JWT_SECRET) {
       return new Response(JSON.stringify({ error: "Konfigurasi autentikasi server belum tersedia." }), {
@@ -180,6 +209,7 @@ export const onRequestPost = async (context: any) => {
       sub: userData.internal_id,
       username,
       role: finalRole,
+      sekolahId: validatedSchoolId,
       iat: now,
       exp: now + 24 * 60 * 60,
     }, context.env.JWT_SECRET);
