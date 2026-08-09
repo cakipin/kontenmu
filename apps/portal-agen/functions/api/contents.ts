@@ -39,7 +39,9 @@ export const onRequestGet = async (context: any) => {
         previewMode: row.preview_mode,
         thumbnailKey: row.thumbnail_key,
         protectedPreview: Boolean(row.protected_preview),
-        sourceUrl: row.source_url ?? undefined,
+        sourceUrl: row.source_url
+          ? `/api/content-source/${encodeURIComponent(String(row.id))}`
+          : undefined,
         isbn: row.isbn ?? undefined,
         dilihat: row.dilihat ?? 0,
         totalWatchTime: row.total_watch_time ?? 0,
@@ -85,6 +87,17 @@ export const onRequestPost = async (context: any) => {
     }
     const rawDb = context.env.DB;
     const db = drizzle(rawDb);
+    const protectedSourcePath = `/api/content-source/${encodeURIComponent(
+      String(content.id),
+    )}`;
+    let sourceUrl = content.sourceUrl;
+    if (sourceUrl === protectedSourcePath) {
+      const existing = await rawDb
+        .prepare("SELECT source_url FROM contents WHERE id = ?")
+        .bind(content.id)
+        .first<{ source_url: string | null }>();
+      sourceUrl = existing?.source_url ?? null;
+    }
     
     await db.insert(contents).values({
       id: content.id,
@@ -101,7 +114,7 @@ export const onRequestPost = async (context: any) => {
       previewMode: content.previewMode ?? "text",
       thumbnailKey: content.thumbnailKey ?? "text",
       protectedPreview: content.protectedPreview === false ? 0 : 1,
-      sourceUrl: content.sourceUrl ?? null,
+      sourceUrl: sourceUrl ?? null,
       isbn: content.isbn ?? null,
       updatedAt: sql`CURRENT_TIMESTAMP`
     }).onConflictDoUpdate({
@@ -120,7 +133,7 @@ export const onRequestPost = async (context: any) => {
         previewMode: content.previewMode ?? "text",
         thumbnailKey: content.thumbnailKey ?? "text",
         protectedPreview: content.protectedPreview === false ? 0 : 1,
-        sourceUrl: content.sourceUrl ?? null,
+        sourceUrl: sourceUrl ?? null,
         isbn: content.isbn ?? null,
         updatedAt: sql`CURRENT_TIMESTAMP`
       }

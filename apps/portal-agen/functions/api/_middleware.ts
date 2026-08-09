@@ -45,6 +45,7 @@ const ROUTE_POLICIES: readonly RoutePolicy[] = [
   { methods: ["POST"], match: pattern(/^\/api\/school-logo\/[^/]+$/), roles: ["sekolah"] },
   { methods: ["GET"], match: exact("/api/contents"), roles: ACTIVE_ROLES },
   { methods: ["POST", "DELETE"], match: exact("/api/contents"), roles: ["superadmin", "uploader"] },
+  { methods: ["GET"], match: pattern(/^\/api\/content-source\/[^/]+$/), roles: ACTIVE_ROLES },
   { methods: ["GET"], match: exact("/api/content-thumbnail"), roles: ACTIVE_ROLES },
   { methods: ["POST"], match: exact("/api/analytics"), roles: ACTIVE_ROLES },
   { methods: ["GET", "POST"], match: exact("/api/users"), roles: ["superadmin", "sekolah"] },
