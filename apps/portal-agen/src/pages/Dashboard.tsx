@@ -476,12 +476,30 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     studentCurrentPage * studentPageSize,
     filteredStudentRows.length,
   );
-  const libraryRows = (data.learning || [])
-    .map((learning) => ({
-      learning,
-      book: getBook(data, learning.isbn),
-    }))
-    .filter((row) => row.book);
+  const libraryRows =
+    currentRole === "guru"
+      ? (data.allocations || [])
+          .filter((a) => a.studentUsername === session?.username)
+          .map((a) => {
+            const learning = (data.learning || []).find(
+              (l) => l.studentUsername === session?.username && l.isbn === a.isbn
+            ) || {
+              studentUsername: a.studentUsername,
+              isbn: a.isbn,
+              progress: 0,
+            };
+            return {
+              learning,
+              book: getBook(data, a.isbn),
+            };
+          })
+          .filter((row) => row.book)
+      : (data.learning || [])
+          .map((learning) => ({
+            learning,
+            book: getBook(data, learning.isbn),
+          }))
+          .filter((row) => row.book);
 
   if (currentRole === "pending") {
     const currentUser = users.find((u) => u.username === session?.username);

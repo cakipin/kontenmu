@@ -5919,51 +5919,11 @@ export function Library() {
 
       const allocatedIsbns = new Set(
         data.allocations
-          .filter((a) => a.studentUsername === session.username)
-          .map((a) => a.isbn),
+          .filter((a: any) => a.studentUsername === session.username)
+          .map((a: any) => a.isbn),
       );
 
-      const userSchoolId =
-        user.sekolah_id ||
-        user.sekolahId ||
-        user.schoolId ||
-        session.sekolahId ||
-        (session as any).sekolah_id;
-      const school = data.schools.find((s: any) => s.id === userSchoolId);
-      const sessionWilayah = (session as any).wilayah || "";
-      const userSchoolLevel = school
-        ? getSchoolLevel(school.nama)
-        : getSchoolLevel(sessionWilayah);
-      const sl = userSchoolLevel ? userSchoolLevel.toLowerCase() : "";
-
-      const allBooks = apiBooks.length > 0 ? apiBooks : data.books;
-      if (user.kelas) {
-        allBooks
-          .filter((b: any) => {
-            if (b.mapel !== user.kelas) return false;
-            if (sl) {
-              const p = (b.jenjang || b.peruntukan || "").toLowerCase();
-              if (p === "umum" || p.includes("semua") || p === "") return true;
-              if (sl === "sd/mi" && !p.includes("sd") && !p.includes("mi"))
-                return false;
-              if (sl === "smp/mts" && !p.includes("smp") && !p.includes("mts"))
-                return false;
-              if (
-                sl === "sma/ma/smk" &&
-                !p.includes("sma") &&
-                !p.includes("smk") &&
-                !p.includes("ma")
-              )
-                return false;
-            }
-            return true;
-          })
-          .forEach((b: any) => {
-            allocatedIsbns.add(b.isbn);
-          });
-      }
-
-      return data.contents.filter((c) => c.isbn && allocatedIsbns.has(c.isbn));
+      return data.contents.filter((c: any) => c.isbn && allocatedIsbns.has(c.isbn));
     }
 
     return data.contents;
