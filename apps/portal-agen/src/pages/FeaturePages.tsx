@@ -5815,6 +5815,9 @@ export function TeacherAccess() {
 export function Library() {
   const { session } = useAuth();
   const { data } = useAppData();
+  const showBabColumn = ["sekolah", "guru", "siswa"].includes(
+    String(session?.role || ""),
+  );
   const itemsPerPage = 25;
   const [playingContent, setPlayingContent] = useState<SimContent | null>(null);
   const [contentPage, setContentPage] = useState(1);
@@ -5982,7 +5985,7 @@ export function Library() {
               "Judul",
               "Kategori",
               "Target",
-              "Status",
+              showBabColumn ? "Bab" : "Status",
               "Aksi",
             ]}
             headerAligns={[
@@ -6046,7 +6049,13 @@ export function Library() {
                       {content.target}
                     </span>
                   </td>
-                  <td>{content.status}</td>
+                  <td>
+                    {showBabColumn
+                      ? content.bab
+                        ? `Bab ${content.bab}`
+                        : "-"
+                      : content.status}
+                  </td>
                   <td>
                     <div className="action-group">
                       <button
