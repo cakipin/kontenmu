@@ -1,12 +1,15 @@
+import { decode, verify } from "@tsndr/cloudflare-worker-jwt";
+
 export interface Env {
   DB: D1Database;
   CACHE?: KVNamespace;
+  JWT_SECRET?: string;
 }
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
 function json(data: unknown, status = 200) {
@@ -14,6 +17,32 @@ function json(data: unknown, status = 200) {
     status,
     headers: { "Content-Type": "application/json", ...corsHeaders },
   });
+}
+
+type AuthUser = { sub: string; role: string; sekolahId?: string | number | null };
+const AUTH_VERIFY_URL = "https://sales-api.1912.workers.dev/api/auth/verify";
+
+async function authenticate(request: Request, env: Env): Promise<AuthUser | null> {
+  const header = request.headers.get("Authorization") || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  if (!token) return null;
+  try {
+    let valid = false;
+    if (env.JWT_SECRET) valid = await verify(token, env.JWT_SECRET);
+    if (!valid) {
+      const response = await fetch(AUTH_VERIFY_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      valid = response.ok;
+    }
+    if (!valid) return null;
+    const payload = decode(token).payload as AuthUser & { exp?: number };
+    if (!payload.sub || !payload.role || !payload.exp || payload.exp <= Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch {
+    return null;
+  }
 }
 
 async function getLicenseQuota(env: Env, sekolahId: number, isbn: string) {
@@ -42,6 +71,25 @@ export default {
     }
 
     const url = new URL(request.url);
+    const route = [
+      { path: "/api/inventory", method: "GET", roles: ["superadmin", "sekolah"] },
+      { path: "/api/allocations", method: "GET", roles: ["superadmin", "sekolah"] },
+      { path: "/api/allocate", method: "POST", roles: ["superadmin", "sekolah"] },
+    ].find((item) => item.path === url.pathname && item.method === request.method);
+    if (!route) return json({ success: false, error: "Not Found" }, 404);
+
+    const authUser = await authenticate(request, env);
+    if (!authUser) return json({ success: false, error: "Unauthorized" }, 401);
+    if (!route.roles.includes(authUser.role)) return json({ success: false, error: "Forbidden" }, 403);
+
+    const requestedSchoolId = url.searchParams.get("sekolahId");
+    if (
+      authUser.role === "sekolah" &&
+      requestedSchoolId &&
+      String(authUser.sekolahId || "") !== requestedSchoolId
+    ) {
+      return json({ success: false, error: "Forbidden" }, 403);
+    }
 
     if (url.pathname === "/api/inventory" && request.method === "GET") {
       try {
@@ -95,6 +143,10 @@ export default {
           isbn: string;
           siswaId: string;
         };
+
+        if (authUser.role === "sekolah" && String(authUser.sekolahId || "") !== String(sekolahId)) {
+          return json({ success: false, error: "Forbidden" }, 403);
+        }
 
         if (!sekolahId || !isbn || !siswaId?.trim()) {
           return json(
@@ -170,6 +222,6 @@ export default {
       }
     }
 
-    return new Response("Allocation API is running", { headers: corsHeaders });
+    return json({ success: false, error: "Not Found" }, 404);
   },
 };

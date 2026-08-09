@@ -1,12 +1,97 @@
 import { decode, verify } from "@tsndr/cloudflare-worker-jwt";
 
 const AUTH_VERIFY_URL = "https://kontenmu-prod-api.1912.workers.dev/api/auth/verify";
+const JSON_HEADERS = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
+};
+
+const ACTIVE_ROLES = [
+  "superadmin",
+  "agen",
+  "sekolah",
+  "guru",
+  "siswa",
+  "uploader",
+] as const;
+
+type Role = (typeof ACTIVE_ROLES)[number];
+type RoutePolicy = {
+  methods: readonly string[];
+  match: (pathname: string, url: URL) => boolean;
+  roles: readonly Role[] | "public";
+};
+
+const exact = (expected: string) => (pathname: string) => pathname === expected;
+const pattern = (expected: RegExp) => (pathname: string) => expected.test(pathname);
+
+// Urutan penting: route yang lebih spesifik harus didefinisikan lebih dahulu.
+const ROUTE_POLICIES: readonly RoutePolicy[] = [
+  { methods: ["POST"], match: exact("/api/auth/sso"), roles: "public" },
+  { methods: ["POST", "DELETE"], match: exact("/api/auth/session"), roles: "public" },
+  { methods: ["GET"], match: exact("/api/puck-data"), roles: "public" },
+  { methods: ["POST"], match: exact("/api/puck-data"), roles: ["superadmin"] },
+  {
+    methods: ["GET"],
+    match: (pathname, url) => pathname === "/api/app-data" && url.searchParams.get("lite") === "true",
+    roles: "public",
+  },
+  { methods: ["GET"], match: exact("/api/app-data"), roles: ACTIVE_ROLES },
+  { methods: ["PUT"], match: exact("/api/app-data"), roles: ACTIVE_ROLES },
+  { methods: ["GET"], match: exact("/api/schools"), roles: "public" },
+  { methods: ["POST"], match: exact("/api/schools"), roles: ["superadmin", "agen"] },
+  { methods: ["PUT"], match: pattern(/^\/api\/schools\/[^/]+$/), roles: ["superadmin", "agen", "sekolah"] },
+  { methods: ["DELETE"], match: pattern(/^\/api\/schools\/[^/]+$/), roles: ["superadmin"] },
+  { methods: ["POST"], match: pattern(/^\/api\/school-logo\/[^/]+$/), roles: ["sekolah"] },
+  { methods: ["GET"], match: exact("/api/contents"), roles: ACTIVE_ROLES },
+  { methods: ["POST", "DELETE"], match: exact("/api/contents"), roles: ["superadmin", "uploader"] },
+  { methods: ["GET"], match: exact("/api/content-thumbnail"), roles: ACTIVE_ROLES },
+  { methods: ["POST"], match: exact("/api/analytics"), roles: ACTIVE_ROLES },
+  { methods: ["GET", "POST"], match: exact("/api/users"), roles: ["superadmin", "sekolah"] },
+  { methods: ["PUT"], match: pattern(/^\/api\/users\/[^/]+$/), roles: ["superadmin", "sekolah"] },
+  { methods: ["DELETE"], match: pattern(/^\/api\/users\/[^/]+$/), roles: ["superadmin"] },
+  { methods: ["POST"], match: exact("/api/upload"), roles: ["superadmin", "uploader"] },
+  { methods: ["POST"], match: exact("/api/upload/presign"), roles: ["superadmin", "uploader"] },
+  { methods: ["GET"], match: pattern(/^\/api\/media\/.+$/), roles: ACTIVE_ROLES },
+];
+
+function jsonError(status: number, error: string) {
+  return new Response(JSON.stringify({ error }), {
+    status,
+    headers: JSON_HEADERS,
+  });
+}
+
+function findPolicy(method: string, pathname: string, url: URL) {
+  return ROUTE_POLICIES.find(
+    (policy) => policy.methods.includes(method) && policy.match(pathname, url),
+  );
+}
+
+function hasKnownPath(pathname: string, url: URL) {
+  return ROUTE_POLICIES.some((policy) => policy.match(pathname, url));
+}
+
+function readToken(request: Request) {
+  const authHeader = request.headers.get("Authorization") || "";
+  if (authHeader.startsWith("Bearer ")) return authHeader.slice(7).trim();
+
+  const authCookie = (request.headers.get("Cookie") || "")
+    .split(";")
+    .map((part) => part.trim())
+    .find(
+      (part) =>
+        part.startsWith("__Host-kontenmu_auth=") ||
+        part.startsWith("kontenmu_auth="),
+    );
+  return authCookie ? authCookie.slice(authCookie.indexOf("=") + 1) : "";
+}
 
 async function isTokenValid(token: string, env: any) {
   try {
     if (env.JWT_SECRET && (await verify(token, env.JWT_SECRET))) return true;
   } catch {
-    // Preview may have a different or unavailable secret; verify with issuer.
+    // Preview dapat memakai secret berbeda; verifikasi ke issuer utama.
   }
   try {
     const response = await fetch(AUTH_VERIFY_URL, {
@@ -22,84 +107,35 @@ async function isTokenValid(token: string, env: any) {
 export const onRequest = async (context: any) => {
   const { request, next } = context;
   const url = new URL(request.url);
+  const method = request.method.toUpperCase();
 
-  // Bypass auth for the SSO token exchange endpoint, media routes, and public landing page data
-  if (
-    url.pathname.startsWith("/api/auth/") ||
-    url.pathname.startsWith("/api/media/")
-  ) {
-    return next();
+  if (method === "OPTIONS") return next();
+
+  const policy = findPolicy(method, url.pathname, url);
+  if (!policy) {
+    return hasKnownPath(url.pathname, url)
+      ? jsonError(405, "Method Not Allowed")
+      : jsonError(403, "Forbidden");
   }
-  if (
-    (url.pathname === "/api/puck-data" ||
-      url.pathname.startsWith("/api/schools") ||
-      url.pathname === "/api/app-data" ||
-      url.pathname === "/api/contents") &&
-    request.method === "GET"
-  ) {
-    return next();
-  }
-  // Allow OPTIONS preflight requests to pass through
-  if (request.method === "OPTIONS") {
-    return next();
+  if (policy.roles === "public") return next();
+
+  const token = readToken(request);
+  if (!token || !(await isTokenValid(token, context.env))) {
+    return jsonError(401, "Unauthorized");
   }
 
-  let isAuthenticated = false;
-  let authRole = "";
-  const authHeader = request.headers.get("Authorization") || "";
-  const cookieHeader = request.headers.get("Cookie") || "";
-  const authCookie = cookieHeader
-    .split(";")
-    .map((part: string) => part.trim())
-    .find((part: string) => part.startsWith("__Host-kontenmu_auth=") || part.startsWith("kontenmu_auth="));
-  const cookieToken = authCookie ? authCookie.slice(authCookie.indexOf("=") + 1) : "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : cookieToken;
-  if (token) {
-    const valid = await isTokenValid(token, context.env);
-    isAuthenticated = !!valid;
-    if (valid) authRole = String(decode(token).payload.role || "");
+  let payload: any;
+  try {
+    payload = decode(token).payload;
+  } catch {
+    return jsonError(401, "Unauthorized");
   }
 
-  if (!isAuthenticated) {
-    return new Response(
-      JSON.stringify({ 
-        error: "Unauthorized: Session is invalid or missing",
-        debug: {
-          hasToken: !!token,
-          hasSecret: !!context.env.JWT_SECRET,
-          tokenStart: token ? token.substring(0, 10) : null,
-          cookieHeader: !!cookieHeader,
-          authHeader: !!authHeader
-        }
-      }),
-      {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      },
-    );
-  }
+  const role = String(payload?.role || "") as Role;
+  if (!policy.roles.includes(role)) return jsonError(403, "Forbidden");
 
-  const allowed = (...roles: string[]) => roles.includes(authRole);
-  const isMutation = request.method !== "GET";
-  const isSchoolProfileCompletion =
-    request.method === "PUT" && /^\/api\/schools\/[^/]+$/.test(url.pathname);
-  if (
-    isMutation &&
-    url.pathname.startsWith("/api/schools") &&
-    !allowed("superadmin", "agen") &&
-    !(isSchoolProfileCompletion && allowed("sekolah"))
-  ) {
-    return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { "Content-Type": "application/json" } });
-  }
-  if (isMutation && (url.pathname.startsWith("/api/contents") || url.pathname.startsWith("/api/upload")) && !allowed("superadmin", "uploader")) {
-    return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { "Content-Type": "application/json" } });
-  }
-  if (isMutation && url.pathname === "/api/puck-data" && !allowed("superadmin")) {
-    return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { "Content-Type": "application/json" } });
-  }
-
+  // Handler yang membutuhkan pengecekan kepemilikan menggunakan payload yang
+  // telah diverifikasi ini, bukan melakukan decode cookie secara mandiri.
+  context.data.auth = payload;
   return next();
 };

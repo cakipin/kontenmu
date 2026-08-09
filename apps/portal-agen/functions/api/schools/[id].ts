@@ -1,7 +1,6 @@
 import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import { masterDataSekolah } from "../../../src/db/schema";
-import { decode } from "@tsndr/cloudflare-worker-jwt";
 
 const jsonHeaders = { "Content-Type": "application/json" };
 
@@ -13,13 +12,7 @@ export const onRequestPut = async (context: any) => {
     const data = await context.request.json();
     const ormDb = drizzle(context.env.DB);
 
-    const cookie = context.request.headers.get("Cookie") || "";
-    const authCookie = cookie
-      .split(";")
-      .map((part: string) => part.trim())
-      .find((part: string) => part.startsWith("__Host-kontenmu_auth=") || part.startsWith("kontenmu_auth="));
-    const token = authCookie ? authCookie.slice(authCookie.indexOf("=") + 1) : "";
-    const payload: any = token ? decode(token).payload : {};
+    const payload: any = context.data?.auth || {};
     const role = String(payload.role || "");
     const schoolId = String(payload.sekolahId || payload.sekolah_id || "");
 

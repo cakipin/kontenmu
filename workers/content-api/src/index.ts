@@ -1,6 +1,35 @@
+import { decode, verify } from "@tsndr/cloudflare-worker-jwt";
+
 export interface Env {
   CACHE: KVNamespace;
   BUCKET: R2Bucket;
+  JWT_SECRET?: string;
+}
+
+const CONTENT_ROLES = ["superadmin", "agen", "sekolah", "guru", "siswa", "uploader"];
+const AUTH_VERIFY_URL = "https://sales-api.1912.workers.dev/api/auth/verify";
+
+async function authorize(request: Request, env: Env) {
+  const header = request.headers.get("Authorization") || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  if (!token) return null;
+  try {
+    let valid = false;
+    if (env.JWT_SECRET) valid = await verify(token, env.JWT_SECRET);
+    if (!valid) {
+      const response = await fetch(AUTH_VERIFY_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      valid = response.ok;
+    }
+    if (!valid) return null;
+    const payload = decode(token).payload as { sub?: string; role?: string; exp?: number };
+    if (!payload.sub || !payload.role || !payload.exp || payload.exp <= Math.floor(Date.now() / 1000)) return null;
+    return CONTENT_ROLES.includes(payload.role) ? payload : null;
+  } catch {
+    return null;
+  }
 }
 
 // MIME types that can be served directly in-browser (no download prompt)
@@ -62,6 +91,12 @@ export default {
 
     // ---- GET /api/content/<key> ----
     if (url.pathname.startsWith("/api/content/") && request.method === "GET") {
+      if (!(await authorize(request, env))) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
       const key = decodeURIComponent(
         url.pathname.slice("/api/content/".length),
       );

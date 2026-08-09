@@ -21,6 +21,22 @@ type AuthUser = {
 
 const AUTH_TOKEN_TTL_SECONDS = 24 * 60 * 60;
 
+const ROUTES = [
+  { path: /^\/$/, methods: ["GET"] },
+  { path: /^\/api\/auth\/login$/, methods: ["POST"] },
+  { path: /^\/api\/auth\/verify$/, methods: ["POST"] },
+  { path: /^\/api\/sekolah$/, methods: ["GET", "POST"] },
+  { path: /^\/api\/sekolah\/[^/]+$/, methods: ["PUT", "DELETE"] },
+  { path: /^\/api\/(?:master\/stats|stats|buku)$/, methods: ["GET"] },
+  { path: /^\/api\/books$/, methods: ["GET", "POST"] },
+  { path: /^\/api\/books\/[^/]+$/, methods: ["PUT", "DELETE"] },
+  { path: /^\/api\/users$/, methods: ["GET", "POST"] },
+  { path: /^\/api\/users\/[^/]+$/, methods: ["PUT", "DELETE"] },
+  { path: /^\/api\/users\/[^/]+\/(?:password|picture)$/, methods: ["PUT"] },
+  { path: /^\/api\/sales$/, methods: ["GET"] },
+  { path: /^\/api\/sales\/bulk$/, methods: ["POST"] },
+] as const;
+
 function bearerToken(request: Request) {
   const header = request.headers.get("Authorization") || "";
   return header.startsWith("Bearer ") ? header.slice(7).trim() : null;
@@ -60,6 +76,11 @@ export default {
     }
 
     const url = new URL(request.url);
+    const route = ROUTES.find(({ path }) => path.test(url.pathname));
+    if (!route) return json({ success: false, error: "Not Found" }, 404);
+    if (!(route.methods as readonly string[]).includes(request.method)) {
+      return json({ success: false, error: "Method Not Allowed" }, 405);
+    }
     const authUser = await authenticate(request, env);
 
     if (url.pathname === "/api/auth/login" && request.method === "POST") {
@@ -125,6 +146,9 @@ export default {
     if (isBookMutation && !hasRole(authUser, ["superadmin", "uploader"])) return json({ success: false, error: "Forbidden" }, 403);
     if (isSalesRoute && !hasRole(authUser, ["superadmin", "agen"])) return json({ success: false, error: "Forbidden" }, 403);
     if (url.pathname === "/api/users" && request.method === "POST" && authUser && !hasRole(authUser, ["superadmin", "sekolah"])) {
+      return json({ success: false, error: "Forbidden" }, 403);
+    }
+    if (url.pathname === "/api/users" && request.method === "GET" && !hasRole(authUser, ["superadmin", "sekolah"])) {
       return json({ success: false, error: "Forbidden" }, 403);
     }
     const userRouteMatch = url.pathname.match(/^\/api\/users\/([^/]+)(?:\/(password|picture))?$/);
@@ -681,6 +705,9 @@ export default {
       }
     }
 
-    return new Response("Sales API is running", { headers: corsHeaders });
+    if (url.pathname === "/" && request.method === "GET") {
+      return json({ success: true, service: "sales-api" });
+    }
+    return json({ success: false, error: "Not Found" }, 404);
   },
 };

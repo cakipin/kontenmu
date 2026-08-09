@@ -1,24 +1,9 @@
 import { drizzle } from "drizzle-orm/d1";
 import { eq, sql } from "drizzle-orm";
-import { decode } from "@tsndr/cloudflare-worker-jwt";
 import bcrypt from "bcryptjs";
 import { users } from "../../../src/db/schema";
 
 const jsonHeaders = { "Content-Type": "application/json" };
-
-function authPayload(request: Request) {
-  const cookie = request.headers.get("Cookie") || "";
-  const authCookie = cookie
-    .split(";")
-    .map((part) => part.trim())
-    .find(
-      (part) =>
-        part.startsWith("__Host-kontenmu_auth=") ||
-        part.startsWith("kontenmu_auth="),
-    );
-  const token = authCookie ? authCookie.slice(authCookie.indexOf("=") + 1) : "";
-  return token ? (decode(token).payload as any) : {};
-}
 
 export const onRequestPut = async (context: any) => {
   try {
@@ -32,7 +17,7 @@ export const onRequestPut = async (context: any) => {
       });
     }
 
-    const payload = authPayload(context.request);
+    const payload = context.data?.auth || {};
     const role = String(payload.role || "");
     const sessionSchoolId = String(payload.sekolahId || payload.sekolah_id || "");
     if (
@@ -103,7 +88,7 @@ export const onRequestDelete = async (context: any) => {
       });
     }
 
-    const payload = authPayload(context.request);
+    const payload = context.data?.auth || {};
     if (String(payload.role || "") !== "superadmin") {
       return new Response(JSON.stringify({ success: false, error: "Forbidden" }), {
         status: 403,
