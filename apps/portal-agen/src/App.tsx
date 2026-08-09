@@ -485,6 +485,46 @@ function Icon({
   );
 }
 
+const ROUTE_PERMISSIONS: Record<string, string> = {
+  "/catalog": "catalog",
+  "/sales": "sales",
+  "/sales/history": "sales-history",
+  "/payments": "payments",
+  "/subscriptions": "subscriptions",
+  "/upload-content": "upload",
+  "/inventory": "inventory",
+  "/allocation": "allocation",
+  "/teacher-allocation": "teacher-allocation",
+  "/school-users": "school-users",
+  "/library": "learning",
+  "/learning": "learning",
+  "/learning-history": "learning",
+  "/play-content": "play",
+  "/sim-sekolah": "sim-sekolah",
+  "/master-sekolah": "master-sekolah",
+  "/ai-settings": "ai-settings",
+};
+
+function canAccessRoute(
+  pathname: string,
+  role: string,
+  permissions: Record<string, string[]>,
+) {
+  if (pathname === "/dashboard" || pathname === "/profile") return true;
+  if (role === "pending") return false;
+  if (pathname === "/users" || pathname === "/access-settings")
+    return role === "superadmin";
+  if (pathname === "/editor" || pathname.startsWith("/editor/"))
+    return role === "superadmin";
+  if (pathname === "/school-profile")
+    return ["sekolah", "siswa", "guru"].includes(role);
+
+  const permissionId = ROUTE_PERMISSIONS[pathname];
+  return permissionId
+    ? permissions[permissionId]?.includes(role) === true
+    : true;
+}
+
 function AppContent() {
   const { session, logout, sessionTimeLeft, switchRole } = useAuth();
   const IS_DEV = import.meta.env.DEV;
@@ -562,6 +602,14 @@ function AppContent() {
   }, [location.pathname]);
 
   if (!session) return null;
+  if (
+    !canAccessRoute(
+      location.pathname,
+      session.role,
+      data.roleAccessPermissions ?? {},
+    )
+  )
+    return <Navigate to="/dashboard" replace />;
 
   let navItems = MASTER_NAVIGATION.filter((item) => {
     if (session.role === "pending") return item.id === "dashboard";
