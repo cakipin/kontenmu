@@ -11,10 +11,42 @@ import {
 const STATE_ID = "portal-agen:simulation:v1";
 const jsonHeaders = { "Content-Type": "application/json" };
 
+async function getAllowedLearningUsers(
+  rawDb: D1Database,
+  context: any,
+  tenantSchoolId: number | null,
+) {
+  const auth = context.data?.auth || {};
+  const role = String(auth.role || "");
+  const username = String(auth.username || "");
+  const subject = String(auth.sub || "");
+
+  let query =
+    "SELECT username FROM users WHERE status = 'Aktif' AND role_slug = 'siswa'";
+  const bindings: Array<string | number> = [];
+  if (tenantSchoolId) {
+    query += " AND sekolah_id = ?";
+    bindings.push(tenantSchoolId);
+  }
+  if (role === "siswa") {
+    query += " AND (username = ? OR id = ?)";
+    bindings.push(username, subject);
+  }
+
+  const statement = bindings.length
+    ? rawDb.prepare(query).bind(...bindings)
+    : rawDb.prepare(query);
+  const result = await statement.all<{ username: string }>();
+  return new Set(
+    (result.results || []).map((row) => String(row.username || "")).filter(Boolean),
+  );
+}
+
 export const onRequestGet = async (context: any) => {
   try {
     const url = new URL(context.request.url);
     const isLite = url.searchParams.get("lite") === "true";
+    const rawDb = context.env.DB;
 
     const KV = context.env.PUCK_DATA;
     let stateString = null;
@@ -26,7 +58,6 @@ export const onRequestGet = async (context: any) => {
 
     // 2. Cache miss atau KV tidak tersedia, ambil dari D1
     if (!stateString) {
-      const rawDb = context.env.DB;
       const db = drizzle(rawDb);
       
       const stateResult = await db
@@ -46,6 +77,9 @@ export const onRequestGet = async (context: any) => {
     const data: any = stateString ? JSON.parse(stateString) : {};
     const tenantSchoolId = getTenantSchoolId(context);
     if (tenantSchoolId === 0) return tenantError();
+    const allowedLearningUsers = isLite
+      ? undefined
+      : await getAllowedLearningUsers(rawDb, context, tenantSchoolId);
     let responseData = data;
 
     // Respons bootstrap hanya membawa konfigurasi publik yang dibutuhkan untuk
@@ -64,7 +98,18 @@ export const onRequestGet = async (context: any) => {
         roleAccessPermissions: data.roleAccessPermissions,
       };
     } else if (tenantSchoolId) {
-      responseData = filterTenantState(data, tenantSchoolId);
+      responseData = filterTenantState(
+        data,
+        tenantSchoolId,
+        allowedLearningUsers,
+      );
+    } else if (allowedLearningUsers && Array.isArray(data.learning)) {
+      responseData = {
+        ...data,
+        learning: data.learning.filter((item: any) =>
+          allowedLearningUsers.has(String(item?.studentUsername || "")),
+        ),
+      };
     }
 
     return new Response(JSON.stringify({ found: true, data: responseData }), {
@@ -93,7 +138,17 @@ export const onRequestPut = async (context: any) => {
         .where(eq(appState.id, STATE_ID))
         .get();
       const existingData = existing?.content ? JSON.parse(existing.content) : {};
-      payload = mergeTenantState(existingData, payload, tenantSchoolId);
+      const allowedLearningUsers = await getAllowedLearningUsers(
+        rawDb,
+        context,
+        tenantSchoolId,
+      );
+      payload = mergeTenantState(
+        existingData,
+        payload,
+        tenantSchoolId,
+        allowedLearningUsers,
+      );
     }
 
     // Safety check: Jangan izinkan menyimpan schools kosong jika sebelumnya ada schools,
