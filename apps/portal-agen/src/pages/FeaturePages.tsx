@@ -6240,6 +6240,7 @@ export function Library() {
 
 export function LearningHistory() {
   const { data, setData } = useAppData();
+  const { session } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
@@ -6272,6 +6273,26 @@ export function LearningHistory() {
     }));
   };
 
+  const guruIsbns = useMemo(() => {
+    if (session?.role !== "guru") return null;
+    return new Set(
+      data.allocations
+        .filter((a: any) => a.studentUsername === session?.username)
+        .map((a: any) => a.isbn)
+    );
+  }, [data.allocations, session]);
+
+  const filteredLearning = useMemo(() => {
+    let result = data.learning || [];
+    if (guruIsbns) {
+       result = result.filter(
+         (item: any) =>
+           guruIsbns.has(item.isbn) && item.studentUsername !== session?.username
+       );
+    }
+    return result;
+  }, [data.learning, guruIsbns, session]);
+
   return (
     <Page
       title="Riwayat Belajar"
@@ -6281,7 +6302,7 @@ export function LearningHistory() {
         headers={["Siswa", "Buku", "Durasi", "Progress", "Aksi"]}
         headerAligns={["left", "left", "center", "center", "center"]}
       >
-        {data.learning.map((item) => {
+        {filteredLearning.map((item) => {
           const student = users.find(
             (user) => user.username === item.studentUsername,
           );

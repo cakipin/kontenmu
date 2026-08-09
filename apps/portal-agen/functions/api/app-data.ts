@@ -37,9 +37,13 @@ async function getAllowedLearningUsers(
     ? rawDb.prepare(query).bind(...bindings)
     : rawDb.prepare(query);
   const result = await statement.all<{ username: string }>();
-  return new Set(
+  const allowed = new Set(
     (result.results || []).map((row) => String(row.username || "")).filter(Boolean),
   );
+  if ((role === "siswa" || role === "guru") && username) {
+    allowed.add(username);
+  }
+  return allowed;
 }
 
 export const onRequestGet = async (context: any) => {
