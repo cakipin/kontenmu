@@ -242,8 +242,14 @@ const MOBILE_NAVIGATION: Record<
     {
       id: "allocation",
       path: "/allocation",
-      label: "Alokasi",
+      label: "Alokasi Siswa",
       icon: "allocation",
+    },
+    {
+      id: "teacher-allocation",
+      path: "/teacher-allocation",
+      label: "Alokasi Guru",
+      icon: "schoolusers",
     },
     {
       id: "school-users",

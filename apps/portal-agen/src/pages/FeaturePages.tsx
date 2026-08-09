@@ -5434,6 +5434,7 @@ export function TeacherAccess() {
         if (selectedBuku && selectedBuku.length > 0) {
           await setData((current) => {
             const newAllocations = [...current.allocations];
+            const newLearning = [...current.learning];
             selectedBuku.forEach((b: any) => {
               const duplicate = newAllocations.some(
                 (a) =>
@@ -5449,10 +5450,25 @@ export function TeacherAccess() {
                   tanggal: new Date().toISOString().slice(0, 10),
                 });
               }
+              const duplicateLearning = newLearning.some(
+                (l) =>
+                  l.studentUsername === editingTeacher.username &&
+                  l.isbn === b.value,
+              );
+              if (!duplicateLearning) {
+                newLearning.unshift({
+                  studentUsername: editingTeacher.username,
+                  isbn: b.value,
+                  progress: 0,
+                  durasiJam: 0,
+                  terakhirDibaca: "-",
+                });
+              }
             });
             return {
               ...current,
               allocations: newAllocations,
+              learning: newLearning,
             };
           });
         }
