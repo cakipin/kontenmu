@@ -38,17 +38,26 @@ export const onRequestGet = async (context: any) => {
     }
 
     const data: any = stateString ? JSON.parse(stateString) : {};
+    let responseData = data;
 
-    // Lazy load: Jika lite=true, kosongkan data berat agar payload jauh lebih kecil (~500KB -> ~50KB)
+    // Respons bootstrap hanya membawa konfigurasi publik yang dibutuhkan untuk
+    // render awal. Jangan mengirim state lengkap lalu sekadar mengosongkan tiga
+    // array karena state dapat berisi credential dan data operasional lain.
     if (isLite) {
-      data.schools = [];
-      // Catatan Refactor (v0.1.1):
-      // Klien baru akan mengambil contents dan users secara mandiri via API masing-masing.
-      data.contents = [];
-      data.users = [];
+      responseData = {
+        schools: [],
+        contents: [],
+        users: [],
+        isChatWidgetEnabled: data.isChatWidgetEnabled,
+        aiApiEndpoint: data.aiApiEndpoint,
+        aiBotName: data.aiBotName,
+        aiWelcomeMessage: data.aiWelcomeMessage,
+        aiProvider: data.aiProvider,
+        roleAccessPermissions: data.roleAccessPermissions,
+      };
     }
 
-    return new Response(JSON.stringify({ found: true, data }), {
+    return new Response(JSON.stringify({ found: true, data: responseData }), {
       headers: jsonHeaders,
     });
   } catch (error: any) {
