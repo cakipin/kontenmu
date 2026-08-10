@@ -6345,34 +6345,36 @@ export function LearningHistory() {
     }));
   };
 
-  const guruIsbns = useMemo(() => {
+  // [FIX] guruIsbns: Kumpulkan semua ISBN yang ada di alokasi sekolah (tidak filter by guru's username).
+  // Data allocations sudah difilter per sekolah oleh backend, jadi semua entry di sini valid untuk ditampilkan guru.
+  const guruAllocatedStudents = useMemo(() => {
     if (session?.role !== "guru") return null;
+    // Kembalikan Set berisi semua studentUsername yang ada di alokasi sekolah ini
     return new Set(
-      data.allocations
-        .filter((a: any) => a.studentUsername === session?.username)
-        .map((a: any) => String(a.isbn))
+      data.allocations.map((a: any) => String(a.studentUsername || "")).filter(Boolean)
     );
   }, [data.allocations, session]);
 
   const rawFilteredLearning = useMemo(() => {
     let result = data.learning || [];
-    if (guruIsbns) {
-       result = result.filter(
-         (item: any) =>
-           guruIsbns.has(String(item.isbn)) && 
-           item.studentUsername !== session?.username &&
-           data.allocations.some((a: any) => a.studentUsername === item.studentUsername && String(a.isbn) === String(item.isbn))
-       );
+    if (guruAllocatedStudents) {
+      // [FIX] Guru melihat semua learning dari semua siswa yang ada di alokasi sekolah,
+      // kecuali entry milik guru sendiri
+      result = result.filter(
+        (item: any) =>
+          item.studentUsername !== session?.username &&
+          guruAllocatedStudents.has(String(item.studentUsername || ""))
+      );
     } else if (isSiswa) {
        result = result.filter((item: any) => item.studentUsername === session?.username);
     }
     return result;
-  }, [data.learning, data.allocations, guruIsbns, session, isSiswa]);
+  }, [data.learning, data.allocations, guruAllocatedStudents, session, isSiswa]);
 
   const contentRows = useMemo(() => {
     const rows: any[] = [];
     rawFilteredLearning.forEach((learningItem: any) => {
-      const bookContents = data.contents.filter((c: any) => String(c.isbn) === String(learningItem.isbn));
+      const bookContents = data.contents.filter((c: any) => c.isbn === learningItem.isbn);
       
       // Jika buku tidak punya konten, kita abaikan saja karena tabel ini khusus progress konten (video/games/infografis)
       bookContents.forEach((content: any) => {
