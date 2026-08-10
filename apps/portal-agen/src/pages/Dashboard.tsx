@@ -1418,7 +1418,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
           </div>
 
           <Link
-            to="/play-content"
+            to="/library"
             style={{
               display: "flex",
               alignItems: "center",
@@ -1957,7 +1957,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                           </div>
                         </td>
                         <td style={{ textAlign: "center" }}>
-                          <Link to="/play-content" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--success)" }}>
+                          <Link to="/library" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--success)" }}>
                             <PlayCircle size={28} />
                           </Link>
                         </td>
