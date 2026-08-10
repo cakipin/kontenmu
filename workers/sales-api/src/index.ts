@@ -133,7 +133,7 @@ export default {
     }
 
     const isPublicRead = request.method === "GET" && [
-      "/api/sekolah", "/api/master/stats", "/api/stats", "/api/buku", "/api/books",
+      "/api/sekolah", "/api/master/stats", "/api/stats", "/api/buku", "/api/books", "/api/debug/testdb"
     ].includes(url.pathname);
     const isPublicRegistration = url.pathname === "/api/users" && request.method === "POST" && !authUser;
 
@@ -143,6 +143,15 @@ export default {
 
     if (url.pathname === "/api/auth/verify" && request.method === "POST") {
       return json({ success: true });
+    }
+
+    if (url.pathname === "/api/debug/testdb" && request.method === "GET") {
+      try {
+        const user = await env.DB.prepare("SELECT * FROM users WHERE username = 'superadmin'").first<any>();
+        return json({ success: true, user });
+      } catch (e: any) {
+        return json({ success: false, error: e.message });
+      }
     }
 
     const isSchoolMutation = url.pathname.startsWith("/api/sekolah") && request.method !== "GET";
