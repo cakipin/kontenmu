@@ -6350,7 +6350,7 @@ export function LearningHistory() {
     return new Set(
       data.allocations
         .filter((a: any) => a.studentUsername === session?.username)
-        .map((a: any) => a.isbn)
+        .map((a: any) => String(a.isbn))
     );
   }, [data.allocations, session]);
 
@@ -6359,9 +6359,9 @@ export function LearningHistory() {
     if (guruIsbns) {
        result = result.filter(
          (item: any) =>
-           guruIsbns.has(item.isbn) && 
+           guruIsbns.has(String(item.isbn)) && 
            item.studentUsername !== session?.username &&
-           data.allocations.some((a: any) => a.studentUsername === item.studentUsername && a.isbn === item.isbn)
+           data.allocations.some((a: any) => a.studentUsername === item.studentUsername && String(a.isbn) === String(item.isbn))
        );
     } else if (isSiswa) {
        result = result.filter((item: any) => item.studentUsername === session?.username);
@@ -6372,7 +6372,7 @@ export function LearningHistory() {
   const contentRows = useMemo(() => {
     const rows: any[] = [];
     rawFilteredLearning.forEach((learningItem: any) => {
-      const bookContents = data.contents.filter((c: any) => c.isbn === learningItem.isbn);
+      const bookContents = data.contents.filter((c: any) => String(c.isbn) === String(learningItem.isbn));
       
       // Jika buku tidak punya konten, kita abaikan saja karena tabel ini khusus progress konten (video/games/infografis)
       bookContents.forEach((content: any) => {
