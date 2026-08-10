@@ -61,7 +61,12 @@ export const onRequestGet = async (context: any) => {
 
       const payload = JSON.stringify({ 
         success: true,
-        contents: (result.results || []).map(rowToContent),
+        contents: (result.results || []).map((row) => {
+          const content = rowToContent(row);
+          // Destructuring untuk menyembunyikan field internal/sensitif
+          const { fileName, thumbnailKey, ...safeContent } = content;
+          return safeContent;
+        }),
         total: totalResult?.value || 0,
         page,
         limit,
