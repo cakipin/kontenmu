@@ -506,6 +506,10 @@ function normalizeAppData(data: AppData): AppData {
   next.payments ??= [];
   next.allocations ??= [];
   next.learning ??= [];
+  // Guard: jika learning berisi string (misalnya terisi roleAccessPermissions yang corrupt), reset ke []
+  if (Array.isArray(next.learning) && next.learning.length > 0 && typeof next.learning[0] !== "object") {
+    next.learning = [];
+  }
   next.contents ??= [];
   next.subscriptions ??= [];
   next.isChatWidgetEnabled ??= true;
