@@ -25,6 +25,7 @@ const ROUTES = [
   { path: /^\/$/, methods: ["GET"] },
   { path: /^\/api\/auth\/login$/, methods: ["POST"] },
   { path: /^\/api\/auth\/verify$/, methods: ["POST"] },
+  { path: /^\/api\/debug\/testdb$/, methods: ["GET"] },
   { path: /^\/api\/sekolah$/, methods: ["GET", "POST"] },
   { path: /^\/api\/sekolah\/[^/]+$/, methods: ["PUT", "DELETE"] },
   { path: /^\/api\/(?:master\/stats|stats|buku)$/, methods: ["GET"] },
@@ -98,6 +99,8 @@ export default {
         const user = await env.DB.prepare(
           "SELECT id, username, nama, role_slug, wilayah, status, initial, sekolah_id, picture, sso_id, password FROM users WHERE username = ? LIMIT 1",
         ).bind(username.trim()).first<any>();
+
+        console.log("Login attempt:", { username: username.trim(), userFound: !!user });
 
         const storedPassword = user?.password || "";
         const passwordMatches = storedPassword.startsWith("$2")
