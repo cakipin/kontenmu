@@ -584,7 +584,7 @@ function useKHGT() {
   return { data, isLoading, isError };
 }
 
-function SidebarDateTime() {
+function AppDateTime({ variant, className }: { variant: "sidebar" | "header", className?: string }) {
   const [time, setTime] = useState(new Date());
   const { data: khgtDate, isLoading, isError } = useKHGT();
 
@@ -606,28 +606,34 @@ function SidebarDateTime() {
     second: "2-digit",
   });
 
+  const isSidebar = variant === "sidebar";
+
   return (
     <div
+      className={className}
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
-        padding: "0.75rem 1rem",
-        borderBottom: "1px solid var(--border-color)",
-        margin: "0 1rem 0.5rem 1rem",
+        justifyContent: isSidebar ? "center" : "flex-start",
+        padding: isSidebar ? "0.75rem 1rem" : "0 0.875rem 0 0",
+        borderBottom: isSidebar ? "1px solid var(--border-color)" : "none",
+        borderRight: isSidebar ? "none" : "1px solid var(--border-color)",
+        margin: isSidebar ? "0 1rem 0.5rem 1rem" : "0 0.5rem 0 0",
+        height: isSidebar ? "auto" : "40px"
       }}
     >
-      {/* Jam */}
-      <span
-        style={{
-          fontSize: "0.95rem",
-          fontWeight: 700,
-          color: "var(--text-primary)",
-          letterSpacing: "0.05em",
-        }}
-      >
-        {jam}
-      </span>
+      <div style={{ width: "75px", textAlign: isSidebar ? "right" : "left", fontVariantNumeric: "tabular-nums" }}>
+        <span
+          style={{
+            fontSize: "0.95rem",
+            fontWeight: 700,
+            color: "var(--text-primary)",
+            letterSpacing: "0.05em",
+          }}
+        >
+          {jam}
+        </span>
+      </div>
       
       {/* Separator */}
       <span style={{ margin: "0 0.75rem", color: "var(--text-tertiary)", opacity: 0.5 }}>|</span>
@@ -816,7 +822,7 @@ function AppContent() {
           </button>
         </div>
         
-        <SidebarDateTime />
+        <AppDateTime variant="sidebar" className="mobile-only" />
 
         <nav className="admin-nav" aria-label="Navigasi utama">
           {navItems.map((item) => {
@@ -936,6 +942,7 @@ function AppContent() {
           </div>
 
           <div className="topbar-actions">
+            <AppDateTime variant="header" className="desktop-only" />
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className="icon-button pwa-theme-control"
