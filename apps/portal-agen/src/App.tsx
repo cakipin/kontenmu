@@ -584,7 +584,7 @@ function useKHGT() {
   return { data, isLoading, isError };
 }
 
-function HeaderDateTime() {
+function SidebarDateTime() {
   const [time, setTime] = useState(new Date());
   const { data: khgtDate, isLoading, isError } = useKHGT();
 
@@ -611,10 +611,10 @@ function HeaderDateTime() {
       style={{
         display: "flex",
         alignItems: "center",
-        borderRight: "1px solid var(--border-color)",
-        paddingRight: "0.875rem",
-        marginRight: "0.5rem",
-        height: "40px"
+        justifyContent: "center",
+        padding: "0.75rem 1rem",
+        borderBottom: "1px solid var(--border-color)",
+        margin: "0 1rem 0.5rem 1rem",
       }}
     >
       {/* Jam */}
@@ -815,6 +815,8 @@ function AppContent() {
             <Icon name="close" />
           </button>
         </div>
+        
+        <SidebarDateTime />
 
         <nav className="admin-nav" aria-label="Navigasi utama">
           {navItems.map((item) => {
@@ -934,7 +936,6 @@ function AppContent() {
           </div>
 
           <div className="topbar-actions">
-            <HeaderDateTime />
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className="icon-button pwa-theme-control"
