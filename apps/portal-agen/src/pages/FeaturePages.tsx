@@ -4741,61 +4741,72 @@ export function Allocation() {
     }
 
     try {
-      await setData((current) => {
-        let newAllocations = [...current.allocations];
-        let newLearning = [...current.learning];
+      const current = data;
+      let newAllocations = [...current.allocations];
+      let newLearning = [...current.learning];
 
-        for (const book of booksToAllocate) {
-          const currentIsbn = book.isbn;
-          if (!currentIsbn) continue;
-          
-          const isDuplicate = current.allocations.some(
-            (item) =>
-              item.id !== editingAllocationId &&
-              item.studentUsername === studentUsername &&
-              item.isbn === currentIsbn,
-          );
-          
-          if (!isDuplicate) {
-             if (editingAllocationId && isbn) {
-                // Edit existing allocation
-                newAllocations = newAllocations.map((a) =>
-                  a.id === editingAllocationId
-                    ? { ...a, studentUsername, isbn: currentIsbn, schoolId }
-                    : a,
-                );
-             } else {
-                newAllocations.unshift({
-                  id: nextId("ALC", newAllocations.length),
+      for (const book of booksToAllocate) {
+        const currentIsbn = book.isbn;
+        if (!currentIsbn) continue;
+        
+        const isDuplicate = current.allocations.some(
+          (item) =>
+            item.id !== editingAllocationId &&
+            item.studentUsername === studentUsername &&
+            item.isbn === currentIsbn,
+        );
+        
+        if (!isDuplicate) {
+            if (editingAllocationId && isbn) {
+              // Edit existing allocation
+              newAllocations = newAllocations.map((a) =>
+                a.id === editingAllocationId
+                  ? { ...a, studentUsername, isbn: currentIsbn, schoolId }
+                  : a,
+              );
+            } else {
+              newAllocations.unshift({
+                id: nextId("ALC", newAllocations.length),
+                studentUsername,
+                isbn: currentIsbn,
+                schoolId,
+                tanggal: new Date().toISOString().slice(0, 10),
+              });
+              
+              const hasLearning = newLearning.some(
+                (item) => item.studentUsername === studentUsername && item.isbn === currentIsbn
+              );
+              
+              if (!hasLearning) {
+                newLearning.unshift({
                   studentUsername,
                   isbn: currentIsbn,
-                  schoolId,
-                  tanggal: new Date().toISOString().slice(0, 10),
+                  progress: 0,
+                  durasiJam: 0,
+                  terakhirDibaca: "-",
                 });
-                
-                const hasLearning = newLearning.some(
-                  (item) => item.studentUsername === studentUsername && item.isbn === currentIsbn
-                );
-                
-                if (!hasLearning) {
-                  newLearning.unshift({
-                    studentUsername,
-                    isbn: currentIsbn,
-                    progress: 0,
-                    durasiJam: 0,
-                    terakhirDibaca: "-",
-                  });
-                }
-             }
-          }
+              }
+            }
         }
-        
-        return {
-          ...current,
-          allocations: newAllocations,
-          learning: newLearning
-        };
+      }
+      
+      const payloadData = {
+        ...current,
+        allocations: newAllocations,
+        learning: newLearning
+      };
+
+      const resApp = await fetch("/api/app-data", {
+         method: "PUT",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify(payloadData)
       });
+      
+      if (!resApp.ok) {
+         throw new Error("Gagal menyimpan alokasi secara permanen ke database.");
+      }
+
+      await setData(payloadData);
 
       setMessage(
         editingAllocationId
@@ -5502,45 +5513,54 @@ export function TeacherAccess() {
       const json = await res.json();
       if (json.success) {
         if (selectedBuku && selectedBuku.length > 0) {
-          await setData((current) => {
-            const newAllocations = [...current.allocations];
-            const newLearning = [...current.learning];
-            selectedBuku.forEach((b: any) => {
-              const duplicate = newAllocations.some(
-                (a) =>
-                  a.studentUsername === editingTeacher.username &&
-                  a.isbn === b.value,
-              );
-              if (!duplicate) {
-                newAllocations.unshift({
-                  id: "ALC" + Date.now() + Math.random(),
-                  studentUsername: editingTeacher.username,
-                  isbn: b.value,
-                  schoolId,
-                  tanggal: new Date().toISOString().slice(0, 10),
-                });
-              }
-              const duplicateLearning = newLearning.some(
-                (l) =>
-                  l.studentUsername === editingTeacher.username &&
-                  l.isbn === b.value,
-              );
-              if (!duplicateLearning) {
-                newLearning.unshift({
-                  studentUsername: editingTeacher.username,
-                  isbn: b.value,
-                  progress: 0,
-                  durasiJam: 0,
-                  terakhirDibaca: "-",
-                });
-              }
-            });
-            return {
-              ...current,
-              allocations: newAllocations,
-              learning: newLearning,
-            };
+          const current = data;
+          const newAllocations = [...current.allocations];
+          const newLearning = [...current.learning];
+          selectedBuku.forEach((b: any) => {
+            const duplicate = newAllocations.some(
+              (a) =>
+                a.studentUsername === editingTeacher.username &&
+                a.isbn === b.value,
+            );
+            if (!duplicate) {
+              newAllocations.unshift({
+                id: "ALC" + Date.now() + Math.random(),
+                studentUsername: editingTeacher.username,
+                isbn: b.value,
+                schoolId,
+                tanggal: new Date().toISOString().slice(0, 10),
+              });
+            }
+            const duplicateLearning = newLearning.some(
+              (l) =>
+                l.studentUsername === editingTeacher.username &&
+                l.isbn === b.value,
+            );
+            if (!duplicateLearning) {
+              newLearning.unshift({
+                studentUsername: editingTeacher.username,
+                isbn: b.value,
+                progress: 0,
+                durasiJam: 0,
+                terakhirDibaca: "-",
+              });
+            }
           });
+          
+          const payloadData = {
+            ...current,
+            allocations: newAllocations,
+            learning: newLearning,
+          };
+          
+          const saveRes = await fetch("/api/app-data", {
+             method: "PUT",
+             headers: { "Content-Type": "application/json" },
+             body: JSON.stringify(payloadData),
+          });
+          if (!saveRes.ok) throw new Error("Gagal menyimpan alokasi permanen ke server");
+          
+          await setData(payloadData);
         }
         setMessage("Akses berhasil dialokasikan ke Guru.");
         setEditingTeacher(null);
