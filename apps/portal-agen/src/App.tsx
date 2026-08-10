@@ -610,49 +610,67 @@ function HeaderDateTime() {
     <div
       style={{
         display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-end",
-        textAlign: "right",
+        alignItems: "center",
         borderRight: "1px solid var(--border-color)",
         paddingRight: "0.875rem",
         marginRight: "0.5rem",
-        justifyContent: "center",
-        minHeight: "40px"
+        height: "40px"
       }}
     >
+      {/* Jam */}
       <span
         style={{
-          fontSize: "0.65rem",
+          fontSize: "0.95rem",
           fontWeight: 700,
-          color: "var(--text-tertiary)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
+          color: "var(--text-primary)",
+          letterSpacing: "0.05em",
         }}
       >
-        {masehi} • {jam}
+        {jam}
       </span>
-      {isLoading && !isError ? (
-        <span 
-          style={{
-            height: "12px",
-            width: "80px",
-            background: "var(--bg-secondary)",
-            borderRadius: "4px",
-            marginTop: "2px",
-            opacity: 0.6
-          }}
-        />
-      ) : !isError && khgtDate ? (
+      
+      {/* Separator */}
+      <span style={{ margin: "0 0.5rem", color: "var(--border-color)" }}>|</span>
+
+      {/* Kalender */}
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        {isLoading && !isError ? (
+          <span 
+            style={{
+              height: "12px",
+              width: "90px",
+              background: "var(--bg-secondary)",
+              borderRadius: "4px",
+              marginBottom: "2px",
+              opacity: 0.6
+            }}
+          />
+        ) : !isError && khgtDate ? (
+          <span
+            style={{
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              color: "var(--accent-color)",
+              lineHeight: 1.2
+            }}
+          >
+            {khgtDate}
+          </span>
+        ) : null}
+        
         <span
           style={{
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            color: "var(--accent-color)",
+            fontSize: "0.65rem",
+            fontWeight: 600,
+            color: "var(--text-secondary)",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            lineHeight: 1.2
           }}
         >
-          {khgtDate}
+          {masehi}
         </span>
-      ) : null}
+      </div>
     </div>
   );
 }
