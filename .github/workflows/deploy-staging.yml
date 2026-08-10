@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          ref: staging
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -80,5 +82,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name kontenmu --branch main
+          command: pages deploy dist --project-name kontenmu --branch staging
           workingDirectory: apps/portal-agen
