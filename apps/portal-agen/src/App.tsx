@@ -531,6 +531,150 @@ function canAccessRoute(
     : true;
 }
 
+function useKHGT() {
+  const [data, setData] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchKHGT = async () => {
+      try {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = now.getMonth();
+        const dd = now.getDate();
+        
+        const res = await fetch(`https://api-khgt.muhammadiyah.or.id/api/calendar/${yyyy}`);
+        if (!res.ok) throw new Error("API Error");
+        const json = await res.json();
+        
+        if (json.success && json.data) {
+          for (const month of json.data) {
+            if (month.days) {
+              for (const day of month.days) {
+                if (day && day.gregorian_date === dd && day.gregorian_month === mm && day.gregorian_year === yyyy) {
+                  if (isMounted) {
+                    setData(`${day.hijri_date} ${month.hijri_month_name} ${month.hijri_year} H`);
+                    setIsLoading(false);
+                  }
+                  return;
+                }
+              }
+            }
+          }
+        }
+        
+        if (isMounted) {
+          setIsError(true);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setIsError(true);
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    fetchKHGT();
+    return () => { isMounted = false; };
+  }, []);
+
+  return { data, isLoading, isError };
+}
+
+function HeaderDateTime() {
+  const [time, setTime] = useState(new Date());
+  const { data: khgtDate, isLoading, isError } = useKHGT();
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const locale = "id-ID";
+  const masehi = time.toLocaleDateString(locale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const jam = time.toLocaleTimeString(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        borderRight: "1px solid var(--border-color)",
+        paddingRight: "0.875rem",
+        marginRight: "0.5rem",
+        height: "40px"
+      }}
+    >
+      {/* Jam */}
+      <span
+        style={{
+          fontSize: "0.95rem",
+          fontWeight: 700,
+          color: "var(--text-primary)",
+          letterSpacing: "0.05em",
+        }}
+      >
+        {jam}
+      </span>
+      
+      {/* Separator */}
+      <span style={{ margin: "0 0.75rem", color: "var(--text-tertiary)", opacity: 0.5 }}>|</span>
+
+      {/* Kalender */}
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        {isLoading && !isError ? (
+          <span 
+            style={{
+              height: "12px",
+              width: "90px",
+              background: "var(--text-tertiary)",
+              borderRadius: "4px",
+              marginBottom: "2px",
+              opacity: 0.2
+            }}
+          />
+        ) : !isError && khgtDate ? (
+          <span
+            style={{
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              color: "#2E97FA", // Official Muhammadiyah Blue, visible in dark mode
+              lineHeight: 1.2
+            }}
+          >
+            {khgtDate}
+          </span>
+        ) : null}
+        
+        <span
+          style={{
+            fontSize: "0.65rem",
+            fontWeight: 600,
+            color: "var(--text-secondary)",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            lineHeight: 1.2
+          }}
+        >
+          {masehi}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function AppContent() {
   const { session, logout, sessionTimeLeft, switchRole } = useAuth();
   const IS_DEV = import.meta.env.DEV;
@@ -790,6 +934,7 @@ function AppContent() {
           </div>
 
           <div className="topbar-actions">
+            <HeaderDateTime />
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className="icon-button pwa-theme-control"
