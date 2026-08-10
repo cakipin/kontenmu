@@ -25,6 +25,22 @@ export function filterTenantState(
   allowedLearningUsers?: Set<string>,
 ) {
   const next = { ...data };
+  const tenantUsernames = new Set(
+    [
+      ...(Array.isArray(data?.users) ? data.users : []),
+      ...(Array.isArray(data?.schoolUsers) ? data.schoolUsers : []),
+    ]
+      .filter((item: any) =>
+        [item?.schoolId, item?.sekolahId, item?.sekolah_id].some(
+          (value) => Number(value) === schoolId,
+        ),
+      )
+      .map((item: any) => String(item?.username || ""))
+      .filter(Boolean),
+  );
+  if (allowedLearningUsers) {
+    allowedLearningUsers.forEach((username) => tenantUsernames.add(username));
+  }
   const filterBySchool = (items: unknown) =>
     Array.isArray(items)
       ? items.filter((item: any) =>
@@ -34,14 +50,16 @@ export function filterTenantState(
         )
       : items;
 
-  for (const key of [
-    "users",
-    "sales",
-    "payments",
-    "allocations",
-    "subscriptions",
-  ]) {
+  for (const key of ["users", "sales", "payments", "subscriptions"]) {
     if (key in next) next[key] = filterBySchool(next[key]);
+  }
+  if (Array.isArray(next.allocations)) {
+    next.allocations = next.allocations.filter(
+      (item: any) =>
+        [item?.schoolId, item?.sekolahId, item?.sekolah_id].some(
+          (value) => Number(value) === schoolId,
+        ) || tenantUsernames.has(String(item?.studentUsername || "")),
+    );
   }
   if (Array.isArray(next.schools)) {
     next.schools = next.schools.filter((school: any) => Number(school?.id) === schoolId);
@@ -62,7 +80,25 @@ export function mergeTenantState(
   allowedLearningUsers?: Set<string>,
 ) {
   const next = { ...existing };
-  const tenantKeys = ["users", "sales", "payments", "allocations", "subscriptions"];
+  const tenantKeys = ["users", "sales", "payments", "subscriptions"];
+  const tenantUsernames = new Set(
+    [
+      ...(Array.isArray(existing?.users) ? existing.users : []),
+      ...(Array.isArray(existing?.schoolUsers) ? existing.schoolUsers : []),
+      ...(Array.isArray(incoming?.users) ? incoming.users : []),
+      ...(Array.isArray(incoming?.schoolUsers) ? incoming.schoolUsers : []),
+    ]
+      .filter((item: any) =>
+        [item?.schoolId, item?.sekolahId, item?.sekolah_id].some(
+          (value) => Number(value) === schoolId,
+        ),
+      )
+      .map((item: any) => String(item?.username || ""))
+      .filter(Boolean),
+  );
+  if (allowedLearningUsers) {
+    allowedLearningUsers.forEach((username) => tenantUsernames.add(username));
+  }
   const belongsToSchool = (item: any) =>
     [item?.schoolId, item?.sekolahId, item?.sekolah_id].some(
       (value) => Number(value) === schoolId,
@@ -75,6 +111,19 @@ export function mergeTenantState(
       : [];
     const ownTenant = incoming[key].filter(belongsToSchool);
     next[key] = [...otherTenants, ...ownTenant];
+  }
+
+  if (Array.isArray(incoming?.allocations)) {
+    const allocationBelongsToSchool = (item: any) =>
+      belongsToSchool(item) ||
+      tenantUsernames.has(String(item?.studentUsername || ""));
+    const otherTenants = Array.isArray(existing?.allocations)
+      ? existing.allocations.filter(
+          (item: any) => !allocationBelongsToSchool(item),
+        )
+      : [];
+    const ownTenant = incoming.allocations.filter(allocationBelongsToSchool);
+    next.allocations = [...otherTenants, ...ownTenant];
   }
 
   if (Array.isArray(incoming?.schools)) {

@@ -83,7 +83,7 @@ export const api = {
     request<InventoryItem[]>(`/api/inventory?sekolahId=${sekolahId}`),
   getAllocations: (sekolahId: number) =>
     request<Alokasi[]>(`/api/allocations?sekolahId=${sekolahId}`),
-  allocate: (payload: { sekolahId: number; isbn: string; siswaId: string }) =>
+  allocate: (payload: { sekolahId: number; isbn?: string; siswaId: string; bulkByClass?: boolean; kelas?: string }) =>
     fetch("/api/allocate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

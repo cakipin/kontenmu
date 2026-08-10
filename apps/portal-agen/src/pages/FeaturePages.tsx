@@ -33,6 +33,7 @@ import {
   nextId,
   useAppData,
   getSchoolLevel,
+  matchesClass,
 } from "../data/appData";
 
 export const FEATURE_PAGES_BUILD = "2026-08-09-cache-recovery-1";
@@ -360,7 +361,7 @@ export function Catalog() {
 
     if (editingId) {
       await fetch(
-        `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}`}/api/books/${editingId}`,
+        `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/books/${editingId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -369,7 +370,7 @@ export function Catalog() {
       );
     } else {
       await fetch(
-        `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}`}/api/books`,
+        `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/books`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -406,7 +407,7 @@ export function Catalog() {
   const confirmDelete = async () => {
     if (bookToDelete) {
       await fetch(
-        `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}`}/api/books/${bookToDelete.id}`,
+        `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/books/${bookToDelete.id}`,
         { method: "DELETE" },
       );
       fetchBooks();
@@ -3342,7 +3343,7 @@ export function SchoolUsers() {
 
   useEffect(() => {
     fetch(
-      `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/users`,
+      `${""}/api/users`,
       { cache: "no-store" },
     )
       .then((res) => res.json())
@@ -3411,52 +3412,53 @@ export function SchoolUsers() {
   }, [data.users, apiUsers, schoolId, currentSchool, sessionWilayah]);
 
   const mapelOptions = useMemo(() => {
-    let allBooks = apiBooks.length > 0 ? apiBooks : data.books;
+    const allBooks = apiBooks.length > 0 ? apiBooks : data.books;
+    const subjects = Array.from(
+      new Set(
+        allBooks
+          .map((book: any) => String(book.mapel || "").trim())
+          .filter(Boolean),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
 
-    const userSchoolLevel = currentSchool
-      ? getSchoolLevel(currentSchool.nama)
-      : getSchoolLevel(sessionWilayah);
-    if (userSchoolLevel) {
-      const sl = userSchoolLevel.toLowerCase();
-      allBooks = allBooks.filter((b) => {
-        const p = (b.jenjang || b.peruntukan || "").toLowerCase();
-        if (p === "umum" || p.includes("semua") || p === "") return true;
-        if (sl === "sd/mi" && !p.includes("sd") && !p.includes("mi"))
-          return false;
-        if (sl === "smp/mts" && !p.includes("smp") && !p.includes("mts"))
-          return false;
-        if (
-          sl === "sma/ma/smk" &&
-          !p.includes("sma") &&
-          !p.includes("smk") &&
-          !p.includes("ma")
-        )
-          return false;
-        return true;
-      });
+    return subjects.map((subject) => ({
+      value: subject,
+      label: subject,
+    }));
+  }, [data.books, apiBooks]);
+  const kelasOptions = useMemo(() => {
+    const schoolLevel = String(
+      (currentSchool as any)?.jenjang ||
+        (currentSchool as any)?.bentuk_pendidikan ||
+        (currentSchool as any)?.bentukPendidikan ||
+        currentSchool?.nama ||
+        sessionWilayah ||
+        "",
+    ).toUpperCase();
+
+    if (/\b(SMP|MTS)\b/.test(schoolLevel)) {
+      return ["SMP Kelas VII", "SMP Kelas VIII", "SMP Kelas IX"];
     }
+    if (/\b(SD|MI)\b/.test(schoolLevel)) {
+      return [
+        "SD Kelas I",
+        "SD Kelas II",
+        "SD Kelas III",
+        "SD Kelas IV",
+        "SD Kelas V",
+        "SD Kelas VI",
+      ];
+    }
+    if (/\bSMK\b/.test(schoolLevel)) {
+      return ["SMK Kelas X", "SMK Kelas XI", "SMK Kelas XII"];
+    }
+    if (/\b(SMA|MA)\b/.test(schoolLevel)) {
+      return ["SMA Kelas X", "SMA Kelas XI", "SMA Kelas XII"];
+    }
+    if (/\b(PAUD|TK|RA)\b/.test(schoolLevel)) return ["PAUD/TK"];
 
-    // ensure unique by title
-    const uniqueBooks = Array.from(
-      new Map(allBooks.map((b: any) => [b.judul, b])).values(),
-    );
-
-    return uniqueBooks
-      .sort((a: any, b: any) => (a.judul || "").localeCompare(b.judul || ""))
-      .map((b: any) => {
-        const peruntukan = b.jenjang || b.peruntukan || "-";
-        const kelas = b.kelas || "-";
-        const isbn = b.isbn || "-";
-        const mapelText = b.mapel || "-";
-        const judul = b.judul || "-";
-        return {
-          value: judul,
-          label: `${judul} (ISBN: ${isbn} | Mapel: ${mapelText} | Peruntukan: ${peruntukan} | Kelas: ${kelas})`,
-        };
-      });
-  }, [data.books, apiBooks, currentSchool, sessionWilayah]);
-  const kelasOptions = useMemo(
-    () => [
+    // Pertahankan fallback lama untuk sekolah yang jenjangnya belum terisi.
+    return [
       "PAUD/TK",
       "SD Kelas I",
       "SD Kelas II",
@@ -3473,9 +3475,8 @@ export function SchoolUsers() {
       "SMK Kelas X",
       "SMK Kelas XI",
       "SMK Kelas XII",
-    ],
-    [],
-  );
+    ];
+  }, [currentSchool, sessionWilayah]);
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -3541,7 +3542,7 @@ export function SchoolUsers() {
       let resPayload;
       if (editingStaffId && !editingStaffId.startsWith("SCH-")) {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}`}/api/users/${editingStaffId}`,
+          `${import.meta.env.VITE_API_URL || `${""}`}/api/users/${editingStaffId}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -3568,7 +3569,7 @@ export function SchoolUsers() {
 
       // Re-fetch users to update the list
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/users`,
+        `${""}/api/users`,
         { cache: "no-store" },
       );
       if (res.ok) {
@@ -3598,7 +3599,7 @@ export function SchoolUsers() {
     try {
       if (!staffId.startsWith("SCH-")) {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}`}/api/users/${staffId}`,
+          `${import.meta.env.VITE_API_URL || `${""}`}/api/users/${staffId}`,
           { method: "DELETE" },
         );
         if (!res.ok) {
@@ -3607,7 +3608,7 @@ export function SchoolUsers() {
           return;
         }
         const getRes = await fetch(
-          `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/users`,
+          `${""}/api/users`,
           { cache: "no-store" },
         );
         if (getRes.ok) {
@@ -4556,7 +4557,7 @@ export function Allocation() {
 
   useEffect(() => {
     fetch(
-      `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/users`,
+      `${""}/api/users`,
     )
       .then((res) => res.json())
       .then((res) => {
@@ -4578,6 +4579,15 @@ export function Allocation() {
       })
       .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (
+      students.length > 0 &&
+      !students.some((student: any) => student.username === studentUsername)
+    ) {
+      setStudentUsername(students[0].username);
+    }
+  }, [students, studentUsername]);
 
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
@@ -4611,9 +4621,19 @@ export function Allocation() {
         return true;
       });
     }
+    const selectedStudent = students.find(
+      (student: any) => student.username === studentUsername,
+    );
+    if (selectedStudent?.kelas) {
+      result = result.filter(
+        (book: any) =>
+          Boolean(book.kelas) &&
+          matchesClass(selectedStudent.kelas, book.kelas),
+      );
+    }
     const mapels = result.map((b) => b.mapel).filter(Boolean);
     return Array.from(new Set(mapels)).sort();
-  }, [masterBooks, currentSchool, sessionWilayah]);
+  }, [masterBooks, currentSchool, sessionWilayah, students, studentUsername]);
 
   const filteredBooks = useMemo(() => {
     let result = Array.from(
@@ -4642,6 +4662,17 @@ export function Allocation() {
       });
     }
 
+    const selectedStudent = students.find(
+      (student: any) => student.username === studentUsername,
+    );
+    if (selectedStudent?.kelas) {
+      result = result.filter(
+        (book: any) =>
+          Boolean(book.kelas) &&
+          matchesClass(selectedStudent.kelas, book.kelas),
+      );
+    }
+
     if (selectedMapel) {
       result = result.filter((b) => b.mapel === selectedMapel);
     }
@@ -4660,6 +4691,8 @@ export function Allocation() {
     selectedMapel,
     currentSchool,
     sessionWilayah,
+    students,
+    studentUsername,
   ]);
 
   const filteredAllocations = useMemo(() => {
@@ -4693,70 +4726,81 @@ export function Allocation() {
 
   const allocate = async (event: FormEvent) => {
     event.preventDefault();
-    if (!studentUsername || !isbn) {
-      setMessage("Silakan pilih siswa dan buku.");
+    if (!studentUsername) {
+      setMessage("Silakan pilih siswa terlebih dahulu.");
       return;
     }
 
-    const isDuplicate = data.allocations.some(
-      (item) =>
-        item.id !== editingAllocationId &&
-        item.studentUsername === studentUsername &&
-        item.isbn === isbn,
-    );
-    if (isDuplicate) {
-      setMessage("Siswa sudah punya akses buku ini.");
+    const booksToAllocate = isbn 
+      ? [{ isbn, judul: bookSearchQuery }] 
+      : filteredBooks;
+
+    if (booksToAllocate.length === 0) {
+      setMessage("Tidak ada buku yang dapat dialokasikan (Buku tidak ditemukan).");
       return;
     }
 
     try {
       await setData((current) => {
+        let newAllocations = [...current.allocations];
+        let newLearning = [...current.learning];
 
-      if (editingAllocationId) {
-        return {
-          ...current,
-          allocations: current.allocations.map((a) =>
-            a.id === editingAllocationId
-              ? { ...a, studentUsername, isbn, schoolId }
-              : a,
-          ),
-        };
-      } else {
-        return {
-          ...current,
-          allocations: [
-            {
-              id: nextId("ALC", current.allocations.length),
-              studentUsername,
-              isbn,
-              schoolId,
-              tanggal: new Date().toISOString().slice(0, 10),
-            },
-            ...current.allocations,
-          ],
-          learning: current.learning.some(
+        for (const book of booksToAllocate) {
+          const currentIsbn = book.isbn;
+          if (!currentIsbn) continue;
+          
+          const isDuplicate = current.allocations.some(
             (item) =>
-              item.studentUsername === studentUsername && item.isbn === isbn,
-          )
-            ? current.learning
-            : [
-                {
+              item.id !== editingAllocationId &&
+              item.studentUsername === studentUsername &&
+              item.isbn === currentIsbn,
+          );
+          
+          if (!isDuplicate) {
+             if (editingAllocationId && isbn) {
+                // Edit existing allocation
+                newAllocations = newAllocations.map((a) =>
+                  a.id === editingAllocationId
+                    ? { ...a, studentUsername, isbn: currentIsbn, schoolId }
+                    : a,
+                );
+             } else {
+                newAllocations.unshift({
+                  id: nextId("ALC", newAllocations.length),
                   studentUsername,
-                  isbn,
-                  progress: 0,
-                  durasiJam: 0,
-                  terakhirDibaca: "-",
-                },
-                ...current.learning,
-              ],
+                  isbn: currentIsbn,
+                  schoolId,
+                  tanggal: new Date().toISOString().slice(0, 10),
+                });
+                
+                const hasLearning = newLearning.some(
+                  (item) => item.studentUsername === studentUsername && item.isbn === currentIsbn
+                );
+                
+                if (!hasLearning) {
+                  newLearning.unshift({
+                    studentUsername,
+                    isbn: currentIsbn,
+                    progress: 0,
+                    durasiJam: 0,
+                    terakhirDibaca: "-",
+                  });
+                }
+             }
+          }
+        }
+        
+        return {
+          ...current,
+          allocations: newAllocations,
+          learning: newLearning
         };
-      }
       });
 
       setMessage(
         editingAllocationId
           ? "Akses siswa berhasil diperbarui."
-          : "Akses siswa berhasil dialokasikan.",
+          : `Akses siswa berhasil dialokasikan (${booksToAllocate.length} buku).`,
       );
 
       if (editingAllocationId) {
@@ -4783,6 +4827,23 @@ export function Allocation() {
     setBookSearchQuery(book?.judul || allocation.isbn);
     setMessage("");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const deleteAllocation = async (allocationId: string) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus alokasi buku ini?")) {
+      return;
+    }
+    
+    try {
+      await setData((current) => ({
+        ...current,
+        allocations: current.allocations.filter((a) => a.id !== allocationId),
+      }));
+      setMessage("Akses buku berhasil dihapus.");
+    } catch (error) {
+      console.error("Gagal menghapus alokasi siswa:", error);
+      setMessage("Gagal menghapus akses buku. Silakan coba lagi.");
+    }
   };
 
   return (
@@ -4976,6 +5037,15 @@ export function Allocation() {
                     onClick={() => editAllocation(allocation)}
                   >
                     <ActionSvg name="edit" />
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-action-button"
+                    title="Hapus"
+                    onClick={() => deleteAllocation(allocation.id)}
+                    style={{ color: "var(--error, #ef4444)" }}
+                  >
+                    <ActionSvg name="delete" />
                   </button>
                 </div>
               </td>
@@ -5316,7 +5386,7 @@ export function TeacherAccess() {
 
   const fetchData = useCallback(() => {
     fetch(
-      `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/users`,
+      `${""}/api/users`,
       { cache: "no-store" },
     )
       .then((res) => res.json())
@@ -5868,7 +5938,7 @@ export function Library() {
       .catch(() => {});
 
     fetch(
-      `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/users`,
+      `${""}/api/users`,
     )
       .then((res) => res.json())
       .then((payload) => {
@@ -5903,20 +5973,33 @@ export function Library() {
           .filter((a) => a.studentUsername === session.username)
           .map((a) => a.isbn),
       );
+      const currentStudent =
+        apiUsers.find((user: any) => user.username === session.username) ||
+        data.users.find((user: any) => user.username === session.username);
+      const books = [...apiBooks, ...data.books];
       return data.contents.filter(
-        (content) =>
-          content.isbn &&
-          allocatedIsbns.has(content.isbn) &&
-          matchesSchoolLevel(content.target),
+        (content) => {
+          if (
+            !content.isbn ||
+            !allocatedIsbns.has(content.isbn) ||
+            !matchesSchoolLevel(content.target)
+          ) {
+            return false;
+          }
+          const book = books.find(
+            (candidate: any) =>
+              String(candidate.isbn) === String(content.isbn),
+          );
+          return (
+            Boolean(currentStudent?.kelas) &&
+            Boolean(book?.kelas) &&
+            matchesClass(currentStudent.kelas, book.kelas)
+          );
+        },
       );
     }
 
     if (session.role === "guru") {
-      const user =
-        apiUsers.find((u) => u.username === session.username) ||
-        data.schoolUsers.find((u) => u.username === session.username);
-      if (!user) return [];
-
       const allocatedIsbns = new Set(
         data.allocations
           .filter((a: any) => a.studentUsername === session.username)
@@ -5930,6 +6013,7 @@ export function Library() {
   }, [
     data.contents,
     data.allocations,
+    data.users,
     data.schoolUsers,
     data.books,
     apiBooks,
@@ -6201,18 +6285,7 @@ export function Library() {
 export function LearningHistory() {
   const { data, setData } = useAppData();
   const { session } = useAuth();
-  const [users, setUsers] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetch(
-      `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/users`,
-    )
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.success && res.data) setUsers(res.data);
-      })
-      .catch(console.error);
-  }, []);
+  const isSiswa = session?.role === "siswa";
 
   const addProgress = (studentUsername: string, isbn: string) => {
     setData((current) => ({
@@ -6242,44 +6315,172 @@ export function LearningHistory() {
     );
   }, [data.allocations, session]);
 
-  const filteredLearning = useMemo(() => {
+  const rawFilteredLearning = useMemo(() => {
     let result = data.learning || [];
     if (guruIsbns) {
        result = result.filter(
          (item: any) =>
-           guruIsbns.has(item.isbn) && item.studentUsername !== session?.username
+           guruIsbns.has(item.isbn) && 
+           item.studentUsername !== session?.username &&
+           data.allocations.some((a: any) => a.studentUsername === item.studentUsername && a.isbn === item.isbn)
        );
+    } else if (isSiswa) {
+       result = result.filter((item: any) => item.studentUsername === session?.username);
     }
     return result;
-  }, [data.learning, guruIsbns, session]);
+  }, [data.learning, data.allocations, guruIsbns, session, isSiswa]);
+
+  const contentRows = useMemo(() => {
+    const rows: any[] = [];
+    rawFilteredLearning.forEach((learningItem: any) => {
+      const bookContents = data.contents.filter((c: any) => c.isbn === learningItem.isbn);
+      
+      // Jika buku tidak punya konten, kita abaikan saja karena tabel ini khusus progress konten (video/games/infografis)
+      bookContents.forEach((content: any) => {
+        rows.push({
+          id: `${learningItem.studentUsername}-${content.id}`,
+          studentUsername: learningItem.studentUsername,
+          isbn: learningItem.isbn,
+          learningProgress: learningItem.progress,
+          learningDurasi: learningItem.durasiJam,
+          content: content,
+        });
+      });
+    });
+    return rows;
+  }, [rawFilteredLearning, data.contents]);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMapel, setSelectedMapel] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const availableMapels = useMemo(() => {
+    const mapels = new Set<string>();
+    (data.contents || []).forEach((c: any) => {
+      if (c.mapel) mapels.add(c.mapel);
+    });
+    return Array.from(mapels).sort();
+  }, [data.contents]);
+
+  const filteredRows = useMemo(() => {
+    let result = contentRows;
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((row: any) => {
+        const student = data.users?.find(
+          (user: any) => user.username === row.studentUsername,
+        );
+        const studentName = (student?.nama ?? row.studentUsername).toLowerCase();
+        const contentName = (row.content?.judul || "").toLowerCase();
+        
+        if (isSiswa) {
+          return contentName.includes(query);
+        } else {
+          return studentName.includes(query) || contentName.includes(query);
+        }
+      });
+    }
+
+    if (selectedMapel) {
+      result = result.filter((row: any) => {
+        return row.content?.mapel === selectedMapel;
+      });
+    }
+
+    return result;
+  }, [contentRows, searchQuery, selectedMapel, data.users, isSiswa]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / itemsPerPage));
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredRows.slice(start, start + itemsPerPage);
+  }, [filteredRows, currentPage]);
+
+  const headers = isSiswa 
+    ? ["Konten", "Kategori", "Mata Pelajaran", "Durasi", "Progress", "Aksi"]
+    : ["Siswa", "Konten", "Kategori", "Mata Pelajaran", "Durasi", "Progress", "Aksi"];
+    
+  const headerAligns = isSiswa
+    ? ["left", "left", "left", "center", "center", "center"]
+    : ["left", "left", "left", "left", "center", "center", "center"];
 
   return (
     <Page
       title="Riwayat Belajar"
-      subtitle="Pantau aktivitas baca siswa, lengkap dengan progress."
+      subtitle="Pantau aktivitas belajar siswa pada konten interaktif (Video, Games, Infografis)."
     >
+      <div style={{ display: "flex", gap: "16px", marginBottom: "24px", flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ flex: 1, minWidth: "250px" }}>
+          <TableSearch 
+            value={searchQuery}
+            onChange={(val) => {
+              setSearchQuery(val);
+              setCurrentPage(1);
+            }}
+            placeholder={isSiswa ? "Cari judul konten..." : "Cari nama siswa atau konten..."}
+          />
+        </div>
+        <div style={{ minWidth: "200px" }}>
+          <select 
+            value={selectedMapel}
+            onChange={(e) => {
+              setSelectedMapel(e.target.value);
+              setCurrentPage(1);
+            }}
+            style={{ 
+              width: "100%", 
+              padding: "10px 12px", 
+              borderRadius: "8px", 
+              border: "1px solid var(--border-subtle)", 
+              background: "var(--bg-secondary)", 
+              color: "var(--text-primary)",
+              fontSize: "0.9rem",
+              outline: "none"
+            }}
+          >
+            <option value="">Semua Mata Pelajaran</option>
+            {availableMapels.map(mapel => (
+              <option key={mapel} value={mapel}>{mapel}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <DataTable
-        headers={["Siswa", "Buku", "Durasi", "Progress", "Aksi"]}
-        headerAligns={["left", "left", "center", "center", "center"]}
+        headers={headers}
+        headerAligns={headerAligns as any}
       >
-        {filteredLearning.map((item) => {
-          const student = users.find(
-            (user) => user.username === item.studentUsername,
+        {paginatedRows.map((row) => {
+          const student = data.users?.find(
+            (user: any) => user.username === row.studentUsername,
           );
-          const book = getBook(data, item.isbn);
+          
           return (
-            <tr key={`${item.studentUsername}-${item.isbn}`}>
-              <td>{student?.nama ?? item.studentUsername}</td>
-              <td>{book?.judul ?? item.isbn}</td>
-              <td>{item.durasiJam} jam</td>
+            <tr key={row.id}>
+              {!isSiswa && <td>{student?.nama ?? row.studentUsername}</td>}
+              <td>
+                <div style={{ fontWeight: 600 }}>{row.content?.judul || "Konten Tidak Diketahui"}</div>
+              </td>
+              <td>
+                <Chip type={row.content?.kategori === "Video" ? "info" : row.content?.kategori === "Games" ? "success" : "warning"} label={row.content?.kategori || "-"} />
+              </td>
+              <td>{row.content?.mapel || "-"}</td>
+              <td>{row.learningDurasi} jam</td>
               <td style={{ minWidth: 180 }}>
-                <Progress value={item.progress} />
+                <Progress value={row.learningProgress} />
               </td>
               <td>
                 <div className="action-group">
                   <button
                     className="action-button"
-                    onClick={() => addProgress(item.studentUsername, item.isbn)}
+                    onClick={() => addProgress(row.studentUsername, row.isbn)}
                   >
                     +5% Progress
                   </button>
@@ -6288,7 +6489,22 @@ export function LearningHistory() {
             </tr>
           );
         })}
+        {paginatedRows.length === 0 && (
+          <tr>
+            <td colSpan={headers.length} style={{ textAlign: "center", padding: "32px", color: "var(--text-secondary)" }}>
+              Tidak ada data riwayat belajar yang sesuai.
+            </td>
+          </tr>
+        )}
       </DataTable>
+
+      {totalPages > 1 && (
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
     </Page>
   );
 }

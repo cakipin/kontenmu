@@ -49,7 +49,7 @@ export default function SalesForm() {
         const p1 =
           data.schools.length === 0
             ? fetch(
-                `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/sekolah?limit=1000`,
+                `${""}/api/sekolah?limit=1000`,
               ).then((r) => r.json())
             : Promise.resolve(null);
         const p2 =

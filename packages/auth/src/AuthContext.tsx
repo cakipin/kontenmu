@@ -62,6 +62,12 @@ export function AuthProvider({
             body: JSON.stringify({ username: username.trim(), password }),
             cache: "no-store",
           });
+
+          const contentType = res.headers.get("content-type");
+          if (!contentType || !contentType.includes("application/json")) {
+             return "Terjadi kesalahan pada server API. Format respons tidak valid.";
+          }
+
           const json = await res.json();
           if (json.success && json.user && json.token) {
             const user = json.user;
@@ -101,9 +107,12 @@ export function AuthProvider({
               setSession(nextSession as any);
               return null;
             }
-          } else if (json.error) return json.error;
+          } else if (json.error) {
+            return json.error;
+          }
         } catch (e) {
-          console.error(e);
+          console.error("Login fetch error:", e);
+          return "Gagal terhubung ke server. Periksa koneksi internet Anda.";
         }
 
         return "Username atau password salah.";

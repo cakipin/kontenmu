@@ -57,6 +57,7 @@ export interface SimBook {
   mapel: string;
   jenjang: string;
   peruntukan?: string;
+  kelas?: string;
   penerbit: string;
   harga: number;
   status: BookStatus;
@@ -302,6 +303,44 @@ export function getSchoolLevel(schoolName: string): string {
     return "SMA/MA/SMK";
   }
   return "";
+}
+
+const ROMAN_CLASS_NUMBERS: Record<string, number> = {
+  I: 1,
+  II: 2,
+  III: 3,
+  IV: 4,
+  V: 5,
+  VI: 6,
+  VII: 7,
+  VIII: 8,
+  IX: 9,
+  X: 10,
+  XI: 11,
+  XII: 12,
+};
+
+/** Menyamakan format kelas lama ("7") dan format label ("SMP Kelas VII"). */
+export function getClassNumber(value: unknown): number | null {
+  const label = String(value ?? "").trim().toUpperCase();
+  if (!label) return null;
+
+  const numeric = label.match(/(?:^|\D)(1[0-2]|[1-9])(?:\D|$)/);
+  if (numeric) return Number(numeric[1]);
+
+  const roman = label.match(/\b(XII|XI|IX|VIII|VII|VI|IV|III|II|I|X|V)\b/);
+  return roman ? ROMAN_CLASS_NUMBERS[roman[1]] ?? null : null;
+}
+
+/** Data tanpa kelas tetap diterima agar katalog lama yang stabil tidak terputus. */
+export function matchesClass(userClass: unknown, bookClass: unknown): boolean {
+  const normalizedUserClass = getClassNumber(userClass);
+  const normalizedBookClass = getClassNumber(bookClass);
+  return (
+    normalizedUserClass === null ||
+    normalizedBookClass === null ||
+    normalizedUserClass === normalizedBookClass
+  );
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {

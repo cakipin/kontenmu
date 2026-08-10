@@ -2,16 +2,21 @@ import { verify } from "@tsndr/cloudflare-worker-jwt";
 
 const jsonHeaders = { "Content-Type": "application/json" };
 const MAX_AGE_SECONDS = 24 * 60 * 60;
-const AUTH_VERIFY_URL = "https://kontenmu-prod-api.1912.workers.dev/api/auth/verify";
+// Default to production verify URL if not specified in env
+const DEFAULT_AUTH_VERIFY_URL = "https://kontenmu-prod-api.1912.workers.dev/api/auth/verify";
 
-async function isTokenValid(token: string, env: any) {
+async function isTokenValid(token: string, env: any, requestUrl: string) {
   try {
     if (env.JWT_SECRET && (await verify(token, env.JWT_SECRET))) return true;
   } catch {
     // Preview may have a different or unavailable secret; verify with issuer.
   }
+  
+  const isStaging = new URL(requestUrl).hostname.includes("staging") || new URL(requestUrl).hostname.includes("localhost");
+  const verifyUrl = env.VITE_API_URL ? `${env.VITE_API_URL}/api/auth/verify` : (env.AUTH_VERIFY_URL || (isStaging ? "https://sales-api.1912.workers.dev/api/auth/verify" : DEFAULT_AUTH_VERIFY_URL));
+  
   try {
-    const response = await fetch(AUTH_VERIFY_URL, {
+    const response = await fetch(verifyUrl, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -30,7 +35,7 @@ function cookieName(request: Request) {
 export const onRequestPost = async (context: any) => {
   const authHeader = context.request.headers.get("Authorization") || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-  if (!token || !(await isTokenValid(token, context.env))) {
+  if (!token || !(await isTokenValid(token, context.env, context.request.url))) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: jsonHeaders,

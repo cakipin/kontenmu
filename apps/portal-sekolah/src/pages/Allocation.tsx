@@ -8,6 +8,8 @@ export default function Allocation({ sekolahId }: { sekolahId: number }) {
   const [allocations, setAllocations] = useState<Alokasi[]>([]);
   const [siswaId, setSiswaId] = useState("");
   const [isbn, setIsbn] = useState("");
+  const [isBulkAllocate, setIsBulkAllocate] = useState(false);
+  const [studentClass, setStudentClass] = useState("7");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -40,8 +42,11 @@ export default function Allocation({ sekolahId }: { sekolahId: number }) {
     setError("");
 
     try {
-      const result = await api.allocate({ sekolahId, isbn, siswaId });
-      setMessage(`${result.message} (Sisa kuota: ${result.remaining})`);
+      const payload = isBulkAllocate 
+        ? { sekolahId, siswaId, bulkByClass: true, kelas: studentClass }
+        : { sekolahId, isbn, siswaId };
+      const result = await api.allocate(payload);
+      setMessage(`${result.message || 'Alokasi berhasil'} ${result.remaining !== undefined ? `(Sisa kuota: ${result.remaining})` : ''}`);
       setSiswaId("");
       await loadData();
     } catch (err) {
@@ -112,8 +117,13 @@ export default function Allocation({ sekolahId }: { sekolahId: number }) {
             <select
               value={isbn}
               onChange={(e) => setIsbn(e.target.value)}
-              required
-              style={inputStyle}
+              required={!isBulkAllocate}
+              disabled={isBulkAllocate}
+              style={{
+                ...inputStyle,
+                opacity: isBulkAllocate ? 0.5 : 1,
+                cursor: isBulkAllocate ? "not-allowed" : "pointer"
+              }}
             >
               {availableBooks.length === 0 ? (
                 <option value="">Tidak ada kuota tersedia</option>
@@ -126,6 +136,40 @@ export default function Allocation({ sekolahId }: { sekolahId: number }) {
               )}
             </select>
           </label>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "8px", marginBottom: "8px" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={isBulkAllocate}
+                onChange={(e) => setIsBulkAllocate(e.target.checked)}
+                style={{ cursor: "pointer", width: "16px", height: "16px" }}
+              />
+              <span style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--text-primary)" }}>
+                Alokasikan semua buku sesuai kelas siswa
+              </span>
+            </label>
+
+            {isBulkAllocate && (
+              <label style={{ display: "flex", flexDirection: "column", gap: "8px", paddingLeft: "24px" }}>
+                <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-secondary)" }}>
+                  Pilih Kelas Siswa
+                </span>
+                <select
+                  value={studentClass}
+                  onChange={(e) => setStudentClass(e.target.value)}
+                  style={inputStyle}
+                >
+                  <option value="7">Kelas 7 (SMP)</option>
+                  <option value="8">Kelas 8 (SMP)</option>
+                  <option value="9">Kelas 9 (SMP)</option>
+                  <option value="10">Kelas 10 (SMA/SMK)</option>
+                  <option value="11">Kelas 11 (SMA/SMK)</option>
+                  <option value="12">Kelas 12 (SMA/SMK)</option>
+                </select>
+              </label>
+            )}
+          </div>
 
           {message && (
             <p style={{ color: "var(--success)", fontSize: "0.875rem" }}>
@@ -140,9 +184,9 @@ export default function Allocation({ sekolahId }: { sekolahId: number }) {
 
           <ButtonPromax
             type="submit"
-            disabled={loading || availableBooks.length === 0}
+            disabled={loading || (!isBulkAllocate && availableBooks.length === 0)}
           >
-            {loading ? "Memproses..." : "Alokasikan Lisensi"}
+            {loading ? "Memproses..." : (isBulkAllocate ? `Alokasikan Semua Buku (Kelas ${studentClass})` : "Alokasikan Lisensi")}
           </ButtonPromax>
         </form>
       </GlassCard>

@@ -20,6 +20,7 @@ import {
   Settings,
   Maximize,
   Minimize,
+  PlayCircle,
 } from "lucide-react";
 import { SchoolSearchInput } from "../components/SchoolSearchInput";
 import {
@@ -37,6 +38,7 @@ import {
   type SimSale,
   subscriptionEndDate,
   subscriptionDurationMonths,
+  matchesClass,
 } from "../data/appData";
 
 export default function Dashboard({ currentRole }: { currentRole: string }) {
@@ -45,6 +47,12 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
 
   const [users, setUsers] = useState<any[]>([]);
   const currentUser = users.find((u) => u.username === session?.username);
+  const currentStudentClass =
+    currentUser?.kelas ||
+    (data.users || []).find((u: any) => u.username === session?.username)
+      ?.kelas ||
+    (session as any)?.kelas ||
+    "";
   const [suratTugas, setSuratTugas] = useState("");
 
   // Add Subscription State
@@ -182,9 +190,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   };
 
   useEffect(() => {
-    fetch(
-      `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/users`,
-    )
+    fetch("/api/users?limit=2000")
       .then((res) => res.json())
       .then((res) => {
         if (res.success && res.data) setUsers(res.data);
@@ -290,7 +296,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
 
     try {
       await fetch(
-        `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/users/${userToUpdate.id}`,
+        `${""}/api/users/${userToUpdate.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -476,8 +482,29 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     studentCurrentPage * studentPageSize,
     filteredStudentRows.length,
   );
+  const [distributionBooks, setDistributionBooks] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (currentRole !== "guru" && currentRole !== "siswa") return;
+    let active = true;
+    fetch(
+      `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/books`,
+      { cache: "no-store" },
+    )
+      .then((response) => response.json())
+      .then((payload) => {
+        if (active && payload?.success && Array.isArray(payload.data)) {
+          setDistributionBooks(payload.data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [currentRole]);
+
   const libraryRows =
-    currentRole === "guru"
+    currentRole === "guru" || currentRole === "siswa"
       ? (data.allocations || [])
           .filter((a) => a.studentUsername === session?.username)
           .map((a) => {
@@ -488,21 +515,89 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
               isbn: a.isbn,
               progress: 0,
             };
+            const book =
+              distributionBooks.find(
+                (b: any) => String(b.isbn) === String(a.isbn),
+              ) ||
+              (data.books || []).find(
+                (b: any) => String(b.isbn) === String(a.isbn),
+              ) ||
+              getBook(data, a.isbn);
             return {
               learning,
-              book: getBook(data, a.isbn),
+              book,
             };
           })
-          .filter((row) => row.book)
+          .filter(
+            (row) =>
+              row.book &&
+              (currentRole !== "siswa" ||
+                (Boolean(currentStudentClass) &&
+                  Boolean(row.book.kelas) &&
+                  matchesClass(currentStudentClass, row.book.kelas))),
+          )
       : (data.learning || [])
           .map((learning) => ({
             learning,
-            book: getBook(data, learning.isbn),
+            book: (data.books || []).find((b: any) => b.isbn === learning.isbn) || getBook(data, learning.isbn),
           }))
           .filter((row) => row.book);
 
+  const [librarySearch, setLibrarySearch] = useState("");
+  const [libraryPage, setLibraryPage] = useState(1);
+  const [libraryMapel, setLibraryMapel] = useState("");
+  const libraryPageSize = 10;
+
+  const normalizeLibraryMapel = (value: unknown) =>
+    String(value || "")
+      .trim()
+      .toLocaleLowerCase("id-ID")
+      .replace(/[\s._-]+/g, "");
+
+  const libraryAvailableMapels = useMemo(() => {
+    const mapels = new Map<string, string>();
+    libraryRows.forEach((row) => {
+      const label = String(row.book?.mapel || "").trim();
+      const key = normalizeLibraryMapel(label);
+      if (key && !mapels.has(key)) mapels.set(key, label);
+    });
+    return Array.from(mapels.values()).sort((a, b) =>
+      a.localeCompare(b, "id-ID"),
+    );
+  }, [libraryRows]);
+
+  const filteredLibraryRows = useMemo(() => {
+    let result = libraryRows;
+    if (librarySearch) {
+      const q = librarySearch.toLowerCase();
+      result = result.filter(row => row.book?.judul.toLowerCase().includes(q));
+    }
+    if (libraryMapel) {
+      const selectedMapel = normalizeLibraryMapel(libraryMapel);
+      result = result.filter(
+        (row) => normalizeLibraryMapel(row.book?.mapel) === selectedMapel,
+      );
+    }
+    return result;
+  }, [libraryRows, librarySearch, libraryMapel]);
+
+  const libraryTotalPages = Math.max(1, Math.ceil(filteredLibraryRows.length / libraryPageSize));
+  const libraryCurrentPage = Math.min(libraryPage, libraryTotalPages);
+  const libraryFirstRow = filteredLibraryRows.length === 0 ? 0 : (libraryCurrentPage - 1) * libraryPageSize + 1;
+  const libraryLastRow = Math.min(libraryCurrentPage * libraryPageSize, filteredLibraryRows.length);
+  const paginatedLibraryRows = filteredLibraryRows.slice((libraryCurrentPage - 1) * libraryPageSize, libraryCurrentPage * libraryPageSize);
+
+  const getGuruMapel = (mapel: string) => {
+    if (!mapel) return "-";
+    const currentUser = data.users?.find((u: any) => u.username === session?.username);
+    const wilayah = currentUser?.wilayah;
+    const guru = data.schoolUsers?.find((u: any) => u.role === 'guru' && u.mapel === mapel && (wilayah ? u.schoolId === currentUser?.sekolahId : true)) 
+              || data.users?.find((u: any) => u.role === 'guru' && u.wilayah === wilayah && u.mapel === mapel);
+    return guru?.nama || "-";
+  };
+
   if (currentRole === "pending") {
-    const currentUser = users.find((u) => u.username === session?.username);
+    const currentUser = data.users?.find((u: any) => u.username === session?.username);
     const isWaitingApproval = currentUser?.status === "Menunggu Approve";
 
     if (isWaitingApproval) {
@@ -1620,6 +1715,41 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
             </div>
           )}
 
+          {currentRole === "siswa" && (
+            <div className="table-toolbar" style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+              <label className="search-field" style={{ flex: 1, minWidth: "250px" }}>
+                <span>Cari buku</span>
+                <input
+                  className="input-control"
+                  value={librarySearch}
+                  onChange={(event) => {
+                    setLibrarySearch(event.target.value);
+                    setLibraryPage(1);
+                  }}
+                  placeholder="Cari judul buku..."
+                />
+              </label>
+              <label className="search-field" style={{ minWidth: "200px" }}>
+                <span>Mata Pelajaran</span>
+                <select 
+                  className="input-control"
+                  value={libraryMapel}
+                  onChange={(event) => {
+                    setLibraryMapel(event.target.value);
+                    setLibraryPage(1);
+                  }}
+                >
+                  <option value="">Semua Mata Pelajaran</option>
+                  {libraryAvailableMapels.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </label>
+              <div className="table-summary" style={{ width: "100%" }}>
+                Menampilkan {libraryFirstRow}-{libraryLastRow} dari{" "}
+                {filteredLibraryRows.length} buku
+              </div>
+            </div>
+          )}
+
           <div className="table-scroll">
             <table className="table-promax">
               <thead>
@@ -1651,6 +1781,8 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                   <tr>
                     <th style={{ textAlign: "left" }}>Judul Buku</th>
                     <th style={{ textAlign: "left" }}>Mata Pelajaran</th>
+                    <th style={{ textAlign: "center" }}>Kelas</th>
+                    <th style={{ textAlign: "left" }}>Guru Mapel</th>
                     <th style={{ textAlign: "center" }}>Progress</th>
                     <th style={{ textAlign: "center" }}>Status</th>
                   </tr>
@@ -1769,47 +1901,68 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                   ))}
 
                 {currentRole === "siswa" &&
-                  libraryRows.map(({ learning, book }) => (
-                    <tr key={`${learning.studentUsername}-${learning.isbn}`}>
-                      <td>
-                        <Identity
-                          initial="BK"
-                          color="#3b82f6"
-                          title={book!.judul}
-                          subtitle={book!.penerbit}
-                        />
-                      </td>
-                      <td style={{ color: "var(--text-secondary)" }}>
-                        {book!.mapel}
-                      </td>
-                      <td style={{ minWidth: 180 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 12,
-                          }}
-                        >
-                          <div className="progress-track">
-                            <div
-                              className="progress-fill"
-                              style={{ width: `${learning.progress}%` }}
-                            />
-                          </div>
-                          <span
-                            style={{
-                              color: "var(--text-secondary)",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            {learning.progress}%
-                          </span>
-                        </div>
-                      </td>
-                      <td style={{ textAlign: "center" }}>
-                        <Chip type="success" label="Lanjutkan" />
+                  (paginatedLibraryRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: "center", padding: "32px 16px", color: "var(--text-secondary)" }}>
+                        Tidak ada buku yang ditemukan.
                       </td>
                     </tr>
+                  ) : (
+                    paginatedLibraryRows.map(({ learning, book }) => (
+                      <tr key={`${learning.studentUsername}-${learning.isbn}`}>
+                        <td>
+                          <Identity
+                            initial="BK"
+                            color="#3b82f6"
+                            title={book!.judul}
+                            subtitle={book!.penerbit}
+                          />
+                        </td>
+                        <td style={{ color: "var(--text-secondary)" }}>
+                          {book!.mapel}
+                        </td>
+                        <td
+                          style={{
+                            textAlign: "center",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          {book!.kelas || "—"}
+                        </td>
+                        <td style={{ color: "var(--text-secondary)" }}>
+                          {getGuruMapel(book!.mapel)}
+                        </td>
+                        <td style={{ minWidth: 180 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 12,
+                            }}
+                          >
+                            <div className="progress-track">
+                              <div
+                                className="progress-fill"
+                                style={{ width: `${learning.progress}%` }}
+                              />
+                            </div>
+                            <span
+                              style={{
+                                color: "var(--text-secondary)",
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              {learning.progress}%
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <Link to="/play-content" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--success)" }}>
+                            <PlayCircle size={28} />
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
                   ))}
 
                 {currentRole === "guru" &&
@@ -1848,7 +2001,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                             color: "var(--text-secondary)",
                           }}
                         >
-                          {book!.jenjang || "—"}
+                          {book!.kelas || book!.jenjang || "—"}
                         </td>
                         <td style={{ textAlign: "center" }}>
                           <Chip type="success" label="Tersedia" />
@@ -1910,6 +2063,56 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
               </tbody>
             </table>
           </div>
+
+          {currentRole === "siswa" && (
+            <div className="pagination-bar">
+              <div className="table-summary">
+                Halaman {libraryCurrentPage} dari {libraryTotalPages}
+              </div>
+              <div className="pagination-actions">
+                <button
+                  type="button"
+                  className="icon-action-button"
+                  onClick={() => setLibraryPage(1)}
+                  disabled={libraryCurrentPage <= 1}
+                  aria-label="Ke halaman awal"
+                  title="Awal"
+                >
+                  <ChevronsLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  className="icon-action-button"
+                  onClick={() => setLibraryPage((p) => Math.max(1, p - 1))}
+                  disabled={libraryCurrentPage <= 1}
+                  aria-label="Halaman sebelumnya"
+                  title="Sebelumnya"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  className="icon-action-button"
+                  onClick={() => setLibraryPage((p) => Math.min(libraryTotalPages, p + 1))}
+                  disabled={libraryCurrentPage >= libraryTotalPages}
+                  aria-label="Halaman selanjutnya"
+                  title="Selanjutnya"
+                >
+                  <ChevronRight size={18} />
+                </button>
+                <button
+                  type="button"
+                  className="icon-action-button"
+                  onClick={() => setLibraryPage(libraryTotalPages)}
+                  disabled={libraryCurrentPage >= libraryTotalPages}
+                  aria-label="Ke halaman akhir"
+                  title="Akhir"
+                >
+                  <ChevronsRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
 
           {currentRole === "agen" && (
             <div className="pagination-bar">

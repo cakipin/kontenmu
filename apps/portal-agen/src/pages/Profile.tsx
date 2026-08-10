@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@repo/auth";
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
 import { Key, Eye, EyeOff, Camera } from "lucide-react";
@@ -14,6 +14,23 @@ export default function Profile() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [profileUser, setProfileUser] = useState<any>(null);
+
+  useEffect(() => {
+    if (!session?.username) return;
+    fetch("/api/users?limit=2000", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((payload) => {
+        if (!payload?.success || !Array.isArray(payload.data)) return;
+        setProfileUser(
+          payload.data.find(
+            (user: any) =>
+              user.username === session.username || user.id === session.id,
+          ) || null,
+        );
+      })
+      .catch(() => {});
+  }, [session?.id, session?.username]);
 
   if (!session) {
     return null;
@@ -68,7 +85,7 @@ export default function Profile() {
       URL.revokeObjectURL(objectUrl);
 
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}`}/api/users/${session.id}/picture`,
+        `${import.meta.env.VITE_API_URL || `${""}`}/api/users/${session.id}/picture`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -108,7 +125,7 @@ export default function Profile() {
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}`}/api/users/${session.id}/password`,
+        `${import.meta.env.VITE_API_URL || `${""}`}/api/users/${session.id}/password`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -300,6 +317,41 @@ export default function Profile() {
               {session.nbm || "-"}
             </div>
           </div>
+          {session.role === "siswa" && (
+            <div>
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "var(--text-secondary)",
+                  marginBottom: "4px",
+                }}
+              >
+                Kelas
+              </div>
+              <div style={{ fontWeight: 500, color: "var(--text-primary)" }}>
+                {profileUser?.kelas || (session as any).kelas || "-"}
+              </div>
+            </div>
+          )}
+          {session.role === "guru" && (
+            <div>
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "var(--text-secondary)",
+                  marginBottom: "4px",
+                }}
+              >
+                Mata Pelajaran
+              </div>
+              <div style={{ fontWeight: 500, color: "var(--text-primary)" }}>
+                {profileUser?.mapel ||
+                  profileUser?.kelas ||
+                  (session as any).mapel ||
+                  "-"}
+              </div>
+            </div>
+          )}
           <div>
             <div
               style={{
