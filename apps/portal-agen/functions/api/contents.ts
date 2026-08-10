@@ -14,6 +14,16 @@ export const onRequestGet = async (context: any) => {
     let response = await cache.match(cacheKey);
 
     if (!response) {
+      if (!context.env.DB) {
+        console.error("[GET /api/contents] Configuration Error: 'DB' binding is missing from environment variables.");
+        return new Response(
+          JSON.stringify({
+            error: "Konfigurasi Database belum disetel (D1 Binding 'DB' missing).",
+            message: "Periksa pengaturan D1 Bindings di Dashboard Cloudflare Pages."
+          }),
+          { status: 500, headers: jsonHeaders }
+        );
+      }
       const rawDb = context.env.DB;
       
       const url = new URL(request.url);
@@ -69,7 +79,14 @@ export const onRequestGet = async (context: any) => {
 
     return response;
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("[GET /api/contents] Fatal Error:", error);
+    
+    // Pastikan kita mengembalikan JSON valid dengan stack trace untuk debugging sementara
+    return new Response(JSON.stringify({ 
+      error: "Internal Server Error saat mengambil data konten",
+      message: error?.message || "Unknown error occurred",
+      stack: error?.stack || null
+    }), {
       status: 500,
       headers: jsonHeaders,
     });
