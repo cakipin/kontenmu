@@ -127,6 +127,7 @@ export const onRequestPost = async (context: any) => {
       headers: jsonHeaders,
     });
   } catch (error: any) {
+    console.error("[POST /api/users] Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: jsonHeaders,

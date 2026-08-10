@@ -503,7 +503,11 @@ export default function Users() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const payload = { ...form, sekolah_id: form.sekolahId };
+    const payload = { 
+      ...form, 
+      id: editingId || crypto.randomUUID(),
+      sekolah_id: form.sekolahId 
+    };
     try {
       const method = editingId ? "PUT" : "POST";
       const endpoint = editingId
@@ -523,9 +527,9 @@ export default function Users() {
       setForm(emptyForm);
       setEditingId(null);
       setFormOpen(false);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Gagal menyimpan user");
+      alert(`Gagal menyimpan user: ${e.message || "Error tidak diketahui"}`);
     }
   };
 
