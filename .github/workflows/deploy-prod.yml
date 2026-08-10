@@ -59,7 +59,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env production
+          environment: production
+          command: deploy
           secrets: JWT_SECRET
           workingDirectory: workers/sales-api
         env:
