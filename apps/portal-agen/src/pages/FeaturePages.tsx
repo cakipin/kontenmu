@@ -5946,28 +5946,47 @@ export function Library() {
   const [apiBooks, setApiBooks] = useState<any[]>([]);
   const [apiUsers, setApiUsers] = useState<any[]>([]);
   useEffect(() => {
-    fetch(
-      `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/books`,
-    )
-      .then((res) => res.json())
-      .then((payload) => {
-        if (payload?.success && Array.isArray(payload.data)) {
-          setApiBooks(payload.data);
-        }
-      })
-      .catch(() => {});
+    let active = true;
+    const isTargetRole = session?.role === "guru" || session?.role === "siswa";
 
-    fetch(
-      `${""}/api/users`,
-    )
-      .then((res) => res.json())
-      .then((payload) => {
-        if (payload?.success && Array.isArray(payload.data)) {
-          setApiUsers(payload.data);
+    const fetchWithCache = (url: string, cacheKey: string, setter: (data: any) => void) => {
+      // --- Logika Caching: Cek apakah ada di cache lokal sebelum fetch ---
+      if (isTargetRole) {
+        const cachedData = localStorage.getItem(cacheKey);
+        if (cachedData) {
+          try {
+            const parsed = JSON.parse(cachedData);
+            if (Array.isArray(parsed)) {
+              setter(parsed);
+              return; // Gunakan cache, skip fetch API
+            }
+          } catch (e) {
+            // Abaikan error parse dan lanjut fetch
+          }
         }
-      })
-      .catch(() => {});
-  }, []);
+      }
+
+      fetch(url)
+        .then((res) => res.json())
+        .then((payload) => {
+          if (active && payload?.success && Array.isArray(payload.data)) {
+            setter(payload.data);
+            // --- Logika Caching: Simpan hasil fetch baru ke cache ---
+            if (isTargetRole) {
+              localStorage.setItem(cacheKey, JSON.stringify(payload.data));
+            }
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchWithCache(`${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/books`, "kontenmu_books_cache", setApiBooks);
+    fetchWithCache(`${""}/api/users`, "kontenmu_users_cache", setApiUsers);
+
+    return () => {
+      active = false;
+    };
+  }, [session?.role]);
 
   const libraryContents = useMemo(() => {
     if (!session) return [];

@@ -487,6 +487,23 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   useEffect(() => {
     if (currentRole !== "guru" && currentRole !== "siswa") return;
     let active = true;
+
+    // --- Logika Caching: Cek apakah ada di cache lokal sebelum fetch ---
+    const cacheKey = "kontenmu_books_cache";
+    const cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
+      try {
+        const parsed = JSON.parse(cachedData);
+        if (Array.isArray(parsed)) {
+          setDistributionBooks(parsed);
+          // Kita tetap bisa return lebih awal jika tidak ingin revalidate background (cache-first sederhana)
+          return;
+        }
+      } catch (e) {
+        // Abaikan error parse dan lanjut fetch
+      }
+    }
+
     fetch(
       `${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/books`,
       { cache: "no-store" },
@@ -495,6 +512,8 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       .then((payload) => {
         if (active && payload?.success && Array.isArray(payload.data)) {
           setDistributionBooks(payload.data);
+          // --- Logika Caching: Simpan hasil fetch baru ke cache ---
+          localStorage.setItem(cacheKey, JSON.stringify(payload.data));
         }
       })
       .catch(() => {});

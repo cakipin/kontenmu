@@ -745,6 +745,24 @@ function AppContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.role]);
 
+  // --- Invalidasi Cache: Hapus cache saat logout atau refresh paksa ---
+  useEffect(() => {
+    if (!session) {
+      localStorage.removeItem("kontenmu_books_cache");
+      localStorage.removeItem("kontenmu_users_cache");
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.performance) {
+      const navEntries = performance.getEntriesByType("navigation");
+      if (navEntries.length > 0 && (navEntries[0] as PerformanceNavigationTiming).type === "reload") {
+        localStorage.removeItem("kontenmu_books_cache");
+        localStorage.removeItem("kontenmu_users_cache");
+      }
+    }
+  }, []);
+
   const toggleMenu = (id: string) => {
     setOpenMenuId(openMenuId === id ? null : id);
   };
