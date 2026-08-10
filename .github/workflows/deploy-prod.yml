@@ -31,7 +31,7 @@ jobs:
       - name: Build Application
         run: |
           echo "VITE_API_URL=https://kontenmu-prod-api.1912.workers.dev" > apps/portal-agen/.env.production
-          echo "VITE_CLIENT_ID=client_svRBFbrf9AK7GMPAAOMZrXRa" >> apps/portal-agen/.env.production
+          echo "VITE_CLIENT_ID=${{ secrets.PROD_SSO_CLIENT_ID }}" >> apps/portal-agen/.env.production
           npm run build
         env:
           VITE_API_URL: https://kontenmu-prod-api.1912.workers.dev
@@ -44,6 +44,14 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: echo -n "${{ secrets.JWT_SECRET }}" | npx wrangler pages secret put JWT_SECRET --project-name kontenmu-prod
+
+      - name: Set Pages SSO Secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo -n "${{ secrets.PROD_SSO_CLIENT_ID }}" | npx wrangler pages secret put CLIENT_ID --project-name kontenmu-prod
+          echo -n "${{ secrets.PROD_SSO_CLIENT_SECRET }}" | npx wrangler pages secret put CLIENT_SECRET --project-name kontenmu-prod
 
       - name: Set R2 Secrets on Cloudflare Pages
         env:
