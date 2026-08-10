@@ -630,7 +630,7 @@ function HeaderDateTime() {
       </span>
       
       {/* Separator */}
-      <span style={{ margin: "0 0.5rem", color: "var(--border-color)" }}>|</span>
+      <span style={{ margin: "0 0.75rem", color: "var(--text-tertiary)", opacity: 0.5 }}>|</span>
 
       {/* Kalender */}
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
@@ -639,10 +639,10 @@ function HeaderDateTime() {
             style={{
               height: "12px",
               width: "90px",
-              background: "var(--bg-secondary)",
+              background: "var(--text-tertiary)",
               borderRadius: "4px",
               marginBottom: "2px",
-              opacity: 0.6
+              opacity: 0.2
             }}
           />
         ) : !isError && khgtDate ? (
@@ -650,7 +650,7 @@ function HeaderDateTime() {
             style={{
               fontSize: "0.75rem",
               fontWeight: 700,
-              color: "var(--accent-color)",
+              color: "#2E97FA", // Official Muhammadiyah Blue, visible in dark mode
               lineHeight: 1.2
             }}
           >
