@@ -1,4 +1,3 @@
-import { verify } from "@tsndr/cloudflare-worker-jwt";
 
 const jsonHeaders = { "Content-Type": "application/json" };
 const MAX_AGE_SECONDS = 24 * 60 * 60;
@@ -6,12 +5,6 @@ const MAX_AGE_SECONDS = 24 * 60 * 60;
 const DEFAULT_AUTH_VERIFY_URL = "https://kontenmu-prod-api.1912.workers.dev/api/auth/verify";
 
 async function isTokenValid(token: string, env: any, requestUrl: string) {
-  try {
-    if (env.JWT_SECRET && (await verify(token, env.JWT_SECRET))) return true;
-  } catch {
-    // If local verification fails, fallback to remote verification
-  }
-
   const isStaging = new URL(requestUrl).hostname.includes("staging") || new URL(requestUrl).hostname.includes("localhost");
   const verifyUrl = env.VITE_API_URL ? `${env.VITE_API_URL}/api/auth/verify` : (env.AUTH_VERIFY_URL || (isStaging ? "https://sales-api.1912.workers.dev/api/auth/verify" : DEFAULT_AUTH_VERIFY_URL));
   
