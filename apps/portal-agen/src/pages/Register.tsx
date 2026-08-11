@@ -46,6 +46,7 @@ export default function Register() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: crypto.randomUUID(),
           ...formData,
           nama: formData.username, // placeholder for now, will be updated in onboarding
           role: "pending",

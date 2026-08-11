@@ -74,8 +74,23 @@ export const onRequestPost = async (context: any) => {
     }
 
     const ormDb = drizzle(context.env.DB);
-    const tenantSchoolId = getTenantSchoolId(context);
-    if (tenantSchoolId === 0) return tenantError();
+    
+    // Untuk registrasi publik, context.data.auth akan kosong.
+    // Jika tidak ada auth atau auth bukan admin, paksa role menjadi "pending"
+    const auth = context.data?.auth || {};
+    const isAdmin = auth.role === "superadmin" || auth.role === "sekolah";
+    if (!isAdmin) {
+      user.role = "pending";
+    }
+
+    // Hanya tolak tenantError jika user authenticated tapi tenant tidak valid.
+    // Untuk public request (unauthenticated), tenantSchoolId akan null, yang valid.
+    let tenantSchoolId = null;
+    if (Object.keys(auth).length > 0) {
+      tenantSchoolId = getTenantSchoolId(context);
+      if (tenantSchoolId === 0) return tenantError();
+    }
+    
     const passwordHash = user.password ? await bcrypt.hash(user.password, 10) : "";
     const insertData = {
       id: user.id,
