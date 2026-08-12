@@ -1,7 +1,7 @@
 const jsonHeaders = { "Content-Type": "application/json" };
 
 import { drizzle } from "drizzle-orm/d1";
-import { count, like, asc, eq, sql, and } from "drizzle-orm";
+import { count, like, asc, eq, sql, and, or } from "drizzle-orm";
 import { masterDataSekolah } from "../../src/db/schema";
 
 export const onRequestGet = async (context: any) => {
@@ -56,7 +56,19 @@ export const onRequestGet = async (context: any) => {
     }
 
     const conditions = [];
-    if (search) conditions.push(like(masterDataSekolah.nama, `%${search}%`));
+    if (search) {
+      const searchWords = search.trim().split(/\s+/).filter(Boolean);
+      if (searchWords.length > 0) {
+        const nameConditions = searchWords.map(word => like(masterDataSekolah.nama, `%${word}%`));
+        conditions.push(
+          or(
+            and(...nameConditions),
+            like(masterDataSekolah.npsn, `%${search}%`)
+          )
+        );
+      }
+    }
+    
     if (jenjang && jenjang !== "Semua") conditions.push(eq(masterDataSekolah.jenjang, jenjang));
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
