@@ -213,10 +213,22 @@ export default {
         let results;
 
         if (search) {
-          query += "WHERE nama LIKE ? ORDER BY nama LIMIT 20";
-          const stmt = await env.DB.prepare(query).bind(`%${search}%`);
-          const res = await stmt.all();
-          results = res.results;
+          const searchWords = search.trim().split(/\\s+/).filter(Boolean);
+          if (searchWords.length > 0) {
+            const nameConditions = searchWords.map(() => "nama LIKE ?").join(" AND ");
+            query += `WHERE (${nameConditions}) OR npsn LIKE ? ORDER BY nama LIMIT 20`;
+            
+            const binds = searchWords.map(word => `%${word}%`);
+            binds.push(`%${search}%`);
+            
+            const stmt = await env.DB.prepare(query).bind(...binds);
+            const res = await stmt.all();
+            results = res.results;
+          } else {
+            query += "ORDER BY nama LIMIT 100";
+            const res = await env.DB.prepare(query).all();
+            results = res.results;
+          }
         } else {
           query += "ORDER BY nama LIMIT 100";
           const res = await env.DB.prepare(query).all();
