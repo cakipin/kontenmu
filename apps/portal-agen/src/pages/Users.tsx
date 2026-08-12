@@ -1045,41 +1045,43 @@ export default function Users() {
                       className="action-group"
                       style={{ justifyContent: "center" }}
                     >
-                      {user.suratTugas ? (
-                        <a
-                          href={user.suratTugas}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="icon-action-button"
-                          aria-label={`Lihat Surat Tugas ${user.nama}`}
-                          title="Lihat Surat Tugas (sudah diupload)"
-                          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--primary, #3b82f6)" }}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                            <polyline points="14 2 14 8 20 8" />
-                            <line x1="16" y1="13" x2="8" y2="13" />
-                            <line x1="16" y1="17" x2="8" y2="17" />
-                            <line x1="10" y1="9" x2="8" y2="9" />
-                          </svg>
-                        </a>
-                      ) : (
-                        <span
-                          className="icon-action-button"
-                          title="Surat Tugas belum diupload"
-                          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", position: "relative", opacity: 0.35, cursor: "default", pointerEvents: "none" }}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                            <polyline points="14 2 14 8 20 8" />
-                            <line x1="16" y1="13" x2="8" y2="13" />
-                            <line x1="16" y1="17" x2="8" y2="17" />
-                            <line x1="10" y1="9" x2="8" y2="9" />
-                          </svg>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--danger-color, #ef4444)" strokeWidth="3" strokeLinecap="round" style={{ position: "absolute", bottom: 1, right: 1, opacity: 1 }}>
-                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                          </svg>
-                        </span>
+                      {user.role === "sekolah" && (
+                        user.suratTugas ? (
+                          <a
+                            href={user.suratTugas}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="icon-action-button"
+                            aria-label={`Lihat Surat Tugas ${user.nama}`}
+                            title="Lihat Surat Tugas (sudah diupload)"
+                            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--primary, #3b82f6)" }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                              <polyline points="14 2 14 8 20 8" />
+                              <line x1="16" y1="13" x2="8" y2="13" />
+                              <line x1="16" y1="17" x2="8" y2="17" />
+                              <line x1="10" y1="9" x2="8" y2="9" />
+                            </svg>
+                          </a>
+                        ) : (
+                          <span
+                            className="icon-action-button"
+                            title="Surat Tugas belum diupload"
+                            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", position: "relative", opacity: 0.35, cursor: "default", pointerEvents: "none" }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                              <polyline points="14 2 14 8 20 8" />
+                              <line x1="16" y1="13" x2="8" y2="13" />
+                              <line x1="16" y1="17" x2="8" y2="17" />
+                              <line x1="10" y1="9" x2="8" y2="9" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--danger-color, #ef4444)" strokeWidth="3" strokeLinecap="round" style={{ position: "absolute", bottom: 1, right: 1, opacity: 1 }}>
+                              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </span>
+                        )
                       )}
                       <button
                         type="button"
