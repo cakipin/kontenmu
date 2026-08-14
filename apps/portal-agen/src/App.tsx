@@ -970,6 +970,22 @@ function AppContent() {
               <Icon name={theme === "dark" ? "sun" : "moon"} />
             </button>
 
+            {session.role === "sekolah" && (
+              <div
+                className="pwa-notification-control"
+                style={{ position: "relative" }}
+              >
+                <button
+                  className="icon-button"
+                  aria-label="Notifikasi Pendaftaran"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  style={{ position: "relative", color: "inherit" }}
+                >
+                  <Icon name="bell" />
+                </button>
+              </div>
+            )}
+
             {session.role === "superadmin" && (
               <div
                 className="pwa-notification-control"

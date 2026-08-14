@@ -138,6 +138,16 @@ export const onRequestPost = async (context: any) => {
         },
       });
 
+    if (insertData.sekolahId) {
+      const notifId = crypto.randomUUID();
+      const message = `Pendaftaran manual baru: ${insertData.nama} (${insertData.roleSlug})`;
+      await context.env.DB.prepare(
+        `INSERT INTO notifications (id, sekolah_id, message) VALUES (?, ?, ?)`
+      )
+        .bind(notifId, insertData.sekolahId, message)
+        .run();
+    }
+
     return new Response(JSON.stringify({ success: true }), {
       headers: jsonHeaders,
     });

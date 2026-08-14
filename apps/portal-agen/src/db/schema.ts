@@ -87,3 +87,11 @@ export const masterDataSekolah = sqliteTable("master_data_sekolah", {
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const notifications = sqliteTable("notifications", {
+  id: text("id").primaryKey(),
+  sekolahId: integer("sekolah_id").notNull(),
+  message: text("message").notNull(),
+  isRead: integer("is_read").default(0),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});

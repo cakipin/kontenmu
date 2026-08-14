@@ -188,6 +188,16 @@ export const onRequestPost = async (context: any) => {
           email,
         )
         .run();
+        
+      if (validatedSchoolId) {
+        const notifId = crypto.randomUUID();
+        const message = `Pendaftaran SSO baru: ${finalNama} (${finalRole})`;
+        await db.prepare(
+          `INSERT INTO notifications (id, sekolah_id, message) VALUES (?, ?, ?)`
+        )
+          .bind(notifId, validatedSchoolId, message)
+          .run();
+      }
     }
 
     // Attach role and internal id to userData before sending to client
