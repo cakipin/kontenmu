@@ -714,7 +714,6 @@ function AppContent() {
     }
   };
 
-  // newUsers tetap dari data.users (sso/manual source) untuk backward compat
   const newUsers = data.users.filter(
     (user) =>
       user.username !== session?.username &&
@@ -725,7 +724,31 @@ function AppContent() {
         user.newUserSource === "manual" ||
         user.terakhirLogin === "Belum pernah login"),
   );
-  const notificationCount = pendingApiUsers.length + newUsers.length;
+  
+  const [apiNotifications, setApiNotifications] = useState<any[]>([]);
+  const fetchApiNotifications = async () => {
+    try {
+      const res = await fetch(`/api/notifications`, { cache: "no-store" });
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.success) setApiNotifications(json.data || []);
+    } catch {}
+  };
+
+  const markNotificationAsRead = async (id?: string) => {
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(id ? { id } : { markAllAsRead: true })
+      });
+      fetchApiNotifications();
+    } catch {}
+  };
+
+  const notificationCount = session?.role === "sekolah" 
+    ? apiNotifications.filter(n => !n.is_read).length 
+    : pendingApiUsers.length + newUsers.length;
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [approvingRoles, setApprovingRoles] = useState<Record<string, string>>(
@@ -735,10 +758,14 @@ function AppContent() {
 
   // --- Polling: ambil user pending langsung dari /api/users setiap 45 detik ---
   useEffect(() => {
-    if (session?.role !== "superadmin") return;
-
-    void fetchPendingApiUsers(); // jalankan sekali saat mount
-    pollingRef.current = setInterval(fetchPendingApiUsers, 45_000);
+    if (session?.role === "superadmin") {
+      void fetchPendingApiUsers(); // jalankan sekali saat mount
+      pollingRef.current = setInterval(fetchPendingApiUsers, 45_000);
+    } else if (session?.role === "sekolah") {
+      void fetchApiNotifications();
+      pollingRef.current = setInterval(fetchApiNotifications, 45_000);
+    }
+    
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
@@ -976,13 +1003,119 @@ function AppContent() {
                 style={{ position: "relative" }}
               >
                 <button
-                  className="icon-button"
+                  className={`icon-button ${notificationCount > 0 ? "has-notifications" : ""}`}
                   aria-label="Notifikasi Pendaftaran"
                   onClick={() => setShowNotifications(!showNotifications)}
-                  style={{ position: "relative", color: "inherit" }}
+                  style={{
+                    position: "relative",
+                    color: notificationCount > 0 ? "#ef4444" : "inherit",
+                    animation: notificationCount > 0 ? "pulse 2s infinite" : "none",
+                  }}
                 >
                   <Icon name="bell" />
+                  {notificationCount > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: -4,
+                        right: -4,
+                        background: "#ef4444",
+                        color: "white",
+                        borderRadius: "50%",
+                        fontSize: "0.7rem",
+                        width: 20,
+                        height: 20,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: "bold",
+                        border: "2px solid var(--bg-secondary)",
+                        boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)",
+                      }}
+                    >
+                      {notificationCount}
+                    </span>
+                  )}
                 </button>
+                <style>{`
+                  @keyframes pulse {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.1); }
+                    100% { transform: scale(1); }
+                  }
+                `}</style>
+                {showNotifications && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      right: 0,
+                      marginTop: "8px",
+                      width: "380px",
+                      background: "var(--bg-primary)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: "12px",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                      zIndex: 9999,
+                      padding: "16px",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "8px", marginBottom: "12px" }}>
+                      <h3 style={{ margin: 0, fontSize: "1rem" }}>Notifikasi</h3>
+                      {apiNotifications.some(n => !n.is_read) && (
+                        <button
+                          onClick={() => markNotificationAsRead()}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "var(--primary-color)",
+                            fontSize: "0.8rem",
+                            cursor: "pointer",
+                            padding: 0
+                          }}
+                        >
+                          Tandai Semua Dibaca
+                        </button>
+                      )}
+                    </div>
+                    {apiNotifications.length === 0 ? (
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", margin: 0 }}>
+                        Tidak ada notifikasi baru.
+                      </p>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "300px", overflowY: "auto" }}>
+                        {apiNotifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              gap: "12px",
+                              opacity: notif.is_read ? 0.6 : 1,
+                            }}
+                          >
+                            <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                              <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>{notif.message}</span>
+                              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                                {new Date(notif.created_at).toLocaleString('id-ID')}
+                              </span>
+                            </div>
+                            {!notif.is_read && (
+                              <button
+                                onClick={() => markNotificationAsRead(notif.id)}
+                                className="primary-button"
+                                style={{ padding: "4px 8px", fontSize: "0.8rem", whiteSpace: "nowrap" }}
+                              >
+                                Tandai Dibaca
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
