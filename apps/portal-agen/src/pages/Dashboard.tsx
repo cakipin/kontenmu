@@ -271,8 +271,9 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
 
     const updatedUser = {
       ...userToUpdate,
-      role: selectedRole,
-      status: selectedRole === "sekolah" ? "Menunggu Approve" : "Aktif",
+      role: "pending",
+      requestedRole: selectedRole,
+      status: "Menunggu Approve",
       nama: namaLengkap || userToUpdate.nama,
       sekolah_id: sekolahId || null,
       wilayah: sekolahNama || "",
@@ -295,7 +296,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     });
 
     try {
-      await fetch(
+      const response = await fetch(
         `${""}/api/users/${userToUpdate.id}`,
         {
           method: "PUT",
@@ -303,11 +304,15 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
           body: JSON.stringify(updatedUser),
         },
       );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Gagal mengirim pendaftaran");
+      }
 
       if (session) {
         setCustomSession({
           ...session,
-          role: selectedRole as any,
+          role: "pending",
           displayName: namaLengkap || session.displayName,
           sekolahId: sekolahId,
           wilayah: sekolahNama,
@@ -317,6 +322,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       window.location.reload();
     } catch (err) {
       console.error(err);
+      alert(err instanceof Error ? err.message : "Gagal mengirim pendaftaran");
     } finally {
       setIsSubmitting(false);
     }
@@ -616,8 +622,10 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   };
 
   if (currentRole === "pending") {
-    const currentUser = data.users?.find((u: any) => u.username === session?.username);
     const isWaitingApproval = currentUser?.status === "Menunggu Approve";
+    const waitingForSchoolAdmin =
+      currentUser?.requestedRole === "guru" ||
+      currentUser?.requestedRole === "siswa";
 
     if (isWaitingApproval) {
       return (
@@ -649,7 +657,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                 <Clock size={40} color="var(--primary)" />
               </div>
               <h2 style={{ fontSize: "1.5rem", marginBottom: "16px" }}>
-                Menunggu Persetujuan Admin Dikdasmen
+                Menunggu Persetujuan {waitingForSchoolAdmin ? "Admin Sekolah" : "Admin Dikdasmen"}
               </h2>
               <div
                 style={{
@@ -661,12 +669,11 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                   fontWeight: 500,
                 }}
               >
-                Data berhasil dikirim. Menunggu persetujuan dari Admin
-                Dikdasmen.
+                Data berhasil dikirim. Menunggu persetujuan dari {waitingForSchoolAdmin ? "Admin Sekolah" : "Admin Dikdasmen"}.
               </div>
               <p style={{ color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                Pendaftaran Anda sebagai Admin Sekolah sedang diverifikasi. Kami
-                akan memberitahu Anda setelah disetujui.
+                Pendaftaran Anda sedang diverifikasi. Kami akan memberitahu Anda
+                setelah disetujui.
               </p>
             </GlassCard>
           </div>

@@ -38,7 +38,7 @@ export interface SimUser {
   password?: string;
   sekolahId?: number;
   sekolah_id?: number;
-  requestedRole?: "sekolah" | "agen";
+  requestedRole?: "sekolah" | "agen" | "guru" | "siswa";
   suratTugas?: string;
   masaAktif?: string;
 }

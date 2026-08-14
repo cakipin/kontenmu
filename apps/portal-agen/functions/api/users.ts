@@ -15,7 +15,12 @@ export const onRequestGet = async (context: any) => {
     const offset = (page - 1) * limit;
     const tenantSchoolId = getTenantSchoolId(context);
     if (tenantSchoolId === 0) return tenantError();
-    const tenantWhere = tenantSchoolId ? eq(users.sekolahId, tenantSchoolId) : undefined;
+    const auth = context.data?.auth || {};
+    const tenantWhere = auth.role === "pending"
+      ? eq(users.id, String(auth.sub || ""))
+      : tenantSchoolId
+        ? eq(users.sekolahId, tenantSchoolId)
+        : undefined;
 
     const [totalResult, result] = await Promise.all([
       ormDb.select({ value: sql`count(*)` }).from(users).where(tenantWhere),
@@ -105,7 +110,7 @@ export const onRequestPost = async (context: any) => {
       kelas: user.kelas ?? null,
       nis: user.nis ?? null,
       newUserSource:
-        user.newUserSource !== undefined ? user.newUserSource : "sso",
+        user.newUserSource !== undefined ? user.newUserSource : "manual",
       sekolahId: tenantSchoolId || user.sekolahId || user.sekolah_id || null,
       requestedRole: user.requestedRole ?? null,
       suratTugas: user.suratTugas ?? null,

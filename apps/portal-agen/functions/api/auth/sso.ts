@@ -151,6 +151,8 @@ export const onRequestPost = async (context: any) => {
         .join("");
     }
 
+    const newUserId = `USR-${crypto.randomUUID()}`;
+
     if (existingUser) {
       // Update existing user
       await db
@@ -179,7 +181,7 @@ export const onRequestPost = async (context: any) => {
       `,
         )
         .bind(
-          `USR-${Date.now().toString().slice(-4)}`,
+          newUserId,
           username,
           finalNama,
           finalRole,
@@ -205,7 +207,7 @@ export const onRequestPost = async (context: any) => {
     userData.kontenmu_username = username;
     userData.internal_id = existingUser
       ? existingUser.id
-      : `USR-${Date.now().toString().slice(-4)}`;
+      : newUserId;
     userData.sekolahId = validatedSchoolId;
 
     if (!context.env.JWT_SECRET) {

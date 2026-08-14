@@ -23,8 +23,10 @@ export const onRequestPut = async (context: any) => {
     const tenantSchoolId = getTenantSchoolId(context);
     if (tenantSchoolId === 0) return tenantError();
     const sessionSchoolId = String(tenantSchoolId || "");
+    const isPendingSelf = role === "pending" && String(payload.sub || "") === id;
     if (
       role !== "superadmin" &&
+      !isPendingSelf &&
       !(role === "sekolah" && sessionSchoolId && sessionSchoolId === String(existing.sekolahId || ""))
     ) {
       return new Response(JSON.stringify({ success: false, error: "Forbidden" }), {
@@ -34,6 +36,70 @@ export const onRequestPut = async (context: any) => {
     }
 
     const data = await context.request.json();
+
+    if (isPendingSelf) {
+      const requestedRole = String(data.requestedRole || data.role || "");
+      const allowedRequestedRoles = new Set(["sekolah", "agen", "guru", "siswa"]);
+      const requestedSchoolId = Number(data.sekolah_id ?? data.sekolahId);
+
+      if (!allowedRequestedRoles.has(requestedRole)) {
+        return new Response(JSON.stringify({ success: false, error: "Role pengajuan tidak valid" }), {
+          status: 400,
+          headers: jsonHeaders,
+        });
+      }
+      if (["sekolah", "guru", "siswa"].includes(requestedRole)) {
+        if (!Number.isInteger(requestedSchoolId) || requestedSchoolId <= 0) {
+          return new Response(JSON.stringify({ success: false, error: "Sekolah wajib dipilih" }), {
+            status: 400,
+            headers: jsonHeaders,
+          });
+        }
+        const school = await context.env.DB.prepare(
+          "SELECT id, nama FROM master_data_sekolah WHERE id = ? LIMIT 1",
+        ).bind(requestedSchoolId).first<{ id: number; nama: string }>();
+        if (Number(school?.id) !== requestedSchoolId) {
+          return new Response(JSON.stringify({ success: false, error: "Sekolah tidak valid" }), {
+            status: 400,
+            headers: jsonHeaders,
+          });
+        }
+      }
+
+      const pendingUpdate: any = {
+        roleSlug: "pending",
+        status: "Menunggu Approve",
+        requestedRole,
+        nama: data.nama || existing.nama,
+        wilayah: data.wilayah || existing.wilayah,
+        sekolahId: Number.isInteger(requestedSchoolId) && requestedSchoolId > 0
+          ? requestedSchoolId
+          : null,
+        kelas: requestedRole === "siswa" ? data.kelas ?? null : null,
+        nis: ["guru", "siswa"].includes(requestedRole) ? data.nis ?? null : null,
+        suratTugas: requestedRole === "sekolah" ? data.suratTugas ?? null : null,
+        masaAktif: requestedRole === "sekolah" ? data.masaAktif ?? null : null,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      };
+      await ormDb.update(users).set(pendingUpdate).where(eq(users.id, id));
+
+      if (["guru", "siswa"].includes(requestedRole) && pendingUpdate.sekolahId) {
+        const roleLabel = requestedRole === "guru" ? "Guru" : "Siswa";
+        const sourceLabel = existing.newUserSource === "sso" ? "SSO" : "manual";
+        await context.env.DB.prepare(
+          `INSERT INTO notifications (id, sekolah_id, message) VALUES (?, ?, ?)`,
+        ).bind(
+          crypto.randomUUID(),
+          pendingUpdate.sekolahId,
+          `Pendaftaran ${sourceLabel} baru: ${pendingUpdate.nama} (${roleLabel})`,
+        ).run();
+      }
+
+      return new Response(JSON.stringify({ success: true, pendingApproval: true }), {
+        headers: jsonHeaders,
+      });
+    }
+
     const updateData: any = { updatedAt: sql`CURRENT_TIMESTAMP` };
     const mappings: Record<string, string> = {
       username: "username",

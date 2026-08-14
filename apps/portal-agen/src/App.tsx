@@ -747,7 +747,7 @@ function AppContent() {
   };
 
   const notificationCount = session?.role === "sekolah" 
-    ? apiNotifications.filter(n => !n.is_read).length 
+    ? pendingApiUsers.length
     : pendingApiUsers.length + newUsers.length;
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -762,8 +762,12 @@ function AppContent() {
       void fetchPendingApiUsers(); // jalankan sekali saat mount
       pollingRef.current = setInterval(fetchPendingApiUsers, 45_000);
     } else if (session?.role === "sekolah") {
+      void fetchPendingApiUsers();
       void fetchApiNotifications();
-      pollingRef.current = setInterval(fetchApiNotifications, 45_000);
+      pollingRef.current = setInterval(() => {
+        void fetchPendingApiUsers();
+        void fetchApiNotifications();
+      }, 45_000);
     }
     
     return () => {
@@ -775,6 +779,7 @@ function AppContent() {
   // Eager load for notifications
   useEffect(() => {
     if (session?.role === "sekolah") {
+      fetchPendingApiUsers();
       fetchApiNotifications();
     }
   }, [session?.role]);
@@ -1085,12 +1090,76 @@ function AppContent() {
                         </button>
                       )}
                     </div>
-                    {apiNotifications.length === 0 ? (
+                    {pendingApiUsers.length === 0 && apiNotifications.length === 0 ? (
                       <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", margin: 0 }}>
                         Tidak ada notifikasi baru.
                       </p>
                     ) : (
                       <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "300px", overflowY: "auto" }}>
+                        {pendingApiUsers.map((user) => (
+                          <div
+                            key={`school-pending-${user.id}`}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              gap: "12px",
+                              paddingBottom: "10px",
+                              borderBottom: "1px solid var(--border-subtle)",
+                            }}
+                          >
+                            <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                              <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>
+                                {user.nama || user.username}
+                              </span>
+                              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                                Pengajuan {ROLE_LABELS[user.requestedRole] || "User"} via {user.newUserSource === "sso" ? "SSO" : "manual"}
+                              </span>
+                            </div>
+                            <button
+                              className="primary-button"
+                              disabled={approvingIds.has(user.id)}
+                              style={{ padding: "6px 10px", fontSize: "0.8rem", whiteSpace: "nowrap" }}
+                              onClick={async () => {
+                                const requestedRole = user.requestedRole;
+                                if (requestedRole !== "guru" && requestedRole !== "siswa") {
+                                  alert("Role pengajuan tidak valid untuk Admin Sekolah.");
+                                  return;
+                                }
+
+                                setApprovingIds((prev) => new Set([...prev, user.id]));
+                                try {
+                                  const response = await fetch(`/api/users/${user.id}`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      role: requestedRole,
+                                      status: "Aktif",
+                                      newUserSource: null,
+                                    }),
+                                  });
+                                  const result = await response.json().catch(() => ({}));
+                                  if (!response.ok || !result.success) {
+                                    throw new Error(result.error || "Gagal menyetujui user");
+                                  }
+                                  await fetchPendingApiUsers();
+                                  await fetchApiNotifications();
+                                } catch (error) {
+                                  console.error("Failed to approve school user", error);
+                                  alert(error instanceof Error ? error.message : "Gagal menyetujui user");
+                                } finally {
+                                  setApprovingIds((prev) => {
+                                    const next = new Set(prev);
+                                    next.delete(user.id);
+                                    return next;
+                                  });
+                                }
+                              }}
+                            >
+                              {approvingIds.has(user.id) ? "Memproses..." : "Approve"}
+                            </button>
+                          </div>
+                        ))}
                         {apiNotifications.map((notif) => (
                           <div
                             key={notif.id}
@@ -1349,7 +1418,9 @@ function AppContent() {
                                     user.requestedRole ||
                                     (user.role !== "pending"
                                       ? user.role
-                                      : "sekolah")
+                                      : session?.role === "sekolah"
+                                        ? "guru"
+                                        : "sekolah")
                                   }
                                   onChange={(e) =>
                                     setApprovingRoles({
@@ -1368,9 +1439,9 @@ function AppContent() {
                                     cursor: "pointer",
                                   }}
                                 >
-                                  <option value="sekolah">Sekolah</option>
-                                  <option value="agen">Agen</option>
-                                  <option value="uploader">Uploader</option>
+                                  {session?.role !== "sekolah" && <option value="sekolah">Sekolah</option>}
+                                  {session?.role !== "sekolah" && <option value="agen">Agen</option>}
+                                  {session?.role !== "sekolah" && <option value="uploader">Uploader</option>}
                                   <option value="guru">Guru</option>
                                   <option value="siswa">Siswa</option>
                                 </select>
@@ -1397,7 +1468,9 @@ function AppContent() {
                                       user.requestedRole ||
                                       (user.role !== "pending"
                                         ? user.role
-                                        : "sekolah");
+                                        : session?.role === "sekolah"
+                                          ? "guru"
+                                          : "sekolah");
 
                                     // Tandai sedang loading
                                     setApprovingIds(
@@ -1410,7 +1483,7 @@ function AppContent() {
                                     );
 
                                     try {
-                                      await fetch(
+                                      const response = await fetch(
                                         `/api/users/${user.id}`,
                                         {
                                           method: "PUT",
@@ -1425,8 +1498,13 @@ function AppContent() {
                                           }),
                                         },
                                       );
+                                      const result = await response.json().catch(() => ({}));
+                                      if (!response.ok || !result.success) {
+                                        throw new Error(result.error || "Gagal menyetujui user");
+                                      }
                                       // Refresh list setelah approve berhasil
                                       await fetchPendingApiUsers();
+                                      await fetchApiNotifications();
                                     } catch (err) {
                                       console.error(
                                         "Failed to approve user",
