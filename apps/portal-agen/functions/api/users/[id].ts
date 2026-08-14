@@ -67,6 +67,28 @@ export const onRequestPut = async (context: any) => {
     }
 
     await ormDb.update(users).set(updateData).where(eq(users.id, id));
+
+    // Opsi 2: Trigger notifikasi jika user baru saja melengkapi data sekolahnya
+    if (
+      updateData.sekolahId && 
+      (!existing.sekolahId || String(existing.sekolahId) !== String(updateData.sekolahId))
+    ) {
+      const notifId = crypto.randomUUID();
+      const finalRoleName = updateData.roleSlug || existing.roleSlug;
+      const finalNama = updateData.nama || existing.nama;
+      const message = `Pendaftaran SSO / Melengkapi data: ${finalNama} (${finalRoleName})`;
+      
+      try {
+        await context.env.DB.prepare(
+          `INSERT INTO notifications (id, sekolah_id, message) VALUES (?, ?, ?)`
+        )
+          .bind(notifId, updateData.sekolahId, message)
+          .run();
+      } catch (e) {
+        console.error("Gagal menyimpan notifikasi dari pelengkapan data:", e);
+      }
+    }
+
     return new Response(JSON.stringify({ success: true }), { headers: jsonHeaders });
   } catch (error: any) {
     return new Response(
