@@ -771,6 +771,13 @@ function AppContent() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.role]);
+  
+  // Eager load for notifications
+  useEffect(() => {
+    if (session?.role === "sekolah") {
+      fetchApiNotifications();
+    }
+  }, [session?.role]);
 
   // --- Invalidasi Cache: Hapus cache saat logout atau refresh paksa ---
   useEffect(() => {
