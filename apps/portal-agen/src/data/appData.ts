@@ -659,8 +659,13 @@ export function loadRemoteAppData(): Promise<AppData | null> {
             fullResult.contents = cachedRemoteData.contents;
           }
 
-          if (usersPayload?.success && Array.isArray(usersPayload.users)) {
-            fullResult.users = usersPayload.users;
+          const apiUsers = Array.isArray(usersPayload?.data)
+            ? usersPayload.data
+            : Array.isArray(usersPayload?.users)
+              ? usersPayload.users
+              : null;
+          if (usersPayload?.success && apiUsers) {
+            fullResult.users = apiUsers;
           } else if (cachedRemoteData && cachedRemoteData.users.length > 0) {
             fullResult.users = cachedRemoteData.users;
           }
