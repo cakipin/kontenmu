@@ -115,9 +115,10 @@ export const onRequestPost = async (context: any) => {
     let finalRole = existingUser ? existingUser.role_slug : "pending";
     let finalNama =
       userData.name || (existingUser ? existingUser.nama : username);
-    if (existingUser && existingUser.status !== "Aktif") {
+
+    if (existingUser && (existingUser.status === "Nonaktif" || existingUser.status === "Ditolak")) {
       return new Response(
-        JSON.stringify({ error: "Akun belum aktif atau menunggu approval." }),
+        JSON.stringify({ error: "Akun Anda telah dinonaktifkan atau ditolak." }),
         { status: 403, headers: jsonHeaders },
       );
     }
