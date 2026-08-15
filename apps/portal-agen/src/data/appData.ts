@@ -479,7 +479,7 @@ export const seedAppData: AppData = {
     "teacher-allocation": ["sekolah"],
     "school-users": ["sekolah"],
     profile: ["sekolah"],
-    "school-profile": ["sekolah"],
+    "school-profile": ["sekolah", "guru", "siswa"],
     admin: ["siswa", "guru", "sekolah", "agen"],
     learning: ["siswa", "guru"],
     school: ["superadmin"],
@@ -539,7 +539,7 @@ function normalizeAppData(data: AppData): AppData {
     "teacher-allocation": ["sekolah"],
     "school-users": ["sekolah"],
     profile: ["sekolah"],
-    "school-profile": ["sekolah"],
+    "school-profile": ["sekolah", "guru", "siswa"],
     library: ["siswa", "guru"],
     learning: ["siswa", "guru"],
     school: ["superadmin"],
@@ -552,6 +552,15 @@ function normalizeAppData(data: AppData): AppData {
     next.roleAccessPermissions["sim-sekolah"] = next.roleAccessPermissions[
       "sim-sekolah"
     ].filter((r) => r !== "sekolah" && r !== "guru" && r !== "siswa");
+  }
+  // Force patch for school-profile
+  if (next.roleAccessPermissions["school-profile"]) {
+    if (!next.roleAccessPermissions["school-profile"].includes("guru")) {
+      next.roleAccessPermissions["school-profile"].push("guru");
+    }
+    if (!next.roleAccessPermissions["school-profile"].includes("siswa")) {
+      next.roleAccessPermissions["school-profile"].push("siswa");
+    }
   }
   return next;
 }
