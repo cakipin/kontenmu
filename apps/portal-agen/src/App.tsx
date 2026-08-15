@@ -657,10 +657,26 @@ function AppDateTime({ variant, className }: { variant: "sidebar" | "header", cl
               fontSize: "0.75rem",
               fontWeight: 700,
               color: "#2E97FA", // Official Muhammadiyah Blue, visible in dark mode
-              lineHeight: 1.2
+              lineHeight: 1.2,
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
             }}
           >
             {khgtDate}
+            <a 
+              href="https://khgt.muhammadiyah.or.id/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "inherit",
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+              title="Kunjungi Web Resmi KHGT Muhammadiyah"
+            >
+              KHGT
+            </a>
           </span>
         ) : null}
         
