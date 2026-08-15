@@ -960,7 +960,7 @@ function AppContent() {
       )}
 
       <main className="admin-main">
-        <header className="admin-topbar">
+        <header className="admin-topbar" style={{ position: "relative" }}>
           <div className="topbar-title-group">
             <div className="pwa-player-brand" aria-label="KontenMu">
               <div className="pwa-player-brand-mark">
@@ -986,16 +986,27 @@ function AppContent() {
               <Icon name={isCollapsed ? "chevron-right" : "chevron-left"} />
             </button>
             <div className="topbar-page-title">
-              <div className="topbar-kicker">
-                {(session.role === "sekolah" ||
-                  session.role === "siswa" ||
-                  session.role === "guru") &&
-                (session as any).wilayah
-                  ? (session as any).wilayah.toUpperCase()
-                  : ROLE_LABELS[session.role]}
-              </div>
               <h1 className="topbar-title">{activeNav.label}</h1>
             </div>
+          </div>
+
+          <div
+            className="topbar-kicker"
+            style={{
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)",
+              margin: 0,
+              textAlign: "center",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {(session.role === "sekolah" ||
+              session.role === "siswa" ||
+              session.role === "guru") &&
+            (session as any).wilayah
+              ? (session as any).wilayah.toUpperCase()
+              : ROLE_LABELS[session.role]}
           </div>
 
           <div className="topbar-actions">
