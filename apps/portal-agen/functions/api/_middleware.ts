@@ -28,6 +28,7 @@ const pattern = (expected: RegExp) => (pathname: string) => expected.test(pathna
 // Urutan penting: route yang lebih spesifik harus didefinisikan lebih dahulu.
 const ROUTE_POLICIES: readonly RoutePolicy[] = [
   { methods: ["POST"], match: exact("/api/auth/sso"), roles: "public" },
+  { methods: ["POST"], match: exact("/api/auth/refresh"), roles: [...ACTIVE_ROLES, "pending"] },
   { methods: ["POST", "DELETE"], match: exact("/api/auth/session"), roles: "public" },
   { methods: ["GET"], match: exact("/api/puck-data"), roles: "public" },
   { methods: ["POST"], match: exact("/api/puck-data"), roles: ["superadmin"] },

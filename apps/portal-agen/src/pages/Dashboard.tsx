@@ -47,6 +47,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
 
   const [users, setUsers] = useState<any[]>([]);
   const currentUser = users.find((u) => u.username === session?.username);
+  const sessionRefreshStarted = useRef(false);
   const currentStudentClass =
     currentUser?.kelas ||
     (data.users || []).find((u: any) => u.username === session?.username)
@@ -197,6 +198,67 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       })
       .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (
+      currentRole !== "pending" ||
+      !session?.token ||
+      !currentUser ||
+      currentUser.status !== "Aktif" ||
+      !currentUser.role ||
+      currentUser.role === "pending" ||
+      sessionRefreshStarted.current
+    ) {
+      return;
+    }
+
+    sessionRefreshStarted.current = true;
+    const refreshApprovedSession = async () => {
+      try {
+        const refreshResponse = await fetch("/api/auth/refresh", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session.token}` },
+          cache: "no-store",
+        });
+        const result = await refreshResponse.json().catch(() => ({}));
+        if (!refreshResponse.ok || !result.success || !result.token || !result.user) {
+          throw new Error(result.error || "Gagal memperbarui sesi");
+        }
+
+        const sessionResponse = await fetch("/api/auth/session", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${result.token}` },
+        });
+        if (!sessionResponse.ok) throw new Error("Gagal menyimpan sesi baru");
+
+        const approvedUser = result.user;
+        setCustomSession({
+          ...session,
+          id: approvedUser.id,
+          username: approvedUser.username,
+          role: approvedUser.role,
+          displayName: approvedUser.nama || approvedUser.username,
+          initial:
+            approvedUser.initial ||
+            (approvedUser.nama || approvedUser.username)
+              .substring(0, 2)
+              .toUpperCase(),
+          sekolahId: approvedUser.sekolah_id
+            ? Number(approvedUser.sekolah_id)
+            : undefined,
+          wilayah: approvedUser.wilayah || undefined,
+          picture: approvedUser.picture || undefined,
+          kelas: approvedUser.kelas || undefined,
+          token: result.token,
+        } as any);
+      } catch (error) {
+        console.error("Failed to refresh approved user session", error);
+        sessionRefreshStarted.current = false;
+      }
+    };
+
+    void refreshApprovedSession();
+  }, [currentRole, currentUser, session, setCustomSession]);
 
   useEffect(() => {
     if (currentRole === "pending") {
