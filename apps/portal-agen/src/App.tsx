@@ -1002,27 +1002,15 @@ function AppContent() {
               <Icon name={isCollapsed ? "chevron-right" : "chevron-left"} />
             </button>
             <div className="topbar-page-title">
-              <h1 className="topbar-title">{activeNav.label}</h1>
+              <h1 className="topbar-title">
+                {(session.role === "sekolah" ||
+                  session.role === "siswa" ||
+                  session.role === "guru") &&
+                (session as any).wilayah
+                  ? (session as any).wilayah.toUpperCase()
+                  : activeNav.label}
+              </h1>
             </div>
-          </div>
-
-          <div
-            className="topbar-kicker"
-            style={{
-              position: "absolute",
-              left: "50%",
-              transform: "translateX(-50%)",
-              margin: 0,
-              textAlign: "center",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {(session.role === "sekolah" ||
-              session.role === "siswa" ||
-              session.role === "guru") &&
-            (session as any).wilayah
-              ? (session as any).wilayah.toUpperCase()
-              : ROLE_LABELS[session.role]}
           </div>
 
           <div className="topbar-actions">
