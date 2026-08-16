@@ -134,6 +134,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   };
   const [masaAktif, setMasaAktif] = useState("");
   const [dbStats, setDbStats] = useState<any>(null);
+  const [analyticsStats, setAnalyticsStats] = useState<any>(null);
 
   useEffect(() => {
     if (currentRole === "superadmin") {
@@ -144,6 +145,15 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
         .then((res) => res.json())
         .then((res) => {
           if (res.success) setDbStats(res.data);
+        })
+        .catch(console.error);
+    }
+    
+    if (currentRole === "superadmin" || currentRole === "sekolah") {
+      fetch("/api/analytics-stats")
+        .then(res => res.json())
+        .then(res => {
+          if (res.success) setAnalyticsStats(res.data);
         })
         .catch(console.error);
     }
@@ -830,6 +840,37 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
             paddingBottom: "12px",
           }}
         >
+          {analyticsStats && (
+            <>
+              <StatCard
+                icon={<Users size={20} />}
+                colorStart="#8B5CF6"
+                colorEnd="#7C3AED"
+                shadowColor="rgba(139, 92, 246, 0.2)"
+                title="User Aktif (24j)"
+                value={formatNumber(analyticsStats.activeUsersToday || 0)}
+                subtitle="Login hari ini"
+              />
+              <StatCard
+                icon={<Users size={20} />}
+                colorStart="#6366F1"
+                colorEnd="#4F46E5"
+                shadowColor="rgba(99, 102, 241, 0.2)"
+                title="User Aktif (7h)"
+                value={formatNumber(analyticsStats.activeUsersWeek || 0)}
+                subtitle="Login 7 hari"
+              />
+              <StatCard
+                icon={<TrendingUp size={20} />}
+                colorStart="#EC4899"
+                colorEnd="#DB2777"
+                shadowColor="rgba(236, 72, 153, 0.2)"
+                title="Kunjungan (24j)"
+                value={analyticsStats.isAnalyticsConfigured ? formatNumber(analyticsStats.visitsToday || 0) : "N/A"}
+                subtitle={analyticsStats.isAnalyticsConfigured ? "Total traffic web" : "Belum Dikonfigurasi"}
+              />
+            </>
+          )}
           <StatCard
             icon={<Package size={20} />}
             colorStart="#5A95FF"
@@ -1556,6 +1597,24 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
 
       {currentRole === "sekolah" && (
         <div className="dashboard-grid">
+          {analyticsStats && (
+            <>
+              <MetricCard
+                icon={<Users size={24} />}
+                color="#8B5CF6"
+                title="Aktif Hari Ini"
+                value={formatNumber(analyticsStats.activeUsersToday || 0)}
+                subtitle="Login 24 jam terakhir"
+              />
+              <MetricCard
+                icon={<Users size={24} />}
+                color="#6366F1"
+                title="Aktif 7 Hari"
+                value={formatNumber(analyticsStats.activeUsersWeek || 0)}
+                subtitle="Login 7 hari terakhir"
+              />
+            </>
+          )}
           <MetricCard
             icon={<Users size={24} />}
             color="#4f46e5"
