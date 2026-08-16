@@ -1742,6 +1742,7 @@ function AppContent() {
               <Route path="/library" element={<Library />} />
               <Route path="/learning" element={<LearningHistory />} />
               <Route path="/play-content" element={<PlayKonten />} />
+              <Route path="/play-content/*" element={<PlayKonten />} />
               <Route path="/learning-history" element={<LearningHistory />} />
               <Route path="/sim-sekolah" element={<SimSekolah />} />
               <Route path="/master-sekolah" element={<MasterSekolah />} />
