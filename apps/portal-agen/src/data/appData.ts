@@ -363,8 +363,9 @@ export const NAVIGATION: Record<
   }[]
 > = {
   superadmin: [
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Data Sekolah", href: "/schools" },
+    { name: "Dashboard", href: "/dashboard", icon: "dashboard" },
+    { name: "Analitik", href: "/analytics", icon: "analytics" },
+    { name: "Data Sekolah", href: "/schools", icon: "school" },
     { name: "Data Guru", href: "/teachers" },
     { name: "Data Siswa", href: "/students" },
     { name: "Data Buku", href: "/books" },
@@ -378,9 +379,10 @@ export const NAVIGATION: Record<
     { name: "Penjualan", href: "/sales" },
   ],
   sekolah: [
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Profil Sekolah", href: "/school-profile" },
-    { name: "Data Guru", href: "/teachers" },
+    { name: "Dashboard", href: "/dashboard", icon: "dashboard" },
+    { name: "Profil Sekolah", href: "/school-profile", icon: "school" },
+    { name: "Analitik", href: "/analytics", icon: "analytics" },
+    { name: "Data Guru", href: "/teachers", icon: "users" },
     { name: "Data Siswa", href: "/students" },
     { name: "Laporan", href: "/reports" },
   ],
@@ -406,6 +408,7 @@ export const MOBILE_NAVIGATION: Record<
 > = {
   superadmin: [
     { name: "Dashboard", href: "/dashboard" },
+    { name: "Analitik", href: "/analytics" },
     { name: "Sekolah", href: "/schools" },
     { name: "Guru", href: "/teachers" },
     { name: "Siswa", href: "/students" },
@@ -420,6 +423,7 @@ export const MOBILE_NAVIGATION: Record<
   ],
   sekolah: [
     { name: "Dashboard", href: "/dashboard" },
+    { name: "Analitik", href: "/analytics" },
     { name: "Guru", href: "/teachers" },
     { name: "Siswa", href: "/students" },
     { name: "Laporan", href: "/reports" },

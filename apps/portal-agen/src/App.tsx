@@ -32,6 +32,7 @@ const SimSekolah = lazy(() => import("./pages/SimSekolah"));
 const AiSettings = lazy(() => import("./pages/AiSettings"));
 const Profile = lazy(() => import("./pages/Profile"));
 const SchoolProfile = lazy(() => import("./pages/SchoolProfile"));
+const Analytics = lazy(() => import("./pages/Analytics"));
 
 const FeaturePages = import("./pages/FeaturePages");
 const Allocation = lazy(() =>
@@ -98,6 +99,7 @@ type NavIcon =
   | "library"
   | "learning"
   | "school"
+  | "analytics"
   | "settings"
   | "chevron-down";
 
@@ -418,6 +420,13 @@ function Icon({
         <path d="m4 6 8-4 8 4" />
         <path d="M6 5v17" />
         <circle cx="12" cy="9" r="2" />
+      </>
+    ),
+    analytics: (
+      <>
+        <line x1="12" y1="20" x2="12" y2="10" />
+        <line x1="18" y1="20" x2="18" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
       </>
     ),
     settings: (
@@ -1705,6 +1714,10 @@ function AppContent() {
               <Route
                 path="/dashboard"
                 element={<Dashboard currentRole={session.role} />}
+              />
+              <Route
+                path="/analytics"
+                element={<Analytics currentRole={session.role} />}
               />
               <Route path="/users" element={<Users />} />
               <Route path="/catalog" element={<Catalog />} />
