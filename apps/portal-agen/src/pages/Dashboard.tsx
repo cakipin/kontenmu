@@ -853,7 +853,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
             colorEnd="#16A34A"
             shadowColor="rgba(22, 163, 74, 0.2)"
             title="Sekolah Aktif"
-            value={formatNumber(activeSchools)}
+            value={formatNumber(masterStats.sekolahAktif || 0)}
             subtitle="Unit terdaftar"
           />
         </div>
