@@ -12,7 +12,6 @@ import { useAuth } from "@repo/auth";
 import { Files, Play, Gamepad2, Image as ImageIcon, BookOpen, CheckCircle2, XCircle, Eye } from "lucide-react";
 import Select from "react-select";
 import AsyncSelect from "react-select/async";
-import { useNavigate } from "react-router-dom";
 
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
 import { Chip } from "../../../../packages/ui/src/Chip";
