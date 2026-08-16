@@ -1898,18 +1898,16 @@ export function PlayKonten() {
   const [page, setPage] = useState(1);
   const [playingContent, setPlayingContent] = useState<SimContent | null>(null);
 
-  const navigate = useNavigate();
-  const previousPath = useRef("");
-  
   useEffect(() => {
-    if (playingContent) {
-      previousPath.current = window.location.pathname;
-      navigate(`/play-content/${playingContent.id}`, { replace: true });
-    } else if (previousPath.current) {
-      navigate(previousPath.current, { replace: true });
-      previousPath.current = "";
+    if (playingContent && playingContent.id) {
+      // Track view automatically in the backend without relying on Cloudflare Analytics SPA tracking
+      fetch('/api/track-view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: playingContent.id })
+      }).catch(err => console.error("Error tracking view:", err));
     }
-  }, [playingContent, navigate]);
+  }, [playingContent]);
   const [editingContent, setEditingContent] = useState<SimContent | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editCategory, setEditCategory] = useState<ContentCategory>("Teks");
@@ -4151,18 +4149,15 @@ export function Inventory() {
 
   const [playingContent, setPlayingContent] = useState<SimContent | null>(null);
 
-  const navigate = useNavigate();
-  const previousPath = useRef("");
-  
   useEffect(() => {
-    if (playingContent) {
-      previousPath.current = window.location.pathname;
-      navigate(`/play-content/${playingContent.id}`, { replace: true });
-    } else if (previousPath.current) {
-      navigate(previousPath.current, { replace: true });
-      previousPath.current = "";
+    if (playingContent && playingContent.id) {
+      fetch('/api/track-view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: playingContent.id })
+      }).catch(err => console.error("Error tracking view:", err));
     }
-  }, [playingContent, navigate]);
+  }, [playingContent]);
   const [contentPage, setContentPage] = useState(1);
   const itemsPerPage = 25;
   const [isMobile, setIsMobile] = useState(
@@ -5954,18 +5949,15 @@ export function Library() {
   const itemsPerPage = 25;
   const [playingContent, setPlayingContent] = useState<SimContent | null>(null);
 
-  const navigate = useNavigate();
-  const previousPath = useRef("");
-  
   useEffect(() => {
-    if (playingContent) {
-      previousPath.current = window.location.pathname;
-      navigate(`/play-content/${playingContent.id}`, { replace: true });
-    } else if (previousPath.current) {
-      navigate(previousPath.current, { replace: true });
-      previousPath.current = "";
+    if (playingContent && playingContent.id) {
+      fetch('/api/track-view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: playingContent.id })
+      }).catch(err => console.error("Error tracking view:", err));
     }
-  }, [playingContent, navigate]);
+  }, [playingContent]);
   const [contentPage, setContentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 768,

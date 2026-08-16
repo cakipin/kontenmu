@@ -90,18 +90,6 @@ export const onRequestGet = async (context: any) => {
                     deviceType
                   }
                 }
-                topPaths: rumPageloadEventsAdaptiveGroups(
-                  limit: 10,
-                  filter: { date_geq: "${lastWeekStr}", requestPath_like: "/play-content/%" },
-                  orderBy: [sum_visits_DESC]
-                ) {
-                  sum {
-                    visits
-                  }
-                  dimensions {
-                    requestPath
-                  }
-                }
               }
             }
           }
@@ -158,39 +146,15 @@ export const onRequestGet = async (context: any) => {
             visits: aggregatedDevices[deviceType]
           }));
 
-          // Process top paths - extracting IDs and querying database for titles
-          const contentIds = topPathsData
-            .map((g: any) => g.dimensions?.requestPath?.replace('/play-content/', ''))
-            .filter((id: string) => id && id.trim() !== '');
-
-          const titleMap: Record<string, string> = {};
-          if (contentIds.length > 0) {
-            try {
-              const placeholders = contentIds.map(() => '?').join(',');
-              const query = `SELECT id, judul FROM contents WHERE id IN (${placeholders})`;
-              const stmt = await rawDb.prepare(query).bind(...contentIds);
-              const res = stmt.results || [];
-              res.forEach((row: any) => {
-                titleMap[row.id] = row.judul;
-              });
-            } catch (err) {
-              console.error("Failed to fetch content titles:", err);
+          // Process top paths from D1 database directly
+          try {
+            const topContentsStmt = await rawDb.prepare("SELECT judul as path, views as visits FROM contents WHERE views > 0 ORDER BY views DESC LIMIT 10").all();
+            if (topContentsStmt.success && topContentsStmt.results) {
+               topPaths = topContentsStmt.results;
             }
+          } catch(err) {
+             console.error("D1 top paths error:", err);
           }
-
-          const aggregatedPaths: Record<string, number> = {};
-          topPathsData.forEach((g: any) => {
-             const path = g.dimensions?.requestPath || "";
-             if (path.startsWith("/play-content/")) {
-               const id = path.replace("/play-content/", "");
-               const title = titleMap[id] || `Konten Tidak Diketahui`;
-               aggregatedPaths[title] = (aggregatedPaths[title] || 0) + (g.sum?.visits || 0);
-             }
-          });
-          topPaths = Object.keys(aggregatedPaths)
-            .map(title => ({ path: title, visits: aggregatedPaths[title] }))
-            .sort((a, b) => b.visits - a.visits)
-            .slice(0, 10);
 
           visitsToday = sumToday;
           visitsWeek = sumWeek;

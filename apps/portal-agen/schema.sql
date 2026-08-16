@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS contents (
   thumbnail_key TEXT NOT NULL,
   protected_preview INTEGER NOT NULL DEFAULT 1,
   source_url TEXT,
+  views INTEGER DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
