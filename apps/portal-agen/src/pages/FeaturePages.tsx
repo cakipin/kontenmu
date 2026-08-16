@@ -12,7 +12,7 @@ import { useAuth } from "@repo/auth";
 import { Files, Play, Gamepad2, Image as ImageIcon, BookOpen, CheckCircle2, XCircle, Eye } from "lucide-react";
 import Select from "react-select";
 import AsyncSelect from "react-select/async";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
 import { Chip } from "../../../../packages/ui/src/Chip";
@@ -1898,15 +1898,18 @@ export function PlayKonten() {
   const [page, setPage] = useState(1);
   const [playingContent, setPlayingContent] = useState<SimContent | null>(null);
 
-  const location = useLocation();
   const navigate = useNavigate();
+  const previousPath = useRef("");
+  
   useEffect(() => {
     if (playingContent) {
+      previousPath.current = window.location.pathname;
       navigate(`/play-content/${playingContent.id}`, { replace: true });
-    } else if (window.location.pathname.startsWith('/play-content/')) {
-      navigate(location.pathname.split('/play-content/')[0] + '/play-content', { replace: true });
+    } else if (previousPath.current) {
+      navigate(previousPath.current, { replace: true });
+      previousPath.current = "";
     }
-  }, [playingContent, location, navigate]);
+  }, [playingContent, navigate]);
   const [editingContent, setEditingContent] = useState<SimContent | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editCategory, setEditCategory] = useState<ContentCategory>("Teks");
@@ -4148,15 +4151,18 @@ export function Inventory() {
 
   const [playingContent, setPlayingContent] = useState<SimContent | null>(null);
 
-  const location = useLocation();
   const navigate = useNavigate();
+  const previousPath = useRef("");
+  
   useEffect(() => {
     if (playingContent) {
+      previousPath.current = window.location.pathname;
       navigate(`/play-content/${playingContent.id}`, { replace: true });
-    } else if (window.location.pathname.startsWith('/play-content/')) {
-      navigate(location.pathname.split('/play-content/')[0] + '/play-content', { replace: true });
+    } else if (previousPath.current) {
+      navigate(previousPath.current, { replace: true });
+      previousPath.current = "";
     }
-  }, [playingContent, location, navigate]);
+  }, [playingContent, navigate]);
   const [contentPage, setContentPage] = useState(1);
   const itemsPerPage = 25;
   const [isMobile, setIsMobile] = useState(
@@ -5948,15 +5954,18 @@ export function Library() {
   const itemsPerPage = 25;
   const [playingContent, setPlayingContent] = useState<SimContent | null>(null);
 
-  const location = useLocation();
   const navigate = useNavigate();
+  const previousPath = useRef("");
+  
   useEffect(() => {
     if (playingContent) {
+      previousPath.current = window.location.pathname;
       navigate(`/play-content/${playingContent.id}`, { replace: true });
-    } else if (window.location.pathname.startsWith('/play-content/')) {
-      navigate(location.pathname.split('/play-content/')[0] + '/play-content', { replace: true });
+    } else if (previousPath.current) {
+      navigate(previousPath.current, { replace: true });
+      previousPath.current = "";
     }
-  }, [playingContent, location, navigate]);
+  }, [playingContent, navigate]);
   const [contentPage, setContentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 768,
