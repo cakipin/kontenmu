@@ -468,6 +468,7 @@ export const seedAppData: AppData = {
   aiIndexedChunks: 108,
   roleAccessPermissions: {
     dashboard: ["superadmin", "agen", "sekolah", "siswa", "guru", "uploader"],
+    analytics: ["superadmin", "sekolah"],
     catalog: ["superadmin", "uploader"],
     upload: ["superadmin", "uploader"],
     play: ["superadmin", "uploader"],
@@ -528,6 +529,7 @@ function normalizeAppData(data: AppData): AppData {
   next.aiIndexedChunks ??= 108;
   const defaultPermissions = {
     dashboard: ["superadmin", "agen", "sekolah", "siswa", "guru", "uploader"],
+    analytics: ["superadmin", "sekolah"],
     catalog: ["superadmin", "uploader"],
     upload: ["superadmin", "uploader"],
     play: ["superadmin", "uploader"],
