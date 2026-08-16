@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, Monitor } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import {
   LineChart,
   Line,
@@ -58,7 +57,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function Analytics({ currentRole }: { currentRole: string }) {
   const [analyticsStats, setAnalyticsStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (currentRole === "superadmin" || currentRole === "sekolah") {
@@ -265,7 +263,6 @@ export default function Analytics({ currentRole }: { currentRole: string }) {
                   {topPaths.map((item: any, index: number) => (
                     <div
                       key={index}
-                      onClick={() => navigate(item.path)}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -273,11 +270,7 @@ export default function Analytics({ currentRole }: { currentRole: string }) {
                         padding: "16px",
                         background: "var(--bg-secondary)",
                         borderRadius: "8px",
-                        cursor: "pointer",
-                        transition: "background 0.2s ease",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--border-color)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-secondary)")}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                         <div
@@ -297,11 +290,11 @@ export default function Analytics({ currentRole }: { currentRole: string }) {
                           {index + 1}
                         </div>
                         <div>
-                          <p style={{ margin: "0 0 4px 0", fontWeight: 600, color: "var(--text-primary)", wordBreak: "break-all" }}>
+                          <p style={{ margin: "0 0 4px 0", fontWeight: 600, color: "var(--text-primary)", wordBreak: "break-word" }}>
                             {item.path}
                           </p>
                           <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                            Klik untuk mengunjungi halaman
+                            Judul konten
                           </p>
                         </div>
                       </div>
