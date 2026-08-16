@@ -43,6 +43,9 @@ export const onRequestGet = async (context: any) => {
     // --- 2. Cloudflare GraphQL Analytics API (Optional/Traffic) ---
     let visitsToday = null;
     let visitsWeek = null;
+    let visitsChart: any[] = [];
+    let deviceChart: any[] = [];
+    let topPaths: any[] = [];
     let isAnalyticsConfigured = false;
 
     const accountId = context.env.CLOUDFLARE_ACCOUNT_ID;
@@ -75,6 +78,30 @@ export const onRequestGet = async (context: any) => {
                     date
                   }
                 }
+                devices: rumPageloadEventsAdaptiveGroups(
+                  limit: 10,
+                  filter: { date_geq: "${lastWeekStr}" },
+                  orderBy: [sum_visits_DESC]
+                ) {
+                  sum {
+                    visits
+                  }
+                  dimensions {
+                    deviceType
+                  }
+                }
+                topPaths: rumPageloadEventsAdaptiveGroups(
+                  limit: 10,
+                  filter: { date_geq: "${lastWeekStr}" },
+                  orderBy: [sum_visits_DESC]
+                ) {
+                  sum {
+                    visits
+                  }
+                  dimensions {
+                    requestPath
+                  }
+                }
               }
             }
           }
@@ -91,18 +118,56 @@ export const onRequestGet = async (context: any) => {
 
         if (cfRes.ok) {
           const cfData = await cfRes.json() as any;
-          const groups = cfData?.data?.viewer?.accounts?.[0]?.rumPageloadEventsAdaptiveGroups || [];
+          const account = cfData?.data?.viewer?.accounts?.[0];
+          const groups = account?.rumPageloadEventsAdaptiveGroups || [];
+          const devicesData = account?.devices || [];
+          const topPathsData = account?.topPaths || [];
           
           let sumToday = 0;
           let sumWeek = 0;
 
+          // Process daily visits (aggregate by date)
+          const dailyVisits: Record<string, number> = {};
+          
           groups.forEach((g: any) => {
             const req = g.sum?.visits || 0;
+            const d = g.dimensions?.date;
             sumWeek += req;
-            if (g.dimensions?.date === todayStr) {
+            if (d === todayStr) {
               sumToday += req;
             }
+            if (d) {
+              dailyVisits[d] = (dailyVisits[d] || 0) + req;
+            }
           });
+
+          // Sort daily visits by date ascending
+          visitsChart = Object.keys(dailyVisits).sort().map(date => ({
+            date,
+            visits: dailyVisits[date]
+          }));
+
+          // Process devices
+          const aggregatedDevices: Record<string, number> = {};
+          devicesData.forEach((g: any) => {
+             const type = g.dimensions?.deviceType || "Unknown";
+             aggregatedDevices[type] = (aggregatedDevices[type] || 0) + (g.sum?.visits || 0);
+          });
+          deviceChart = Object.keys(aggregatedDevices).map(deviceType => ({
+            deviceType,
+            visits: aggregatedDevices[deviceType]
+          }));
+
+          // Process top paths
+          const aggregatedPaths: Record<string, number> = {};
+          topPathsData.forEach((g: any) => {
+             const path = g.dimensions?.requestPath || "/";
+             aggregatedPaths[path] = (aggregatedPaths[path] || 0) + (g.sum?.visits || 0);
+          });
+          topPaths = Object.keys(aggregatedPaths)
+            .map(path => ({ path, visits: aggregatedPaths[path] }))
+            .sort((a, b) => b.visits - a.visits)
+            .slice(0, 10);
 
           visitsToday = sumToday;
           visitsWeek = sumWeek;
@@ -120,6 +185,9 @@ export const onRequestGet = async (context: any) => {
           activeUsersWeek,
           visitsToday,
           visitsWeek,
+          visitsChart,
+          deviceChart,
+          topPaths,
           isAnalyticsConfigured,
         },
       }),
