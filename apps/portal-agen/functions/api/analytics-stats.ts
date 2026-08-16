@@ -64,12 +64,12 @@ export const onRequestGet = async (context: any) => {
           query {
             viewer {
               accounts(filter: { accountTag: "${accountId}" }) {
-                pagesAppRequestsAdaptiveGroups(
+                rumPageloadEventsAdaptiveGroups(
                   limit: 1000,
                   filter: { date_geq: "${lastWeekStr}" }
                 ) {
                   sum {
-                    requests
+                    visits
                   }
                   dimensions {
                     date
@@ -91,13 +91,13 @@ export const onRequestGet = async (context: any) => {
 
         if (cfRes.ok) {
           const cfData = await cfRes.json() as any;
-          const groups = cfData?.data?.viewer?.accounts?.[0]?.pagesAppRequestsAdaptiveGroups || [];
+          const groups = cfData?.data?.viewer?.accounts?.[0]?.rumPageloadEventsAdaptiveGroups || [];
           
           let sumToday = 0;
           let sumWeek = 0;
 
           groups.forEach((g: any) => {
-            const req = g.sum?.requests || 0;
+            const req = g.sum?.visits || 0;
             sumWeek += req;
             if (g.dimensions?.date === todayStr) {
               sumToday += req;
