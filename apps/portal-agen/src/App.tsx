@@ -118,6 +118,12 @@ const MASTER_NAVIGATION: NavItemType[] = [
     label: "Dasbor Utama",
     icon: "dashboard",
   },
+  {
+    id: "analytics",
+    path: "/analytics",
+    label: "Analitik",
+    icon: "analytics",
+  },
   { id: "users", path: "/users", label: "Kelola User", icon: "users" },
   { id: "catalog", path: "/catalog", label: "Master Katalog", icon: "catalog" },
   {
@@ -218,6 +224,7 @@ const MOBILE_NAVIGATION: Record<
 > = {
   superadmin: [
     { id: "dashboard", path: "/dashboard", label: "Dasbor", icon: "dashboard" },
+    { id: "analytics", path: "/analytics", label: "Analitik", icon: "analytics" },
     { id: "upload", path: "/upload-content", label: "Upload", icon: "upload" },
     { id: "play", path: "/play-content", label: "Player", icon: "library" },
     { id: "users", path: "/users", label: "User", icon: "users" },
@@ -240,6 +247,7 @@ const MOBILE_NAVIGATION: Record<
   ],
   sekolah: [
     { id: "dashboard", path: "/dashboard", label: "Dasbor", icon: "dashboard" },
+    { id: "analytics", path: "/analytics", label: "Analitik", icon: "analytics" },
     { id: "inventory", path: "/inventory", label: "Konten", icon: "inventory" },
     {
       id: "allocation",
@@ -501,6 +509,7 @@ function Icon({
 }
 
 const ROUTE_PERMISSIONS: Record<string, string> = {
+  "/analytics": "analytics",
   "/catalog": "catalog",
   "/sales": "sales",
   "/sales/history": "sales-history",
