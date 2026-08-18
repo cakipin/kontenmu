@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@repo/auth";
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
-import { Key, Eye, EyeOff, Camera } from "lucide-react";
+import { Key, Eye, EyeOff, Camera, FileText } from "lucide-react";
 
 export default function Profile() {
   const { session, setCustomSession } = useAuth();
@@ -518,12 +518,13 @@ export default function Profile() {
                 <div style={{ fontWeight: 500 }}>
                   {profileUser?.suratTugas ? (
                     <a
-                      href={profileUser.suratTugas.startsWith('http') ? profileUser.suratTugas : `/api/media/${profileUser.suratTugas}`}
+                      href={profileUser.suratTugas.startsWith('http') || profileUser.suratTugas.startsWith('/') ? profileUser.suratTugas : `/api/media/${profileUser.suratTugas}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: "var(--brand-primary)", textDecoration: "underline" }}
+                      style={{ color: "var(--brand-primary)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                      title="Lihat File"
                     >
-                      Lihat File
+                      <FileText size={20} />
                     </a>
                   ) : (
                     "-"
