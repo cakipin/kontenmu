@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS contents (
   mapel TEXT NOT NULL DEFAULT '',
   bab INTEGER,
   target TEXT NOT NULL DEFAULT '',
+  kelas TEXT,
   file_name TEXT NOT NULL DEFAULT '',
   deskripsi TEXT NOT NULL DEFAULT '',
   thumbnail_url TEXT,

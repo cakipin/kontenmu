@@ -166,6 +166,7 @@ export const mapContentRow = (row: any): SimContent => ({
   mapel: row.mapel,
   bab: row.bab ?? undefined,
   target: row.target,
+  kelas: row.kelas ?? undefined,
   fileName: row.fileName,
   deskripsi: row.deskripsi,
   status: row.status,
@@ -186,6 +187,7 @@ export interface SimContent {
   mapel: string;
   bab?: number;
   target: string;
+  kelas?: string;
   fileName: string;
   deskripsi?: string;
   thumbnailUrl?: string;

@@ -53,6 +53,10 @@ if (!contentsColumns().has('views')) {
   console.log("Adding contents.views");
   execute("ALTER TABLE contents ADD COLUMN views INTEGER DEFAULT 0;");
 }
+if (!contentsColumns().has('kelas')) {
+  console.log("Adding contents.kelas");
+  execute("ALTER TABLE contents ADD COLUMN kelas TEXT;");
+}
 
 execute("CREATE TABLE IF NOT EXISTS app_state (id TEXT PRIMARY KEY, content TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP); INSERT OR IGNORE INTO app_state (id, content) VALUES ('portal-agen:simulation:v1', '{}');");
 execute("CREATE TABLE IF NOT EXISTS notifications (id TEXT PRIMARY KEY, sekolah_id INTEGER NOT NULL, message TEXT NOT NULL, is_read INTEGER DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP);");

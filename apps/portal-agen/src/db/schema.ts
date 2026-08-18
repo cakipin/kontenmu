@@ -15,6 +15,7 @@ export const contents = sqliteTable("contents", {
   mapel: text("mapel").notNull().default(""),
   bab: integer("bab"),
   target: text("target").notNull().default(""),
+  kelas: text("kelas"),
   fileName: text("file_name").notNull().default(""),
   deskripsi: text("deskripsi").notNull().default(""),
   thumbnailUrl: text("thumbnail_url"),

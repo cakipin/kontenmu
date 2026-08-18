@@ -1089,6 +1089,7 @@ export function UploadContent() {
   const [mapel, setMapel] = useState("");
   const [bab, setBab] = useState("");
   const [target, setTarget] = useState("");
+  const [contentKelas, setContentKelas] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [thumbnailName, setThumbnailName] = useState("");
@@ -1360,6 +1361,7 @@ export function UploadContent() {
         mapel: mapel.trim() || "Umum",
         bab: bab ? Number(bab) : undefined,
         target: target.trim() || "Semua jenjang",
+        kelas: contentKelas.trim() || "-",
         fileName: finalFileName || `${judul.trim()}.bin`,
         deskripsi: deskripsi.trim() || undefined,
         thumbnailUrl: finalThumbnailUrl || undefined,
@@ -1776,6 +1778,8 @@ export function UploadContent() {
                       setIsbn("");
                       setMapel("");
                       setTarget("");
+                      setContentKelas("");
+                      setDeskripsi("");
                     }}
                   >
                     <option value="">Semua Kelas</option>
@@ -1816,9 +1820,11 @@ export function UploadContent() {
                       if (book) {
                         setMapel(book.mapel);
                         setTarget(book.jenjang || book.peruntukan || "-");
+                        setContentKelas(book.kelas || "-");
                       } else {
                         setMapel("");
                         setTarget("");
+                        setContentKelas("");
                       }
                     }}
                     placeholder="Pilih buku induk..."
@@ -1913,6 +1919,7 @@ export function PlayKonten() {
   const [editBab, setEditBab] = useState("");
   const [editMapel, setEditMapel] = useState("");
   const [editTarget, setEditTarget] = useState("");
+  const [editContentKelas, setEditContentKelas] = useState("");
   const [editIsbn, setEditIsbn] = useState("");
   const [editDeskripsi, setEditDeskripsi] = useState("");
   const [editThumbnailFile, setEditThumbnailFile] = useState<File | null>(null);
@@ -2087,6 +2094,7 @@ export function PlayKonten() {
     setEditBab(content.bab ? String(content.bab) : "");
     setEditMapel(content.mapel);
     setEditTarget(content.target);
+    setEditContentKelas(content.kelas || "-");
     setEditIsbn(content.isbn || "");
     const bookForEdit = masterBooks.find((b) => b.isbn === content.isbn);
     setEditSelectedKelas(bookForEdit?.kelas || "");
@@ -2139,6 +2147,7 @@ export function PlayKonten() {
           bab: editBab ? Number(editBab) : null,
           mapel: editMapel.trim() || "Umum",
           target: editTarget.trim() || "Umum",
+          kelas: editContentKelas.trim() || "-",
           thumbnailUrl: finalThumbnailUrl,
           isbn: editIsbn,
           deskripsi: editDeskripsi,
@@ -2160,6 +2169,7 @@ export function PlayKonten() {
                 bab: editBab ? Number(editBab) : undefined,
                 mapel: editMapel.trim() || "Umum",
                 target: editTarget.trim() || "Umum",
+                kelas: editContentKelas.trim() || "-",
                 thumbnailUrl: finalThumbnailUrl,
                 isbn: editIsbn,
                 deskripsi: editDeskripsi,
@@ -2729,6 +2739,7 @@ export function PlayKonten() {
                     setEditIsbn("");
                     setEditMapel("");
                     setEditTarget("");
+                    setEditContentKelas("");
                   }}
                   disabled={isSaving}
                 >
@@ -2771,9 +2782,11 @@ export function PlayKonten() {
                     if (book) {
                       setEditMapel(book.mapel);
                       setEditTarget(book.jenjang || book.peruntukan || "-");
+                      setEditContentKelas(book.kelas || "-");
                     } else {
                       setEditMapel("");
                       setEditTarget("");
+                      setEditContentKelas("");
                     }
                   }}
                   placeholder="Pilih buku induk..."
@@ -6115,6 +6128,7 @@ export function Library() {
               "Judul",
               "Kategori",
               "Target",
+              "Kelas",
               showBabColumn ? "Bab" : "Status",
               "Aksi",
             ]}
@@ -6125,12 +6139,13 @@ export function Library() {
               "left",
               "center",
               "center",
+              "center",
             ]}
           >
             {paginatedContents.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   style={{
                     textAlign: "center",
                     padding: "40px",
@@ -6178,6 +6193,9 @@ export function Library() {
                     <span style={{ fontSize: "0.85rem" }}>
                       {content.target}
                     </span>
+                  </td>
+                  <td style={{ textAlign: "center" }}>
+                    {content.kelas || "-"}
                   </td>
                   <td>
                     {showBabColumn
@@ -6245,7 +6263,7 @@ export function Library() {
                 <div key={content.id} className="player-content-card">
                   <div className="card-header">
                     <div className="card-title">{content.judul}</div>
-                    <div className="card-subtitle">{content.mapel}{content.bab ? ` · Bab ${content.bab}` : ""}</div>
+                    <div className="card-subtitle">{content.mapel}{content.kelas ? ` · Kelas ${content.kelas}` : ""}{content.bab ? ` · Bab ${content.bab}` : ""}</div>
                   </div>
                   <div
                     className="card-thumbnail"
