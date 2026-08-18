@@ -1927,20 +1927,13 @@ export function PlayKonten() {
   const [editDeskripsi, setEditDeskripsi] = useState("");
   const [editThumbnailFile, setEditThumbnailFile] = useState<File | null>(null);
   const [masterBooks, setMasterBooks] = useState<any[]>([]);
-  const [kelasData, setKelasData] = useState<any[]>([]);
-  useEffect(() => {
-    fetch('/api/kelasForIsbn')
-      .then(r => r.json())
-      .then(d => { if (d.success) setKelasData(d.data); })
-      .catch(() => {});
-  }, []);
   const kelasForIsbn = useMemo(() => {
     const map = new Map<string, string>();
-    kelasData.forEach(item => {
-      map.set(String(item.isbn), item.kelas);
+    masterBooks.forEach(item => {
+      if (item.isbn && item.kelas) map.set(String(item.isbn), String(item.kelas));
     });
     return map;
-  }, [kelasData]);
+  }, [masterBooks]);
   const [editSelectedKelas, setEditSelectedKelas] = useState("");
   const editAvailableKelas = Array.from(
     new Set(masterBooks.map((b) => b.kelas).filter(Boolean)),
@@ -5423,20 +5416,6 @@ export function TeacherAccess() {
 
   const [apiUsers, setApiUsers] = useState<any[]>([]);
   const [apiBooks, setApiBooks] = useState<any[]>([]);
-  const [kelasData, setKelasData] = useState<any[]>([]);
-  useEffect(() => {
-    fetch('/api/kelasForIsbn')
-      .then(r => r.json())
-      .then(d => { if (d.success) setKelasData(d.data); })
-      .catch(() => {});
-  }, []);
-  const kelasForIsbn = useMemo(() => {
-    const map = new Map<string, string>();
-    kelasData.forEach(item => {
-      map.set(String(item.isbn), item.kelas);
-    });
-    return map;
-  }, [kelasData]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentUser = useMemo(
@@ -5702,7 +5681,7 @@ export function TeacherAccess() {
                         )
                         .map((b) => ({
                           value: b.isbn,
-                          label: `${b.mapel ? `[${b.mapel}] ` : ""}${b.judul} ${kelasForIsbn.get(String(b.isbn)) ? `(Kelas ${kelasForIsbn.get(String(b.isbn))})` : ""} ${b.jilid && String(b.jilid).toLowerCase() !== "no.jil.lengkap" && String(b.jilid).toLowerCase() !== "null" ? `[${b.jilid}]` : ""}`,
+                          label: `${b.mapel ? `[${b.mapel}] ` : ""}${b.judul} ${b.kelas ? `(Kelas ${b.kelas})` : ""} ${b.jilid && String(b.jilid).toLowerCase() !== "no.jil.lengkap" && String(b.jilid).toLowerCase() !== "null" ? `[${b.jilid}]` : ""}`,
                         }))}
                     />
                   </label>
@@ -5840,8 +5819,7 @@ export function TeacherAccess() {
                 const b = allBooks.find((b) => String(b.isbn) === String(a.isbn));
                 if (!b) return null;
                 const extra = [];
-                const kls = kelasForIsbn.get(String(b.isbn));
-                if (kls) extra.push(`(Kelas ${kls})`);
+                if (b.kelas) extra.push(`(Kelas ${b.kelas})`);
                 if (
                   b.jilid &&
                   String(b.jilid).toLowerCase() !== "no.jil.lengkap" &&
