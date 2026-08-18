@@ -399,6 +399,8 @@ export default {
           email,
           password,
           sekolah_id,
+          suratTugas,
+          masaAktif,
         } = body;
 
         const schoolId = tenantSchoolId(authUser);
@@ -409,7 +411,7 @@ export default {
         const passwordHash = password ? await bcrypt.hash(password, 10) : null;
 
         const result = await env.DB.prepare(
-          "INSERT INTO users (id, username, nama, role_slug, wilayah, status, kelas, nis, npsn, nuptk, nip, email, password, sekolah_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO users (id, username, nama, role_slug, wilayah, status, kelas, nis, npsn, nuptk, nip, email, surat_tugas, masa_aktif, password, sekolah_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
           .bind(
             id,
@@ -424,6 +426,8 @@ export default {
             nuptk || null,
             nip || null,
             email || null,
+            suratTugas || null,
+            masaAktif || null,
             passwordHash,
             safeSchoolId,
           )
@@ -463,23 +467,26 @@ export default {
           email,
           password,
           sekolah_id,
+          suratTugas,
+          masaAktif,
         } = body;
         const schoolId = tenantSchoolId(authUser);
         if (schoolId === -1) return json({ success: false, error: "Tenant sekolah pada token tidak valid" }, 403);
         const safeSchoolId = schoolId || sekolah_id || null;
 
         const commonValues = [
-          username, nama, role, wilayah || "", status || "Aktif", kelas || null,
+          username || null, nama || null, role || null, wilayah || null, status || null, kelas || null,
           nis || null, npsn || null, nuptk || null, nip || null, email || null,
+          suratTugas || null, masaAktif || null,
         ];
         if (password) {
           const passwordHash = await bcrypt.hash(password, 10);
           await env.DB.prepare(
-            "UPDATE users SET username = ?, nama = ?, role_slug = ?, wilayah = ?, status = ?, kelas = ?, nis = ?, npsn = ?, nuptk = ?, nip = ?, email = ?, password = ?, sekolah_id = ? WHERE id = ?",
+            "UPDATE users SET username = COALESCE(?, username), nama = COALESCE(?, nama), role_slug = COALESCE(?, role_slug), wilayah = COALESCE(?, wilayah), status = COALESCE(?, status), kelas = COALESCE(?, kelas), nis = COALESCE(?, nis), npsn = COALESCE(?, npsn), nuptk = COALESCE(?, nuptk), nip = COALESCE(?, nip), email = COALESCE(?, email), surat_tugas = COALESCE(?, surat_tugas), masa_aktif = COALESCE(?, masa_aktif), password = ?, sekolah_id = COALESCE(?, sekolah_id) WHERE id = ?",
           ).bind(...commonValues, passwordHash, safeSchoolId, id).run();
         } else {
           await env.DB.prepare(
-            "UPDATE users SET username = ?, nama = ?, role_slug = ?, wilayah = ?, status = ?, kelas = ?, nis = ?, npsn = ?, nuptk = ?, nip = ?, email = ?, sekolah_id = ? WHERE id = ?",
+            "UPDATE users SET username = COALESCE(?, username), nama = COALESCE(?, nama), role_slug = COALESCE(?, role_slug), wilayah = COALESCE(?, wilayah), status = COALESCE(?, status), kelas = COALESCE(?, kelas), nis = COALESCE(?, nis), npsn = COALESCE(?, npsn), nuptk = COALESCE(?, nuptk), nip = COALESCE(?, nip), email = COALESCE(?, email), surat_tugas = COALESCE(?, surat_tugas), masa_aktif = COALESCE(?, masa_aktif), sekolah_id = COALESCE(?, sekolah_id) WHERE id = ?",
           ).bind(...commonValues, safeSchoolId, id).run();
         }
 

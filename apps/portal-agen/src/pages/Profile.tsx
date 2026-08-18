@@ -155,7 +155,7 @@ export default function Profile() {
       }
 
       setAdminDataSuccess("Menyimpan profil...");
-      const res = await fetch(`/api/users/${session.id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/users/${session.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
