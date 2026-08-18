@@ -6115,6 +6115,7 @@ export function Library() {
               "Judul",
               "Kategori",
               "Target",
+              "Kelas",
               showBabColumn ? "Bab" : "Status",
               "Aksi",
             ]}
@@ -6125,12 +6126,13 @@ export function Library() {
               "left",
               "center",
               "center",
+              "center",
             ]}
           >
             {paginatedContents.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   style={{
                     textAlign: "center",
                     padding: "40px",
@@ -6178,6 +6180,9 @@ export function Library() {
                     <span style={{ fontSize: "0.85rem" }}>
                       {content.target}
                     </span>
+                  </td>
+                  <td style={{ textAlign: "center" }}>
+                    {content.isbn ? (kelasForIsbn.get(String(content.isbn)) || "-") : "-"}
                   </td>
                   <td>
                     {showBabColumn
@@ -6245,7 +6250,7 @@ export function Library() {
                 <div key={content.id} className="player-content-card">
                   <div className="card-header">
                     <div className="card-title">{content.judul}</div>
-                    <div className="card-subtitle">{content.mapel}{content.bab ? ` · Bab ${content.bab}` : ""}</div>
+                    <div className="card-subtitle">{content.mapel}{content.isbn && kelasForIsbn.get(String(content.isbn)) ? ` · Kelas ${kelasForIsbn.get(String(content.isbn))}` : ""}{content.bab ? ` · Bab ${content.bab}` : ""}</div>
                   </div>
                   <div
                     className="card-thumbnail"
