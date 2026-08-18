@@ -6113,6 +6113,14 @@ export function Library() {
     return libraryContents.slice(start, start + itemsPerPage);
   }, [libraryContents, contentPage]);
 
+  // Lookup kelas dari katalog buku berdasarkan isbn
+  const allBooks = useMemo(() => [...apiBooks, ...data.books], [apiBooks, data.books]);
+  const booksByIsbn = useMemo(() => {
+    const map = new Map<string, any>();
+    allBooks.forEach((b: any) => { if (b.isbn) map.set(String(b.isbn), b); });
+    return map;
+  }, [allBooks]);
+
   return (
     <Page
       title="Rak Buku Saya"
@@ -6195,7 +6203,7 @@ export function Library() {
                     </span>
                   </td>
                   <td style={{ textAlign: "center" }}>
-                    {content.kelas || "-"}
+                    {content.isbn ? (booksByIsbn.get(String(content.isbn))?.kelas || "-") : "-"}
                   </td>
                   <td>
                     {showBabColumn
@@ -6263,7 +6271,7 @@ export function Library() {
                 <div key={content.id} className="player-content-card">
                   <div className="card-header">
                     <div className="card-title">{content.judul}</div>
-                    <div className="card-subtitle">{content.mapel}{content.kelas ? ` · Kelas ${content.kelas}` : ""}{content.bab ? ` · Bab ${content.bab}` : ""}</div>
+                    <div className="card-subtitle">{content.mapel}{content.isbn && booksByIsbn.get(String(content.isbn))?.kelas ? ` · Kelas ${booksByIsbn.get(String(content.isbn))?.kelas}` : ""}{content.bab ? ` · Bab ${content.bab}` : ""}</div>
                   </div>
                   <div
                     className="card-thumbnail"
