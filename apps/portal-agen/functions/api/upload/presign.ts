@@ -14,6 +14,8 @@ const EXTENSION_MAP: Record<string, string> = {
   "application/x-zip-compressed": "zip",
   "text/html": "html",
   "application/xhtml+xml": "html",
+  "application/msword": "doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
 };
 
 // MIME type video yang TIDAK didukung browser — ditolak

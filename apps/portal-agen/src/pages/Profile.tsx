@@ -563,7 +563,21 @@ export default function Profile() {
                 </label>
                 <input
                   type="file"
-                  onChange={(e) => setSuratTugasFile(e.target.files?.[0] || null)}
+                  accept="image/*,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 2 * 1024 * 1024) {
+                        alert("Gagal: Ukuran maksimal file Surat Tugas adalah 2MB!");
+                        e.target.value = "";
+                        setSuratTugasFile(null);
+                        return;
+                      }
+                      setSuratTugasFile(file);
+                    } else {
+                      setSuratTugasFile(null);
+                    }
+                  }}
                   disabled={adminDataLoading}
                   style={{
                     width: "100%",
