@@ -5795,7 +5795,7 @@ export function TeacherAccess() {
             );
             const allocatedBooksList = guruAllocations
               .map((a) => {
-                const b = allBooks.find((b) => b.isbn === a.isbn);
+                const b = allBooks.find((b) => String(b.isbn) === String(a.isbn));
                 if (!b) return null;
                 const extra = [];
                 if (b.kelas) extra.push(`(Kelas ${b.kelas})`);
@@ -6068,10 +6068,10 @@ export function Library() {
       const allocatedIsbns = new Set(
         data.allocations
           .filter((a: any) => a.studentUsername === session.username)
-          .map((a: any) => a.isbn),
+          .map((a: any) => String(a.isbn)),
       );
 
-      return data.contents.filter((c: any) => c.isbn && allocatedIsbns.has(c.isbn));
+      return data.contents.filter((c: any) => c.isbn && allocatedIsbns.has(String(c.isbn)));
     }
 
     return data.contents;
