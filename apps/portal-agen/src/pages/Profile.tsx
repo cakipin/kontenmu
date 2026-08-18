@@ -16,6 +16,12 @@ export default function Profile() {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [profileUser, setProfileUser] = useState<any>(null);
 
+  const [isEditingAdminData, setIsEditingAdminData] = useState(false);
+  const [adminDataLoading, setAdminDataLoading] = useState(false);
+  const [adminDataError, setAdminDataError] = useState("");
+  const [adminDataSuccess, setAdminDataSuccess] = useState("");
+  const [editMasaAktif, setEditMasaAktif] = useState("");
+  const [suratTugasFile, setSuratTugasFile] = useState<File | null>(null);
   useEffect(() => {
     if (!session?.username) return;
     fetch("/api/users?limit=2000", { cache: "no-store" })
@@ -109,6 +115,71 @@ export default function Profile() {
     } finally {
       setIsUploadingPhoto(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleAdminDataSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminDataLoading(true);
+    setAdminDataError("");
+    setAdminDataSuccess("");
+
+    try {
+      let finalSuratTugasUrl = profileUser?.suratTugas || "";
+
+      if (suratTugasFile) {
+        setAdminDataSuccess("Mengunggah surat tugas...");
+        const psRes = await fetch(`/api/upload/presign`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contentType: suratTugasFile.type,
+            fileName: suratTugasFile.name,
+          }),
+        });
+        const psJson = await psRes.json();
+        if (!psRes.ok || psJson.error) {
+          throw new Error(`Gagal menyiapkan upload: ${psJson.error ?? psRes.statusText}`);
+        }
+
+        const uploadRes = await fetch(psJson.url, {
+          method: "PUT",
+          headers: { "Content-Type": suratTugasFile.type },
+          body: suratTugasFile,
+        });
+        if (!uploadRes.ok) {
+          throw new Error(`Gagal mengunggah file: ${uploadRes.status} ${uploadRes.statusText}`);
+        }
+        finalSuratTugasUrl = psJson.mediaPath;
+      }
+
+      setAdminDataSuccess("Menyimpan profil...");
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/users/${session.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          masaAktif: editMasaAktif,
+          suratTugas: finalSuratTugasUrl,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setAdminDataSuccess("Data berhasil diperbarui!");
+        setProfileUser((prev: any) => ({
+          ...prev,
+          masaAktif: editMasaAktif,
+          suratTugas: finalSuratTugasUrl,
+        }));
+        setTimeout(() => setIsEditingAdminData(false), 2000);
+      } else {
+        throw new Error(json.error || "Gagal mengubah data");
+      }
+    } catch (err: any) {
+      setAdminDataError(err.message || "Terjadi kesalahan jaringan");
+      setAdminDataSuccess("");
+    } finally {
+      setAdminDataLoading(false);
     }
   };
 
@@ -386,6 +457,172 @@ export default function Profile() {
         </div>
       </GlassCard>
 
+      {isSchoolAdmin && (
+        <GlassCard
+          style={{
+            padding: "32px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            marginBottom: "24px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "1.125rem",
+                fontWeight: 600,
+                color: "var(--text-primary)",
+              }}
+            >
+              Data Admin Sekolah
+            </h3>
+            {!isEditingAdminData && (
+              <button
+                onClick={() => {
+                  setEditMasaAktif(profileUser?.masaAktif || "");
+                  setSuratTugasFile(null);
+                  setIsEditingAdminData(true);
+                  setAdminDataError("");
+                  setAdminDataSuccess("");
+                }}
+                style={{
+                  padding: "8px 16px",
+                  background: "#0ea5e9",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Edit Data
+              </button>
+            )}
+          </div>
+
+          {!isEditingAdminData ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "8px" }}>
+              <div>
+                <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Masa Aktif:</span>
+                <div style={{ fontWeight: 500, color: "var(--text-primary)" }}>{profileUser?.masaAktif || "-"}</div>
+              </div>
+              <div>
+                <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Surat Tugas:</span>
+                <div style={{ fontWeight: 500 }}>
+                  {profileUser?.suratTugas ? (
+                    <a
+                      href={profileUser.suratTugas.startsWith('http') ? profileUser.suratTugas : `/api/media/${profileUser.suratTugas}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "var(--brand-primary)", textDecoration: "underline" }}
+                    >
+                      Lihat File
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleAdminDataSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "8px" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "8px", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-secondary)" }}>
+                  Masa Aktif
+                </label>
+                <input
+                  type="text"
+                  value={editMasaAktif}
+                  onChange={(e) => setEditMasaAktif(e.target.value)}
+                  disabled={adminDataLoading}
+                  placeholder="Contoh: Tahun Ajaran 2024/2025"
+                  style={{
+                    width: "100%",
+                    maxWidth: "400px",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--glass-border)",
+                    background: "rgba(15, 23, 42, 0.4)",
+                    color: "white",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "8px", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-secondary)" }}>
+                  Surat Tugas
+                </label>
+                <input
+                  type="file"
+                  onChange={(e) => setSuratTugasFile(e.target.files?.[0] || null)}
+                  disabled={adminDataLoading}
+                  style={{
+                    width: "100%",
+                    maxWidth: "400px",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--glass-border)",
+                    background: "rgba(15, 23, 42, 0.4)",
+                    color: "white",
+                    outline: "none",
+                  }}
+                />
+                {profileUser?.suratTugas && !suratTugasFile && (
+                  <div style={{ marginTop: "4px", fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+                    Biarkan kosong jika tidak ingin mengubah surat tugas saat ini.
+                  </div>
+                )}
+              </div>
+
+              {adminDataError && <div style={{ color: "var(--error)", fontSize: "0.875rem" }}>{adminDataError}</div>}
+              {adminDataSuccess && <div style={{ color: "var(--success)", fontSize: "0.875rem" }}>{adminDataSuccess}</div>}
+
+              <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
+                <button
+                  type="submit"
+                  disabled={adminDataLoading}
+                  style={{
+                    padding: "8px 24px",
+                    background: "var(--success)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontWeight: 600,
+                    cursor: adminDataLoading ? "not-allowed" : "pointer",
+                    opacity: adminDataLoading ? 0.7 : 1,
+                  }}
+                >
+                  {adminDataLoading ? "Menyimpan..." : "Simpan"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingAdminData(false)}
+                  disabled={adminDataLoading}
+                  style={{
+                    padding: "8px 24px",
+                    background: "transparent",
+                    color: "var(--text-secondary)",
+                    border: "1px solid var(--glass-border)",
+                    borderRadius: "8px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
+          )}
+        </GlassCard>
+      )}
       {!session.isSso && session.id && (
         <GlassCard
           style={{
