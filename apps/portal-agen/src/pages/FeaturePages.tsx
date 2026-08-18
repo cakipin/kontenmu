@@ -5974,6 +5974,9 @@ export function Library() {
     }
   }, [playingContent]);
   const [contentPage, setContentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [kelasFilter, setKelasFilter] = useState("Semua");
+  const [kategoriFilter, setKategoriFilter] = useState("Semua");
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 768,
   );
@@ -6034,6 +6037,32 @@ export function Library() {
       active = false;
     };
   }, [session?.role]);
+
+// Buat map isbn -> kelas dari buku katalog (sama seperti Dashboard guru)
+  const allBooks = useMemo(() => [...apiBooks, ...data.books], [apiBooks, data.books]);
+  const kelasForIsbn = useMemo(() => {
+    const map = new Map<string, string>();
+    // Prioritaskan dari allocations guru -> lookup ke allBooks
+    const guruAllocations = (data.allocations || []).filter(
+      (a: any) => a.studentUsername === session?.username
+    );
+    guruAllocations.forEach((a: any) => {
+      if (!a.isbn) return;
+      const book =
+        allBooks.find((b: any) => String(b.isbn) === String(a.isbn)) ||
+        data.books.find((b: any) => String(b.isbn) === String(a.isbn));
+      if (book?.kelas || book?.jenjang) {
+        map.set(String(a.isbn), book.kelas || book.jenjang || "-");
+      }
+    });
+    // Fallback: langsung dari allBooks
+    allBooks.forEach((b: any) => {
+      if (b.isbn && !map.has(String(b.isbn)) && (b.kelas || b.jenjang)) {
+        map.set(String(b.isbn), b.kelas || b.jenjang || "-");
+      }
+    });
+    return map;
+  }, [allBooks, data.allocations, data.books, session?.username]);
 
   const libraryContents = useMemo(() => {
     if (!session) return [];
@@ -6107,40 +6136,55 @@ export function Library() {
     session,
   ]);
 
+const uniqueKategori = useMemo(() => {
+    const set = new Set<string>();
+    libraryContents.forEach(c => {
+      if (c.kategori) set.add(c.kategori);
+    });
+    return Array.from(set).sort();
+  }, [libraryContents]);
+
+  const uniqueKelas = useMemo(() => {
+    const set = new Set<string>();
+    libraryContents.forEach(c => {
+      const k = c.isbn ? kelasForIsbn.get(String(c.isbn)) : null;
+      if (k && k !== "-") set.add(k);
+    });
+    return Array.from(set).sort((a, b) => {
+      const numA = parseInt(a);
+      const numB = parseInt(b);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b);
+    });
+  }, [libraryContents, kelasForIsbn]);
+
+  const filteredContents = useMemo(() => {
+    return libraryContents.filter(content => {
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const titleMatch = content.judul?.toLowerCase().includes(q);
+        const mapelMatch = content.mapel?.toLowerCase().includes(q);
+        if (!titleMatch && !mapelMatch) return false;
+      }
+      if (kategoriFilter !== "Semua") {
+        if (content.kategori !== kategoriFilter) return false;
+      }
+      if (session?.role !== "siswa" && kelasFilter !== "Semua") {
+        const kelas = content.isbn ? kelasForIsbn.get(String(content.isbn)) : "-";
+        if (kelas !== kelasFilter) return false;
+      }
+      return true;
+    });
+  }, [libraryContents, searchQuery, kategoriFilter, kelasFilter, session?.role, kelasForIsbn]);
+
   const contentTotalPages = Math.max(
     1,
-    Math.ceil(libraryContents.length / itemsPerPage),
+    Math.ceil(filteredContents.length / itemsPerPage),
   );
   const paginatedContents = useMemo(() => {
     const start = (contentPage - 1) * itemsPerPage;
-    return libraryContents.slice(start, start + itemsPerPage);
-  }, [libraryContents, contentPage]);
-
-  // Buat map isbn -> kelas dari buku katalog (sama seperti Dashboard guru)
-  const allBooks = useMemo(() => [...apiBooks, ...data.books], [apiBooks, data.books]);
-  const kelasForIsbn = useMemo(() => {
-    const map = new Map<string, string>();
-    // Prioritaskan dari allocations guru -> lookup ke allBooks
-    const guruAllocations = (data.allocations || []).filter(
-      (a: any) => a.studentUsername === session?.username
-    );
-    guruAllocations.forEach((a: any) => {
-      if (!a.isbn) return;
-      const book =
-        allBooks.find((b: any) => String(b.isbn) === String(a.isbn)) ||
-        data.books.find((b: any) => String(b.isbn) === String(a.isbn));
-      if (book?.kelas || book?.jenjang) {
-        map.set(String(a.isbn), book.kelas || book.jenjang || "-");
-      }
-    });
-    // Fallback: langsung dari allBooks
-    allBooks.forEach((b: any) => {
-      if (b.isbn && !map.has(String(b.isbn)) && (b.kelas || b.jenjang)) {
-        map.set(String(b.isbn), b.kelas || b.jenjang || "-");
-      }
-    });
-    return map;
-  }, [allBooks, data.allocations, data.books, session?.username]);
+    return filteredContents.slice(start, start + itemsPerPage);
+  }, [filteredContents, contentPage]);
 
   return (
     <Page
@@ -6151,6 +6195,36 @@ export function Library() {
       {!isMobile && (
         <div className="play-content-table" style={{ marginBottom: 32 }}>
           <h4 style={{ marginBottom: 16 }}>Daftar Konten Belajar</h4>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ flex: "1 1 200px" }}>
+              <TableSearch
+                value={searchQuery}
+                onChange={(val: string) => { setSearchQuery(val); setContentPage(1); }}
+                placeholder="Cari judul atau mapel..."
+              />
+            </div>
+            <select
+              className="input-control"
+              style={{ flex: "0 0 auto", width: "180px" }}
+              value={kategoriFilter}
+              onChange={(e) => { setKategoriFilter(e.target.value); setContentPage(1); }}
+            >
+              <option value="Semua">Semua Jenis Konten</option>
+              {uniqueKategori.map(k => <option key={k} value={k}>{k}</option>)}
+            </select>
+            {session?.role !== "siswa" && (
+              <select
+                className="input-control"
+                style={{ flex: "0 0 auto", width: "160px" }}
+                value={kelasFilter}
+                onChange={(e) => { setKelasFilter(e.target.value); setContentPage(1); }}
+              >
+                <option value="Semua">Semua Kelas</option>
+                {uniqueKelas.map(k => <option key={k} value={k}>Kelas {k}</option>)}
+              </select>
+            )}
+          </div>
+
           <DataTable
             headers={[
               "Thumbnail",
@@ -6268,9 +6342,37 @@ export function Library() {
 
       {isMobile && (
         <div className="player-mobile-list" style={{ marginBottom: 32 }}>
-          <h4 style={{ marginBottom: 16, fontSize: "1.1rem" }}>
-            Daftar Konten Belajar
-          </h4>
+          <h4 style={{ marginBottom: 16, fontSize: "1.1rem" }}>Daftar Konten Belajar</h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: 16 }}>
+            <TableSearch
+              value={searchQuery}
+              onChange={(val: string) => { setSearchQuery(val); setContentPage(1); }}
+              placeholder="Cari judul atau mapel..."
+            />
+            <div style={{ display: "flex", gap: "12px" }}>
+              <select
+                className="input-control"
+                style={{ flex: 1 }}
+                value={kategoriFilter}
+                onChange={(e) => { setKategoriFilter(e.target.value); setContentPage(1); }}
+              >
+                <option value="Semua">Semua Jenis</option>
+                {uniqueKategori.map(k => <option key={k} value={k}>{k}</option>)}
+              </select>
+              {session?.role !== "siswa" && (
+                <select
+                  className="input-control"
+                  style={{ flex: 1 }}
+                  value={kelasFilter}
+                  onChange={(e) => { setKelasFilter(e.target.value); setContentPage(1); }}
+                >
+                  <option value="Semua">Semua Kelas</option>
+                  {uniqueKelas.map(k => <option key={k} value={k}>Kelas {k}</option>)}
+                </select>
+              )}
+            </div>
+          </div>
+
           {paginatedContents.length === 0 ? (
             <div
               style={{
