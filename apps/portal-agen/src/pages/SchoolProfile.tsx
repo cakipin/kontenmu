@@ -3,7 +3,7 @@ import { useAuth } from "@repo/auth";
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
 import { useAppData } from "../data/appData";
 import AsyncSelect from "react-select/async";
-import { Camera } from "lucide-react";
+import { Camera, Save, Plus, Trash2, Key, BookOpen } from "lucide-react";
 
 const normalizeSchoolProfile = (school: any) => ({
   ...school,
@@ -306,12 +306,16 @@ export default function SchoolProfile() {
           {isLoadingSchool ? (
             <GlassCard
               style={{
-                padding: "24px",
-                textAlign: "center",
-                color: "var(--text-secondary)",
+                padding: "48px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--primary-color)",
+                animation: "pulse 1.5s infinite"
               }}
             >
-              Memuat data master sekolah...
+              <BookOpen size={48} />
             </GlassCard>
           ) : masterSchool ? (
             <>

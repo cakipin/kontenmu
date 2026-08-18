@@ -701,11 +701,21 @@ export function Catalog() {
                 colSpan={8}
                 style={{
                   textAlign: "center",
-                  padding: "24px 0",
-                  color: "var(--text-secondary)",
+                  padding: "40px",
                 }}
               >
-                Memuat data katalog...
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "var(--primary-color)",
+                    animation: "pulse 1.5s infinite"
+                  }}
+                >
+                  <BookOpen size={48} />
+                </div>
               </td>
             </tr>
           ) : paginatedBooks.length === 0 ? (
@@ -4283,18 +4293,17 @@ export function Inventory() {
                 >
                   <div
                     style={{
-                      display: "inline-block",
-                      width: "24px",
-                      height: "24px",
-                      border: "3px solid var(--border-subtle)",
-                      borderTopColor: "var(--brand-primary)",
-                      borderRadius: "50%",
-                      animation: "spin 1s linear infinite",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "var(--primary-color)",
+                      animation: "pulse 1.5s infinite",
                       marginBottom: "12px",
                     }}
-                  />
-                  <div>Memuat inventaris konten...</div>
-                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                  >
+                    <BookOpen size={48} />
+                  </div>
                 </td>
               </tr>
             ) : paginatedContents.length === 0 ? (
@@ -4398,17 +4407,17 @@ export function Inventory() {
             >
               <div
                 style={{
-                  display: "inline-block",
-                  width: "24px",
-                  height: "24px",
-                  border: "3px solid var(--border-subtle)",
-                  borderTopColor: "var(--brand-primary)",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "var(--primary-color)",
+                  animation: "pulse 1.5s infinite",
                   marginBottom: "12px",
                 }}
-              />
-              <div>Memuat inventaris konten...</div>
+              >
+                <BookOpen size={48} />
+              </div>
             </div>
           ) : paginatedContents.length === 0 ? (
             <div
@@ -7730,12 +7739,16 @@ export function MasterSekolah() {
       {isLoading ? (
         <div
           style={{
-            padding: "32px",
-            textAlign: "center",
-            color: "var(--text-secondary)",
+            padding: "48px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--primary-color)",
+            animation: "pulse 1.5s infinite"
           }}
         >
-          Memuat data sekolah...
+          <BookOpen size={48} />
         </div>
       ) : (
         <DataTable

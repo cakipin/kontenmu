@@ -16,6 +16,7 @@ import {
 } from "react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@repo/auth";
+import { BookOpen } from "lucide-react";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -1803,12 +1804,14 @@ function LoadingScreen() {
       style={{
         minHeight: "100vh",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        color: "var(--text-secondary)",
+        color: "var(--primary-color)",
+        animation: "pulse 1.5s infinite"
       }}
     >
-      Memuat sesi...
+      <BookOpen size={48} />
     </div>
   );
 }

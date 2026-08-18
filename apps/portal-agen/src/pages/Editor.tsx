@@ -1,5 +1,6 @@
-import { Puck } from "@puckeditor/core";
-import "@puckeditor/core/dist/index.css";
+import { Puck } from "@measured/puck";
+import "@measured/puck/puck.css";
+import { BookOpen } from "lucide-react";
 import { puckConfig, initialData } from "./puck.config";
 import "./LandingPage.css"; // We need the landing page styles so it renders correctly inside the editor
 
@@ -44,13 +45,15 @@ export default function Editor() {
       <div
         style={{
           display: "flex",
-          justifyContent: "center",
+          flexDirection: "column",
           alignItems: "center",
+          justifyContent: "center",
           height: "100vh",
-          fontFamily: "sans-serif",
+          color: "var(--primary-color)",
+          animation: "pulse 1.5s infinite"
         }}
       >
-        Memuat Editor...
+        <BookOpen size={48} />
       </div>
     );
 

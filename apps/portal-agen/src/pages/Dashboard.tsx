@@ -759,20 +759,16 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       >
         <div
           style={{
-            display: "inline-block",
-            width: "32px",
-            height: "32px",
-            border: "3px solid var(--border-subtle)",
-            borderTopColor: "var(--brand-primary)",
-            borderRadius: "50%",
-            animation: "spin 1s linear infinite",
-            marginBottom: "16px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--primary-color)",
+            animation: "pulse 1.5s infinite"
           }}
-        />
-        <div style={{ color: "var(--text-secondary)" }}>
-          Memuat data dasbor...
+        >
+          <BookOpen size={48} />
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
