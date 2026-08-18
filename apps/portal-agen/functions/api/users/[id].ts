@@ -132,6 +132,11 @@ export const onRequestPut = async (context: any) => {
       updateData.requestedRole = null;
     }
 
+    // Sanitize updateData to ensure no undefined values are passed to D1
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) delete updateData[key];
+    });
+
     await ormDb.update(users).set(updateData).where(eq(users.id, id));
 
     // Opsi 2: Trigger notifikasi jika user baru saja melengkapi data sekolahnya
