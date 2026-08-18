@@ -1048,7 +1048,7 @@ export default function Users() {
                       {user.role === "sekolah" && (
                         user.suratTugas ? (
                           <a
-                            href={user.suratTugas}
+                            href={user.suratTugas.startsWith('http') ? user.suratTugas : `/api/media/${user.suratTugas}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="icon-action-button"
