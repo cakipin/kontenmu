@@ -1,5 +1,5 @@
-import { BookOpen,  useEffect, useState } from "react";
-import { TrendingUp, Monitor } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BookOpen, TrendingUp, Monitor } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -110,8 +110,18 @@ export default function Analytics({ currentRole }: { currentRole: string }) {
         </div>
 
         {loading ? (
-          <div style={{ padding: "24px", textAlign: "center", color: "var(--text-secondary)" }}>
-            Memuat data analitik...
+          <div
+            style={{
+              padding: "48px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--primary-color)",
+              animation: "pulse 1.5s infinite"
+            }}
+          >
+            <BookOpen size={48} />
           </div>
         ) : (
           <div

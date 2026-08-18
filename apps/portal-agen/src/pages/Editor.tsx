@@ -1,5 +1,5 @@
-import { Puck } from "@measured/puck";
-import "@measured/puck/puck.css";
+import { Puck } from "@puckeditor/core";
+import "@puckeditor/core/dist/index.css";
 import { BookOpen } from "lucide-react";
 import { puckConfig, initialData } from "./puck.config";
 import "./LandingPage.css"; // We need the landing page styles so it renders correctly inside the editor

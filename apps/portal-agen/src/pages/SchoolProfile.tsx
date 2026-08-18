@@ -3,7 +3,7 @@ import { useAuth } from "@repo/auth";
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
 import { useAppData } from "../data/appData";
 import AsyncSelect from "react-select/async";
-import { Camera, Save, Plus, Trash2, Key, BookOpen } from "lucide-react";
+import { Camera, BookOpen } from "lucide-react";
 
 const normalizeSchoolProfile = (school: any) => ({
   ...school,
