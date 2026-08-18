@@ -4,7 +4,7 @@ pages_build_output_dir = "dist"
 
 [[kv_namespaces]]
 binding = "PUCK_DATA"
-id = "84149d824f0f45ef9898b527c3d6b1e7"
+id = "f7f73402ae7c4ea3bb380cf1b20ba759"
 
 [[d1_databases]]
 binding = "DB"
