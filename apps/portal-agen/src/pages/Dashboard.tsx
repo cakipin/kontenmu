@@ -2055,17 +2055,19 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                 {currentRole === "guru" &&
                   (libraryRows.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={4}
-                        style={{
-                          textAlign: "center",
-                          color: "var(--text-secondary)",
-                          padding: "32px 16px",
-                        }}
-                      >
-                        Belum ada buku yang dialokasikan ke akun Anda.
-                        <br />
-                        <small>Minta Admin Sekolah untuk mengalokasikan buku mengajar Anda.</small>
+                      <td colSpan={4} style={{ padding: "40px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "var(--primary-color)",
+                            animation: "pulse 1.5s infinite"
+                          }}
+                        >
+                          <BookOpen size={48} />
+                        </div>
                       </td>
                     </tr>
                   ) : (
