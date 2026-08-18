@@ -1927,6 +1927,13 @@ export function PlayKonten() {
   const [editDeskripsi, setEditDeskripsi] = useState("");
   const [editThumbnailFile, setEditThumbnailFile] = useState<File | null>(null);
   const [masterBooks, setMasterBooks] = useState<any[]>([]);
+  const kelasForIsbn = useMemo(() => {
+    const map = new Map<string, string>();
+    masterBooks.forEach(item => {
+      if (item.isbn && item.kelas) map.set(String(item.isbn), String(item.kelas));
+    });
+    return map;
+  }, [masterBooks]);
   const [editSelectedKelas, setEditSelectedKelas] = useState("");
   const editAvailableKelas = Array.from(
     new Set(masterBooks.map((b) => b.kelas).filter(Boolean)),
@@ -2321,12 +2328,14 @@ export function PlayKonten() {
               "Judul",
               "Kategori",
               "Target",
+              "Kelas",
               "Dilihat",
               "AVD",
               "Aksi",
             ]}
             headerAligns={[
               "center",
+              "left",
               "left",
               "left",
               "left",
@@ -2338,7 +2347,7 @@ export function PlayKonten() {
             {paginatedContents.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   style={{
                     textAlign: "center",
                     padding: "40px",
@@ -2403,6 +2412,9 @@ export function PlayKonten() {
                     <span style={{ fontSize: "0.85rem" }}>
                       {content.target}
                     </span>
+                  </td>
+                  <td>
+                    {content.isbn && kelasForIsbn.get(String(content.isbn)) ? kelasForIsbn.get(String(content.isbn)) : "-"}
                   </td>
                   <td style={{ textAlign: "center" }}>{content.dilihat ?? 0}</td>
                   <td style={{ textAlign: "center" }}>
@@ -2518,7 +2530,7 @@ export function PlayKonten() {
                 <div key={content.id} className="player-content-card">
                   <div className="card-header">
                     <div className="card-title">{content.judul}</div>
-                    <div className="card-subtitle">{content.mapel}{content.bab ? ` · Bab ${content.bab}` : ""}</div>
+                    <div className="card-subtitle">{content.mapel}{content.isbn && kelasForIsbn.get(String(content.isbn)) ? ` · Kelas ${kelasForIsbn.get(String(content.isbn))}` : ""}{content.bab ? ` · Bab ${content.bab}` : ""}</div>
                   </div>
                   <div
                     className="card-thumbnail"
