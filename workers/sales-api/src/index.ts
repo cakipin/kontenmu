@@ -64,9 +64,13 @@ function hasRole(user: AuthUser | null, roles: string[]) {
 }
 
 function tenantSchoolId(user: AuthUser | null) {
-  if (user?.role !== "sekolah") return 0;
-  const schoolId = Number(user.sekolahId);
-  return Number.isInteger(schoolId) && schoolId > 0 ? schoolId : -1;
+  if (!user) return -1;
+  if (user.role === "superadmin" || user.role === "agen") return 0;
+  if (["sekolah", "guru", "siswa"].includes(user.role)) {
+    const schoolId = Number(user.sekolahId);
+    return Number.isInteger(schoolId) && schoolId > 0 ? schoolId : -1;
+  }
+  return -1;
 }
 
 function json(data: unknown, status = 200) {
@@ -160,7 +164,7 @@ export default {
     if (url.pathname === "/api/users" && request.method === "POST" && authUser && !hasRole(authUser, ["superadmin", "sekolah"])) {
       return json({ success: false, error: "Forbidden" }, 403);
     }
-    if (url.pathname === "/api/users" && request.method === "GET" && !hasRole(authUser, ["superadmin", "sekolah"])) {
+    if (url.pathname === "/api/users" && request.method === "GET" && !hasRole(authUser, ["superadmin", "sekolah", "guru", "siswa"])) {
       return json({ success: false, error: "Forbidden" }, 403);
     }
     const userRouteMatch = url.pathname.match(/^\/api\/users\/([^/]+)(?:\/(password|picture))?$/);
