@@ -6071,9 +6071,6 @@ export function Library() {
     if (!session) return [];
 
     if (session.role === "siswa") {
-      // BUG #5: Jika data.schools belum dimuat, jangan tampilkan konten apa pun
-      // untuk mencegah filtering level sekolah yang salah sementara data loading.
-      if (data.schools.length === 0) return [];
 
       const sessionSchoolId = session.sekolahId || (session as any).sekolah_id;
       const studentSchool = sessionSchoolId
