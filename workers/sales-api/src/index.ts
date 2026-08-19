@@ -102,20 +102,14 @@ export default {
 
         console.log("Login attempt:", { username: username.trim(), userFound: !!user });
 
-        const storedPassword = user?.password || "";
-        const passwordMatches = storedPassword.startsWith("$2")
-          ? await bcrypt.compare(password, storedPassword)
-          : storedPassword === password;
         if (!user) return json({ success: false, error: "Username atau password salah" }, 401);
         if (user.status !== "Aktif") return json({ success: false, error: "Akun belum aktif atau menunggu approval" }, 403);
 
-        // Upgrade legacy plaintext passwords in place after a successful login.
-        if (!storedPassword.startsWith("$2") && false) {
-          const passwordHash = await bcrypt.hash(password, 10);
-          await env.DB.prepare("UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
-            .bind(passwordHash, user.id)
-            .run();
-        }
+        const storedPassword = user.password || "";
+        const passwordMatches = storedPassword.startsWith("$2")
+          ? await bcrypt.compare(password, storedPassword)
+          : storedPassword === password;
+        if (!passwordMatches) return json({ success: false, error: "Username atau password salah" }, 401);
 
         const now = Math.floor(Date.now() / 1000);
         const token = await sign({

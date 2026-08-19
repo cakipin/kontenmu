@@ -521,7 +521,7 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
   "/allocation": "allocation",
   "/teacher-allocation": "teacher-allocation",
   "/school-users": "school-users",
-  "/library": "learning",
+  "/library": "library",       // BUG #9: was "learning" — now correctly uses its own key
   "/learning": "learning",
   "/learning-history": "learning",
   "/play-content": "play",
@@ -1939,7 +1939,6 @@ function App() {
             }
           />
           <Route path="/*" element={<AppRoutes />} />
-          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </AuthProvider>

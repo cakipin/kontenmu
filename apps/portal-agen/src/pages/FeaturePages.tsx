@@ -5998,16 +5998,18 @@ export function Library() {
   useEffect(() => {
     let active = true;
     const isTargetRole = session?.role === "guru" || session?.role === "siswa";
+    const CACHE_TTL_MS = 15 * 60 * 1000; // 15 menit
 
     const fetchWithCache = (url: string, cacheKey: string, setter: (data: any) => void) => {
-      // --- Logika Caching: Cek apakah ada di cache lokal sebelum fetch ---
+      // --- Logika Caching dengan TTL: Cek apakah ada di cache lokal dan masih segar ---
       if (isTargetRole) {
-        const cachedData = localStorage.getItem(cacheKey);
-        if (cachedData) {
+        const cachedRaw = localStorage.getItem(cacheKey);
+        if (cachedRaw) {
           try {
-            const parsed = JSON.parse(cachedData);
-            if (Array.isArray(parsed)) {
-              setter(parsed);
+            const { data: cachedData, cachedAt } = JSON.parse(cachedRaw);
+            const isStillFresh = Date.now() - cachedAt < CACHE_TTL_MS;
+            if (isStillFresh && Array.isArray(cachedData)) {
+              setter(cachedData);
               return; // Gunakan cache, skip fetch API
             }
           } catch (e) {
@@ -6021,17 +6023,18 @@ export function Library() {
         .then((payload) => {
           if (active && payload?.success && Array.isArray(payload.data)) {
             setter(payload.data);
-            // --- Logika Caching: Simpan hasil fetch baru ke cache ---
+            // --- Logika Caching: Simpan hasil fetch baru ke cache dengan timestamp ---
             if (isTargetRole) {
-              localStorage.setItem(cacheKey, JSON.stringify(payload.data));
+              localStorage.setItem(cacheKey, JSON.stringify({ data: payload.data, cachedAt: Date.now() }));
             }
           }
         })
         .catch(() => {});
     };
 
-    fetchWithCache(`${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/books`, "kontenmu_books_cache", setApiBooks);
-    fetchWithCache(`${""}/api/users`, "kontenmu_users_cache", setApiUsers);
+    const apiBase = import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev";
+    fetchWithCache(`${apiBase}/api/books`, "kontenmu_books_cache", setApiBooks);
+    fetchWithCache(`${apiBase}/api/users`, "kontenmu_users_cache", setApiUsers);
 
     return () => {
       active = false;
@@ -6068,6 +6071,10 @@ export function Library() {
     if (!session) return [];
 
     if (session.role === "siswa") {
+      // BUG #5: Jika data.schools belum dimuat, jangan tampilkan konten apa pun
+      // untuk mencegah filtering level sekolah yang salah sementara data loading.
+      if (data.schools.length === 0) return [];
+
       const sessionSchoolId = session.sekolahId || (session as any).sekolah_id;
       const studentSchool = sessionSchoolId
         ? data.schools.find((school: any) => String(school.id) === String(sessionSchoolId))
@@ -6129,7 +6136,7 @@ export function Library() {
     data.contents,
     data.allocations,
     data.users,
-    data.schoolUsers,
+    data.schools,
     data.books,
     apiBooks,
     apiUsers,
