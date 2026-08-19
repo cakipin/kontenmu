@@ -1289,13 +1289,20 @@ export function UploadContent() {
           type: "uploading",
           message: "Mengunggah thumbnail ke R2...",
         });
+        
+        let finalFileToUpload = thumbnailFile;
+        if (thumbnailFile.type.startsWith("image/")) {
+          const { compressImageToWebp } = await import("../utils/image");
+          finalFileToUpload = await compressImageToWebp(thumbnailFile, 0.8);
+        }
+
         const psRes = await fetch(`/api/upload/presign`, {
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contentType: thumbnailFile.type,
-            fileName: thumbnailFile.name,
+            contentType: finalFileToUpload.type,
+            fileName: finalFileToUpload.name,
           }),
         });
         const psJson = await psRes.json();
@@ -1306,8 +1313,8 @@ export function UploadContent() {
 
         const uploadRes = await fetch(psJson.url, {
           method: "PUT",
-          headers: { "Content-Type": thumbnailFile.type },
-          body: thumbnailFile,
+          headers: { "Content-Type": finalFileToUpload.type },
+          body: finalFileToUpload,
         });
         if (!uploadRes.ok)
           throw new Error(
@@ -2119,13 +2126,19 @@ export function PlayKonten() {
     try {
       let finalThumbnailUrl = editingContent.thumbnailUrl || "";
       if (editThumbnailFile) {
+        let finalFileToUpload = editThumbnailFile;
+        if (editThumbnailFile.type.startsWith("image/")) {
+          const { compressImageToWebp } = await import("../utils/image");
+          finalFileToUpload = await compressImageToWebp(editThumbnailFile, 0.8);
+        }
+
         const psRes = await fetch(`/api/upload/presign`, {
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contentType: editThumbnailFile.type,
-            fileName: editThumbnailFile.name,
+            contentType: finalFileToUpload.type,
+            fileName: finalFileToUpload.name,
           }),
         });
         const psJson = await psRes.json();
@@ -2136,8 +2149,8 @@ export function PlayKonten() {
 
         const uploadRes = await fetch(psJson.url, {
           method: "PUT",
-          headers: { "Content-Type": editThumbnailFile.type },
-          body: editThumbnailFile,
+          headers: { "Content-Type": finalFileToUpload.type },
+          body: finalFileToUpload,
         });
         if (!uploadRes.ok)
           throw new Error(
@@ -7646,8 +7659,13 @@ export function MasterSekolah() {
 
     setIsUploadingLogo(true);
     try {
+      // Import the utility dynamically or statically (statically is better)
+      // Since we can't easily add imports to the top without parsing, we'll do dynamic import for now.
+      const { compressImageToWebp } = await import("../utils/image");
+      const webpFile = await compressImageToWebp(file, 0.8);
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", webpFile);
 
       const res = await fetch("/api/upload", {
         method: "POST",

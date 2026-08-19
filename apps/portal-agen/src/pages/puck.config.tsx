@@ -57,8 +57,11 @@ const ImageUploadField = ({
             setIsUploading(true);
             setErrorMsg(null);
             try {
+              const { compressImageToWebp } = await import("../utils/image");
+              const webpFile = await compressImageToWebp(file, 0.8);
+
               const formData = new FormData();
-              formData.append("file", file);
+              formData.append("file", webpFile);
               const res = await fetch(`/api/upload`, {
                 method: "POST",
                 body: formData,

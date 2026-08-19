@@ -129,13 +129,21 @@ export default function Profile() {
 
       if (suratTugasFile) {
         setAdminDataSuccess("Mengunggah surat tugas...");
+        
+        let finalFileToUpload = suratTugasFile;
+        // Compress if it's an image
+        if (suratTugasFile.type.startsWith("image/")) {
+          const { compressImageToWebp } = await import("../utils/image");
+          finalFileToUpload = await compressImageToWebp(suratTugasFile, 0.8);
+        }
+
         const psRes = await fetch(`/api/upload/presign`, {
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contentType: suratTugasFile.type,
-            fileName: suratTugasFile.name,
+            contentType: finalFileToUpload.type,
+            fileName: finalFileToUpload.name,
           }),
         });
         const psJson = await psRes.json();
@@ -145,8 +153,8 @@ export default function Profile() {
 
         const uploadRes = await fetch(psJson.url, {
           method: "PUT",
-          headers: { "Content-Type": suratTugasFile.type },
-          body: suratTugasFile,
+          headers: { "Content-Type": finalFileToUpload.type },
+          body: finalFileToUpload,
         });
         if (!uploadRes.ok) {
           throw new Error(`Gagal mengunggah file: ${uploadRes.status} ${uploadRes.statusText}`);
