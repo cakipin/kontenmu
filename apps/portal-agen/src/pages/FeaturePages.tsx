@@ -1289,13 +1289,20 @@ export function UploadContent() {
           type: "uploading",
           message: "Mengunggah thumbnail ke R2...",
         });
+        
+        let finalFileToUpload = thumbnailFile;
+        if (thumbnailFile.type.startsWith("image/")) {
+          const { compressImageToWebp } = await import("../utils/image");
+          finalFileToUpload = await compressImageToWebp(thumbnailFile, 0.8);
+        }
+
         const psRes = await fetch(`/api/upload/presign`, {
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contentType: thumbnailFile.type,
-            fileName: thumbnailFile.name,
+            contentType: finalFileToUpload.type,
+            fileName: finalFileToUpload.name,
           }),
         });
         const psJson = await psRes.json();
@@ -1306,8 +1313,8 @@ export function UploadContent() {
 
         const uploadRes = await fetch(psJson.url, {
           method: "PUT",
-          headers: { "Content-Type": thumbnailFile.type },
-          body: thumbnailFile,
+          headers: { "Content-Type": finalFileToUpload.type },
+          body: finalFileToUpload,
         });
         if (!uploadRes.ok)
           throw new Error(
@@ -2119,13 +2126,19 @@ export function PlayKonten() {
     try {
       let finalThumbnailUrl = editingContent.thumbnailUrl || "";
       if (editThumbnailFile) {
+        let finalFileToUpload = editThumbnailFile;
+        if (editThumbnailFile.type.startsWith("image/")) {
+          const { compressImageToWebp } = await import("../utils/image");
+          finalFileToUpload = await compressImageToWebp(editThumbnailFile, 0.8);
+        }
+
         const psRes = await fetch(`/api/upload/presign`, {
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contentType: editThumbnailFile.type,
-            fileName: editThumbnailFile.name,
+            contentType: finalFileToUpload.type,
+            fileName: finalFileToUpload.name,
           }),
         });
         const psJson = await psRes.json();
@@ -2136,8 +2149,8 @@ export function PlayKonten() {
 
         const uploadRes = await fetch(psJson.url, {
           method: "PUT",
-          headers: { "Content-Type": editThumbnailFile.type },
-          body: editThumbnailFile,
+          headers: { "Content-Type": finalFileToUpload.type },
+          body: finalFileToUpload,
         });
         if (!uploadRes.ok)
           throw new Error(
@@ -5998,16 +6011,18 @@ export function Library() {
   useEffect(() => {
     let active = true;
     const isTargetRole = session?.role === "guru" || session?.role === "siswa";
+    const CACHE_TTL_MS = 15 * 60 * 1000; // 15 menit
 
     const fetchWithCache = (url: string, cacheKey: string, setter: (data: any) => void) => {
-      // --- Logika Caching: Cek apakah ada di cache lokal sebelum fetch ---
+      // --- Logika Caching dengan TTL: Cek apakah ada di cache lokal dan masih segar ---
       if (isTargetRole) {
-        const cachedData = localStorage.getItem(cacheKey);
-        if (cachedData) {
+        const cachedRaw = localStorage.getItem(cacheKey);
+        if (cachedRaw) {
           try {
-            const parsed = JSON.parse(cachedData);
-            if (Array.isArray(parsed)) {
-              setter(parsed);
+            const { data: cachedData, cachedAt } = JSON.parse(cachedRaw);
+            const isStillFresh = Date.now() - cachedAt < CACHE_TTL_MS;
+            if (isStillFresh && Array.isArray(cachedData)) {
+              setter(cachedData);
               return; // Gunakan cache, skip fetch API
             }
           } catch (e) {
@@ -6021,17 +6036,18 @@ export function Library() {
         .then((payload) => {
           if (active && payload?.success && Array.isArray(payload.data)) {
             setter(payload.data);
-            // --- Logika Caching: Simpan hasil fetch baru ke cache ---
+            // --- Logika Caching: Simpan hasil fetch baru ke cache dengan timestamp ---
             if (isTargetRole) {
-              localStorage.setItem(cacheKey, JSON.stringify(payload.data));
+              localStorage.setItem(cacheKey, JSON.stringify({ data: payload.data, cachedAt: Date.now() }));
             }
           }
         })
         .catch(() => {});
     };
 
-    fetchWithCache(`${import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev"}/api/books`, "kontenmu_books_cache", setApiBooks);
-    fetchWithCache(`${""}/api/users`, "kontenmu_users_cache", setApiUsers);
+    const apiBase = import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev";
+    fetchWithCache(`${apiBase}/api/books`, "kontenmu_books_cache", setApiBooks);
+    fetchWithCache(`${apiBase}/api/users`, "kontenmu_users_cache", setApiUsers);
 
     return () => {
       active = false;
@@ -6068,6 +6084,7 @@ export function Library() {
     if (!session) return [];
 
     if (session.role === "siswa") {
+
       const sessionSchoolId = session.sekolahId || (session as any).sekolah_id;
       const studentSchool = sessionSchoolId
         ? data.schools.find((school: any) => String(school.id) === String(sessionSchoolId))
@@ -6105,11 +6122,7 @@ export function Library() {
             (candidate: any) =>
               String(candidate.isbn) === String(content.isbn),
           );
-          return (
-            Boolean(currentStudent?.kelas) &&
-            Boolean(book?.kelas) &&
-            matchesClass(currentStudent.kelas, book.kelas)
-          );
+          return matchesClass(currentStudent?.kelas, book?.kelas);
         },
       );
     }
@@ -6129,7 +6142,7 @@ export function Library() {
     data.contents,
     data.allocations,
     data.users,
-    data.schoolUsers,
+    data.schools,
     data.books,
     apiBooks,
     apiUsers,
@@ -7646,8 +7659,13 @@ export function MasterSekolah() {
 
     setIsUploadingLogo(true);
     try {
+      // Import the utility dynamically or statically (statically is better)
+      // Since we can't easily add imports to the top without parsing, we'll do dynamic import for now.
+      const { compressImageToWebp } = await import("../utils/image");
+      const webpFile = await compressImageToWebp(file, 0.8);
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", webpFile);
 
       const res = await fetch("/api/upload", {
         method: "POST",

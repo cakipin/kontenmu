@@ -548,7 +548,7 @@ function normalizeAppData(data: AppData): AppData {
     "school-users": ["sekolah"],
     profile: ["sekolah"],
     "school-profile": ["sekolah", "guru", "siswa"],
-    library: ["siswa", "guru"],
+    library: ["siswa", "guru"],   // BUG #9: now a dedicated key, separate from "learning"
     learning: ["siswa", "guru"],
     school: ["superadmin"],
   };

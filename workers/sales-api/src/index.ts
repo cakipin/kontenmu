@@ -64,9 +64,13 @@ function hasRole(user: AuthUser | null, roles: string[]) {
 }
 
 function tenantSchoolId(user: AuthUser | null) {
-  if (user?.role !== "sekolah") return 0;
-  const schoolId = Number(user.sekolahId);
-  return Number.isInteger(schoolId) && schoolId > 0 ? schoolId : -1;
+  if (!user) return -1;
+  if (user.role === "superadmin" || user.role === "agen") return 0;
+  if (["sekolah", "guru", "siswa"].includes(user.role)) {
+    const schoolId = Number(user.sekolahId);
+    return Number.isInteger(schoolId) && schoolId > 0 ? schoolId : -1;
+  }
+  return -1;
 }
 
 function json(data: unknown, status = 200) {
@@ -102,20 +106,14 @@ export default {
 
         console.log("Login attempt:", { username: username.trim(), userFound: !!user });
 
-        const storedPassword = user?.password || "";
-        const passwordMatches = storedPassword.startsWith("$2")
-          ? await bcrypt.compare(password, storedPassword)
-          : storedPassword === password;
         if (!user) return json({ success: false, error: "Username atau password salah" }, 401);
         if (user.status !== "Aktif") return json({ success: false, error: "Akun belum aktif atau menunggu approval" }, 403);
 
-        // Upgrade legacy plaintext passwords in place after a successful login.
-        if (!storedPassword.startsWith("$2") && false) {
-          const passwordHash = await bcrypt.hash(password, 10);
-          await env.DB.prepare("UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
-            .bind(passwordHash, user.id)
-            .run();
-        }
+        const storedPassword = user.password || "";
+        const passwordMatches = storedPassword.startsWith("$2")
+          ? await bcrypt.compare(password, storedPassword)
+          : storedPassword === password;
+        if (!passwordMatches) return json({ success: false, error: "Username atau password salah" }, 401);
 
         const now = Math.floor(Date.now() / 1000);
         const token = await sign({
@@ -166,7 +164,7 @@ export default {
     if (url.pathname === "/api/users" && request.method === "POST" && authUser && !hasRole(authUser, ["superadmin", "sekolah"])) {
       return json({ success: false, error: "Forbidden" }, 403);
     }
-    if (url.pathname === "/api/users" && request.method === "GET" && !hasRole(authUser, ["superadmin", "sekolah"])) {
+    if (url.pathname === "/api/users" && request.method === "GET" && !hasRole(authUser, ["superadmin", "sekolah", "guru", "siswa"])) {
       return json({ success: false, error: "Forbidden" }, 403);
     }
     const userRouteMatch = url.pathname.match(/^\/api\/users\/([^/]+)(?:\/(password|picture))?$/);
