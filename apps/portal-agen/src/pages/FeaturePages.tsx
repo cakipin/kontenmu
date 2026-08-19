@@ -6112,11 +6112,7 @@ export function Library() {
             (candidate: any) =>
               String(candidate.isbn) === String(content.isbn),
           );
-          return (
-            Boolean(currentStudent?.kelas) &&
-            Boolean(book?.kelas) &&
-            matchesClass(currentStudent.kelas, book.kelas)
-          );
+          return matchesClass(currentStudent?.kelas, book?.kelas);
         },
       );
     }
