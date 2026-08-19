@@ -6070,7 +6070,58 @@ export function Library() {
   const libraryContents = useMemo(() => {
     if (!session) return [];
 
-    if (session.role === "siswa" || session.role === "guru") {
+    if (session.role === "siswa") {
+      // BUG #5: Jika data.schools belum dimuat, jangan tampilkan konten apa pun
+      // untuk mencegah filtering level sekolah yang salah sementara data loading.
+      if (data.schools.length === 0) return [];
+
+      const sessionSchoolId = session.sekolahId || (session as any).sekolah_id;
+      const studentSchool = sessionSchoolId
+        ? data.schools.find((school: any) => String(school.id) === String(sessionSchoolId))
+        : null;
+      const schoolLevel = getSchoolLevel(
+        studentSchool?.nama || (session as any).wilayah || "",
+      ).toLowerCase();
+      const matchesSchoolLevel = (target: string) => {
+        const normalizedTarget = String(target || "").toLowerCase();
+        if (!schoolLevel || !normalizedTarget || normalizedTarget === "umum" || normalizedTarget.includes("semua")) return true;
+        if (schoolLevel === "sd/mi") return normalizedTarget.includes("sd") || normalizedTarget.includes("mi");
+        if (schoolLevel === "smp/mts") return normalizedTarget.includes("smp") || normalizedTarget.includes("mts");
+        if (schoolLevel === "sma/ma/smk") return normalizedTarget.includes("sma") || normalizedTarget.includes("ma") || normalizedTarget.includes("smk");
+        return false;
+      };
+      const allocatedIsbns = new Set(
+        data.allocations
+          .filter((a) => a.studentUsername === session.username)
+          .map((a) => a.isbn),
+      );
+      const currentStudent =
+        apiUsers.find((user: any) => user.username === session.username) ||
+        data.users.find((user: any) => user.username === session.username);
+      const books = [...apiBooks, ...data.books];
+      return data.contents.filter(
+        (content) => {
+          if (
+            !content.isbn ||
+            !allocatedIsbns.has(content.isbn) ||
+            !matchesSchoolLevel(content.target)
+          ) {
+            return false;
+          }
+          const book = books.find(
+            (candidate: any) =>
+              String(candidate.isbn) === String(content.isbn),
+          );
+          return (
+            Boolean(currentStudent?.kelas) &&
+            Boolean(book?.kelas) &&
+            matchesClass(currentStudent.kelas, book.kelas)
+          );
+        },
+      );
+    }
+
+    if (session.role === "guru") {
       const allocatedIsbns = new Set(
         data.allocations
           .filter((a: any) => a.studentUsername === session.username)
