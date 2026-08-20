@@ -126,7 +126,6 @@ const MASTER_NAVIGATION: NavItemType[] = [
     label: "Analitik",
     icon: "analytics",
   },
-  { id: "ai-monitor", path: "/ai-monitor", label: "AI Monitor", icon: "analytics" },
   { id: "users", path: "/users", label: "Kelola User", icon: "users" },
   { id: "catalog", path: "/catalog", label: "Master Katalog", icon: "catalog" },
   {
@@ -170,16 +169,14 @@ const MASTER_NAVIGATION: NavItemType[] = [
     icon: "school",
   },
   {
-    id: "access-settings",
-    path: "/access-settings",
+    id: "pengaturan",
     label: "Pengaturan",
     icon: "settings",
-  },
-  {
-    id: "ai-settings",
-    path: "/ai-settings",
-    label: "Pengaturan AI",
-    icon: "settings",
+    subItems: [
+      { id: "access-settings", path: "/access-settings", label: "Akses Peran" },
+      { id: "ai-settings", path: "/ai-settings", label: "Konfigurasi AI" },
+      { id: "ai-monitor", path: "/ai-monitor", label: "AI Monitor" },
+    ]
   },
   {
     id: "inventory",
@@ -228,7 +225,6 @@ const MOBILE_NAVIGATION: Record<
   superadmin: [
     { id: "dashboard", path: "/dashboard", label: "Dasbor", icon: "dashboard" },
     { id: "analytics", path: "/analytics", label: "Analitik", icon: "analytics" },
-    { id: "ai-monitor", path: "/ai-monitor", label: "AI Monitor", icon: "analytics" },
     { id: "upload", path: "/upload-content", label: "Upload", icon: "upload" },
     { id: "play", path: "/play-content", label: "Player", icon: "library" },
     { id: "users", path: "/users", label: "User", icon: "users" },
@@ -864,7 +860,7 @@ function AppContent() {
 
   let navItems = MASTER_NAVIGATION.filter((item) => {
     if (session.role === "pending") return item.id === "dashboard";
-    if (session.role === "superadmin" && (item.id === "users" || item.id === "access-settings" || item.id === "ai-monitor" || item.id === "ai-settings"))
+    if (session.role === "superadmin" && (item.id === "users" || item.id === "pengaturan" || item.id === "access-settings" || item.id === "ai-monitor" || item.id === "ai-settings"))
       return true;
 
     if (item.subItems) {
