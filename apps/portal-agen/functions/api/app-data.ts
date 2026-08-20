@@ -175,9 +175,10 @@ export const onRequestPut = async (context: any) => {
     }
 
     // Hanya simpan state murni (konfigurasi, schools, dll). 
-    // contents dan users sekarang dikelola mandiri via masing-masing API-nya.
+    // contents, users, dan allocations sekarang dikelola mandiri via masing-masing API-nya.
     if (payload.contents) delete payload.contents;
     if (payload.users) delete payload.users;
+    if (payload.allocations) delete payload.allocations;
 
     const content = JSON.stringify(payload);
 

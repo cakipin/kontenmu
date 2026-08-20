@@ -4808,13 +4808,20 @@ export function Allocation() {
         
         if (!isDuplicate) {
             if (editingAllocationId && isbn) {
-              // Edit existing allocation
+              // Edit existing allocation (Hanya update lokal, API terpisah jika perlu)
               newAllocations = newAllocations.map((a) =>
                 a.id === editingAllocationId
                   ? { ...a, studentUsername, isbn: currentIsbn, schoolId }
                   : a,
               );
             } else {
+              // Option 2: Migrasi Frontend ke allocation-api
+              await fetch("/api/allocate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sekolahId: schoolId, isbn: currentIsbn, siswaId: studentUsername })
+              });
+
               newAllocations.unshift({
                 id: nextId("ALC", newAllocations.length),
                 studentUsername,
@@ -5566,13 +5573,19 @@ export function TeacherAccess() {
           const current = data;
           const newAllocations = [...current.allocations];
           const newLearning = [...current.learning];
-          selectedBuku.forEach((b: any) => {
+          for (const b of selectedBuku) {
             const duplicate = newAllocations.some(
               (a) =>
                 a.studentUsername === editingTeacher.username &&
                 a.isbn === b.value,
             );
             if (!duplicate) {
+              await fetch("/api/allocate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sekolahId: schoolId, isbn: b.value, siswaId: editingTeacher.username, studentUsername: editingTeacher.username })
+              });
+
               newAllocations.unshift({
                 id: "ALC" + Date.now() + Math.random(),
                 studentUsername: editingTeacher.username,
@@ -5595,7 +5608,7 @@ export function TeacherAccess() {
                 terakhirDibaca: "-",
               });
             }
-          });
+          }
           
           const payloadData = {
             ...current,

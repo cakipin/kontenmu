@@ -659,10 +659,15 @@ export function loadRemoteAppData(): Promise<AppData | null> {
       Promise.all([
         fetch("/api/app-data", { cache: "no-store" }).then(res => res.json()).catch(() => null),
         fetch("/api/contents?page=1&limit=2000", { cache: "no-store" }).then(res => res.json()).catch(() => null),
-        fetch("/api/users?page=1&limit=2000", { cache: "no-store" }).then(res => res.json()).catch(() => null)
-      ]).then(([fullPayload, contentsPayload, usersPayload]) => {
+        fetch("/api/users?page=1&limit=2000", { cache: "no-store" }).then(res => res.json()).catch(() => null),
+        fetch("/api/allocations", { cache: "no-store" }).then(res => res.json()).catch(() => null)
+      ]).then(([fullPayload, contentsPayload, usersPayload, allocationsPayload]) => {
         if (fullPayload?.found && fullPayload?.data) {
           const fullResult = normalizeAppData(fullPayload.data);
+          
+          if (allocationsPayload?.success && Array.isArray(allocationsPayload.data)) {
+             fullResult.allocations = allocationsPayload.data;
+          }
           
           // Sisipkan hasil dari endpoint mandiri ke dalam state (Decoupled API)
           if (contentsPayload?.success && Array.isArray(contentsPayload.contents)) {
