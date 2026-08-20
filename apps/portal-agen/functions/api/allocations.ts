@@ -31,7 +31,7 @@ export const onRequestGet = async (context: any) => {
 
     // Map to the format expected by the frontend's appData
     const mapped = results.map((row: any) => ({
-      id: row.id,
+      id: `ALC-${String(row.id).padStart(4, "0")}`,
       studentUsername: row.studentUsername,
       isbn: row.isbn,
       schoolId: row.schoolId,

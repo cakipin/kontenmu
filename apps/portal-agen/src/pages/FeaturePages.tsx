@@ -4756,7 +4756,7 @@ export function Allocation() {
         getBook(data, allocation.isbn);
       const s = search.toLowerCase();
       return (
-        allocation.id.toLowerCase().includes(s) ||
+        String(allocation.id).toLowerCase().includes(s) ||
         (student?.nama || "").toLowerCase().includes(s) ||
         (book?.judul || "").toLowerCase().includes(s)
       );
