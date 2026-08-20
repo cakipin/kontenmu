@@ -10,6 +10,9 @@ binding = "DB"
 database_name = "KONTENMU_DB"
 database_id = "32b70d74-ed3d-4e0e-9d27-c5fb785cc374"
 
+[ai]
+binding = "AI"
+
 [env.production]
 name = "kontenmu-prod-api"
 [[env.production.d1_databases]]

@@ -34,6 +34,7 @@ const AiSettings = lazy(() => import("./pages/AiSettings"));
 const Profile = lazy(() => import("./pages/Profile"));
 const SchoolProfile = lazy(() => import("./pages/SchoolProfile"));
 const Analytics = lazy(() => import("./pages/Analytics"));
+const AiSystemMonitor = lazy(() => import("./pages/AiSystemMonitor"));
 
 const FeaturePages = import("./pages/FeaturePages");
 const Allocation = lazy(() =>
@@ -125,6 +126,7 @@ const MASTER_NAVIGATION: NavItemType[] = [
     label: "Analitik",
     icon: "analytics",
   },
+  { id: "ai-monitor", path: "/ai-monitor", label: "AI Monitor", icon: "analytics" },
   { id: "users", path: "/users", label: "Kelola User", icon: "users" },
   { id: "catalog", path: "/catalog", label: "Master Katalog", icon: "catalog" },
   {
@@ -226,6 +228,7 @@ const MOBILE_NAVIGATION: Record<
   superadmin: [
     { id: "dashboard", path: "/dashboard", label: "Dasbor", icon: "dashboard" },
     { id: "analytics", path: "/analytics", label: "Analitik", icon: "analytics" },
+    { id: "ai-monitor", path: "/ai-monitor", label: "AI Monitor", icon: "analytics" },
     { id: "upload", path: "/upload-content", label: "Upload", icon: "upload" },
     { id: "play", path: "/play-content", label: "Player", icon: "library" },
     { id: "users", path: "/users", label: "User", icon: "users" },
@@ -537,7 +540,7 @@ function canAccessRoute(
 ) {
   if (pathname === "/dashboard" || pathname === "/profile") return true;
   if (role === "pending") return false;
-  if (pathname === "/users" || pathname === "/access-settings")
+  if (pathname === "/users" || pathname === "/access-settings" || pathname === "/ai-monitor")
     return role === "superadmin";
   if (pathname === "/editor" || pathname.startsWith("/editor/"))
     return role === "superadmin";
@@ -1748,6 +1751,7 @@ function AppContent() {
               <Route path="/sim-sekolah" element={<SimSekolah />} />
               <Route path="/master-sekolah" element={<MasterSekolah />} />
               <Route path="/access-settings" element={<RoleAccessSettings />} />
+              <Route path="/ai-monitor" element={<AiSystemMonitor />} />
               <Route path="/ai-settings" element={<AiSettings />} />
               <Route path="/editor/:id?" element={<Editor />} />
               <Route path="/profile" element={<Profile />} />

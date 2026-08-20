@@ -4,6 +4,7 @@ import { decode, sign, verify } from "@tsndr/cloudflare-worker-jwt";
 export interface Env {
   DB: D1Database;
   JWT_SECRET: string;
+  AI: any;
 }
 
 const corsHeaders = {
@@ -36,6 +37,7 @@ const ROUTES = [
   { path: /^\/api\/users\/[^/]+\/(?:password|picture)$/, methods: ["PUT"] },
   { path: /^\/api\/sales$/, methods: ["GET"] },
   { path: /^\/api\/sales\/bulk$/, methods: ["POST"] },
+  { path: /^\/api\/error-logs$/, methods: ["GET", "POST"] },
 ] as const;
 
 function bearerToken(request: Request) {
@@ -751,6 +753,70 @@ export default {
         const message =
           error instanceof Error ? error.message : "Unknown error";
         return json({ success: false, error: message }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/error-logs") {
+      if (request.method === "GET") {
+        if (!hasRole(authUser, ["superadmin"])) return json({ success: false, error: "Forbidden" }, 403);
+        try {
+          const { results } = await env.DB.prepare("SELECT * FROM error_logs ORDER BY timestamp DESC LIMIT 50").all();
+          return json({ success: true, data: results });
+        } catch (error: any) {
+          // If table doesn't exist, we can handle it gracefully
+          if (error.message.includes("no such table")) {
+             await env.DB.prepare("CREATE TABLE IF NOT EXISTS error_logs (id TEXT PRIMARY KEY, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, service TEXT, endpoint TEXT, error_message TEXT, stack_trace TEXT, ai_analysis TEXT, status TEXT DEFAULT 'new')").run();
+             return json({ success: true, data: [] });
+          }
+          return json({ success: false, error: error.message }, 500);
+        }
+      }
+
+      if (request.method === "POST") {
+        try {
+          const body: any = await request.json();
+          const id = crypto.randomUUID();
+          const { service = "frontend", endpoint = "", error_message = "", stack_trace = "" } = body;
+          
+          // Background AI Analysis
+          const analyzeAndSave = async () => {
+            let analysis = "AI tidak tersedia atau gagal menganalisis.";
+            try {
+              if (env.AI) {
+                const systemPrompt = "Kamu adalah AI Debugger. Analisis error dan stack trace berikut, jelaskan penyebabnya secara singkat dalam bahasa Indonesia, dan berikan saran perbaikan.";
+                const aiResponse = await env.AI.run("@cf/qwen/qwen1.5-14b-chat-awq", {
+                  messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: `Error: ${error_message}\nStack Trace: ${stack_trace}\nEndpoint: ${endpoint}` }
+                  ]
+                });
+                analysis = (aiResponse as any).response || analysis;
+              }
+            } catch (aiErr) {
+              console.error("AI Error:", aiErr);
+            }
+            
+            // Simpan ke DB
+            try {
+              // Ensure table exists just in case
+              await env.DB.prepare("CREATE TABLE IF NOT EXISTS error_logs (id TEXT PRIMARY KEY, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, service TEXT, endpoint TEXT, error_message TEXT, stack_trace TEXT, ai_analysis TEXT, status TEXT DEFAULT 'new')").run();
+              
+              await env.DB.prepare(
+                "INSERT INTO error_logs (id, service, endpoint, error_message, stack_trace, ai_analysis) VALUES (?, ?, ?, ?, ?, ?)"
+              ).bind(id, service, endpoint, error_message, stack_trace, analysis).run();
+            } catch (dbErr) {
+              console.error("DB Error:", dbErr);
+            }
+          };
+
+          // Handle background non-blocking execution (requires passing ctx to handler but since we don't have ctx here, we can just await it or use CF's context.waitUntil if available).
+          // For simplicity in this demo index.ts, we'll await it. In a real production system, we'd use waitUntil.
+          await analyzeAndSave();
+
+          return json({ success: true, message: "Error logged and analyzed" });
+        } catch (error: any) {
+          return json({ success: false, error: error.message }, 500);
+        }
       }
     }
 
