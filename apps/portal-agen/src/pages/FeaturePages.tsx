@@ -4747,6 +4747,10 @@ export function Allocation() {
 
   const filteredAllocations = useMemo(() => {
     return data.allocations.filter((allocation) => {
+      // Filter berdasarkan siswa yang dipilih di dropdown
+      if (studentUsername && allocation.studentUsername !== studentUsername) {
+        return false;
+      }
       const student = students.find(
         (user) => user.username === allocation.studentUsername,
       );
@@ -4761,7 +4765,7 @@ export function Allocation() {
         (book?.judul || "").toLowerCase().includes(s)
       );
     });
-  }, [data.allocations, search, students, masterBooks, data]);
+  }, [data.allocations, search, students, studentUsername, masterBooks, data]);
 
   const totalPages = Math.ceil(filteredAllocations.length / itemsPerPage) || 1;
   const paginatedAllocations = useMemo(() => {
