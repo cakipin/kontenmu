@@ -59,6 +59,8 @@ const ROUTE_POLICIES: readonly RoutePolicy[] = [
   { methods: ["POST"], match: exact("/api/upload/presign"), roles: ["superadmin", "uploader", "sekolah"] },
   { methods: ["GET"], match: pattern(/^\/api\/media\/.+$/), roles: ACTIVE_ROLES },
   { methods: ["GET", "PATCH"], match: exact("/api/notifications"), roles: ["superadmin", "sekolah"] },
+  { methods: ["POST"], match: exact("/api/allocate"), roles: ["superadmin", "sekolah"] },
+  { methods: ["GET"], match: exact("/api/allocations"), roles: ["superadmin", "sekolah", "guru"] },
 ];
 
 function jsonError(status: number, error: string) {
