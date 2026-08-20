@@ -864,8 +864,7 @@ function AppContent() {
 
   let navItems = MASTER_NAVIGATION.filter((item) => {
     if (session.role === "pending") return item.id === "dashboard";
-    if (session.role === "superadmin" && item.id === "users") return true;
-    if (session.role === "superadmin" && item.id === "access-settings")
+    if (session.role === "superadmin" && (item.id === "users" || item.id === "access-settings" || item.id === "ai-monitor" || item.id === "ai-settings"))
       return true;
 
     if (item.subItems) {
