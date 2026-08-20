@@ -6174,6 +6174,19 @@ const uniqueKategori = useMemo(() => {
     return Array.from(set).sort();
   }, [libraryContents]);
 
+  const uniqueBab = useMemo(() => {
+    const set = new Set<string>();
+    libraryContents.forEach(c => {
+      if (c.bab && String(c.bab).trim() !== "") set.add(String(c.bab).trim());
+    });
+    return Array.from(set).sort((a, b) => {
+      const numA = parseInt(a);
+      const numB = parseInt(b);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b);
+    });
+  }, [libraryContents]);
+
   const uniqueKelas = useMemo(() => {
     const set = new Set<string>();
     libraryContents.forEach(c => {
@@ -6199,13 +6212,16 @@ const uniqueKategori = useMemo(() => {
       if (kategoriFilter !== "Semua") {
         if (content.kategori !== kategoriFilter) return false;
       }
+      if (babFilter !== "Semua") {
+        if (String(content.bab || "").trim() !== babFilter) return false;
+      }
       if (session?.role !== "siswa" && kelasFilter !== "Semua") {
         const kelas = content.isbn ? kelasForIsbn.get(String(content.isbn)) : "-";
         if (kelas !== kelasFilter) return false;
       }
       return true;
     });
-  }, [libraryContents, searchQuery, kategoriFilter, kelasFilter, session?.role, kelasForIsbn]);
+  }, [libraryContents, searchQuery, kategoriFilter, babFilter, kelasFilter, session?.role, kelasForIsbn]);
 
   const contentTotalPages = Math.max(
     1,
@@ -6253,6 +6269,15 @@ const uniqueKategori = useMemo(() => {
                 {uniqueKelas.map(k => <option key={k} value={k}>Kelas {k}</option>)}
               </select>
             )}
+            <select
+              className="input-control"
+              style={{ flex: "0 0 auto", width: "160px" }}
+              value={babFilter}
+              onChange={(e) => { setBabFilter(e.target.value); setContentPage(1); }}
+            >
+              <option value="Semua">Semua Bab</option>
+              {uniqueBab.map(k => <option key={k} value={k}>Bab {k}</option>)}
+            </select>
           </div>
 
           <DataTable
@@ -6400,6 +6425,15 @@ const uniqueKategori = useMemo(() => {
                   {uniqueKelas.map(k => <option key={k} value={k}>Kelas {k}</option>)}
                 </select>
               )}
+              <select
+                className="input-control"
+                style={{ flex: 1 }}
+                value={babFilter}
+                onChange={(e) => { setBabFilter(e.target.value); setContentPage(1); }}
+              >
+                <option value="Semua">Semua Bab</option>
+                {uniqueBab.map(k => <option key={k} value={k}>Bab {k}</option>)}
+              </select>
             </div>
           </div>
 
@@ -7094,7 +7128,10 @@ function RelatedContents({
   if (!currentContent.isbn) return null;
 
   const related = allContents.filter(
-    (c) => c.isbn === currentContent.isbn && c.id !== currentContent.id,
+    (c) => 
+      c.isbn === currentContent.isbn && 
+      c.id !== currentContent.id &&
+      (!currentContent.bab || c.bab === currentContent.bab)
   );
 
   if (related.length === 0) return null;
