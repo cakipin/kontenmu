@@ -943,11 +943,12 @@ function AppContent() {
                   {isOpen && (
                     <div className="admin-submenu">
                       {item.subItems
-                        .filter((sub) =>
-                          data.roleAccessPermissions?.[sub.id]?.includes(
-                            session.role,
-                          ),
-                        )
+                        .filter((sub) => {
+                          if (session.role === "superadmin") {
+                            return true; // Superadmin bisa melihat semua sub menu
+                          }
+                          return data.roleAccessPermissions?.[sub.id]?.includes(session.role);
+                        })
                         .map((sub) => (
                           <Link
                             key={sub.id}
