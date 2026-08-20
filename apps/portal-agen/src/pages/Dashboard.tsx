@@ -55,6 +55,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     (session as any)?.kelas ||
     "";
   const [suratTugas, setSuratTugas] = useState("");
+  const [suratTugasFile, setSuratTugasFile] = useState<File | null>(null);
 
   // Add Subscription State
   const [isAddSubscriptionModalOpen, setIsAddSubscriptionModalOpen] =
@@ -330,6 +331,47 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       return;
     }
 
+    let finalSuratTugasUrl = selectedRole === "sekolah" ? suratTugas : null;
+
+    if (selectedRole === "sekolah" && suratTugasFile) {
+      try {
+        let finalFileToUpload = suratTugasFile;
+        // Compress if it's an image
+        if (suratTugasFile.type.startsWith("image/")) {
+          const { compressImageToWebp } = await import("../utils/image");
+          finalFileToUpload = await compressImageToWebp(suratTugasFile, 0.8);
+        }
+
+        const psRes = await fetch(`/api/upload/presign`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contentType: finalFileToUpload.type,
+            fileName: finalFileToUpload.name,
+          }),
+        });
+        const psJson = await psRes.json();
+        if (!psRes.ok || psJson.error) {
+          throw new Error(`Gagal menyiapkan upload: ${psJson.error ?? psRes.statusText}`);
+        }
+
+        const uploadRes = await fetch(psJson.url, {
+          method: "PUT",
+          headers: { "Content-Type": finalFileToUpload.type },
+          body: finalFileToUpload,
+        });
+        if (!uploadRes.ok) {
+          throw new Error(`Gagal mengunggah file: ${uploadRes.status} ${uploadRes.statusText}`);
+        }
+        finalSuratTugasUrl = psJson.mediaPath;
+      } catch (err: any) {
+        alert(err.message || "Gagal mengunggah surat tugas");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     const updatedUser = {
       ...userToUpdate,
       role: "pending",
@@ -340,7 +382,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       wilayah: sekolahNama || "",
       kelas: selectedRole === "siswa" ? kelas : null,
       nis: selectedRole === "siswa" || selectedRole === "guru" ? nisn : null,
-      suratTugas: selectedRole === "sekolah" ? suratTugas : null,
+      suratTugas: finalSuratTugasUrl,
       masaAktif: selectedRole === "sekolah" ? masaAktif : null,
     } as any;
 
@@ -2413,7 +2455,6 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                       <option value="sekolah">Admin Sekolah</option>
                       <option value="guru">Guru</option>
                       <option value="siswa">Siswa</option>
-                      <option value="agen">Agen</option>
                     </select>
                   </label>
 
@@ -2472,9 +2513,12 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                         <input
                           type="file"
                           className="input-control"
+                          accept=".pdf,.jpg,.jpeg,.png"
                           onChange={(e) => {
-                            if (e.target.files?.length)
+                            if (e.target.files?.length) {
                               setSuratTugas(e.target.files[0].name);
+                              setSuratTugasFile(e.target.files[0]);
+                            }
                           }}
                           required
                         />
