@@ -6007,6 +6007,8 @@ export function Library() {
   const [searchQuery, setSearchQuery] = useState("");
   const [kelasFilter, setKelasFilter] = useState("Semua");
   const [kategoriFilter, setKategoriFilter] = useState("Semua");
+  const [babFilter, setBabFilter] = useState("Semua");
+
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 768,
   );
