@@ -1,7 +1,7 @@
 const jsonHeaders = { "Content-Type": "application/json" };
 
 import { drizzle } from "drizzle-orm/d1";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, or, sql } from "drizzle-orm";
 import { users } from "../../src/db/schema";
 import bcrypt from "bcryptjs";
 import { getTenantSchoolId, tenantError } from "./_tenant";
@@ -17,7 +17,10 @@ export const onRequestGet = async (context: any) => {
     if (tenantSchoolId === 0) return tenantError();
     const auth = context.data?.auth || {};
     const tenantWhere = auth.role === "pending"
-      ? eq(users.id, String(auth.sub || ""))
+      ? or(
+          eq(users.id, String(auth.sub || "")),
+          eq(users.username, String(auth.username || "")),
+        )
       : tenantSchoolId
         ? eq(users.sekolahId, tenantSchoolId)
         : undefined;

@@ -21,6 +21,7 @@ import {
   Maximize,
   Minimize,
   PlayCircle,
+  Eye,
 } from "lucide-react";
 import { SchoolSearchInput } from "../components/SchoolSearchInput";
 import {
@@ -46,6 +47,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   const { data, setData, isLoading } = useAppData();
 
   const [users, setUsers] = useState<any[]>([]);
+  const [isUsersLoading, setIsUsersLoading] = useState(true);
   const currentUser = users.find(
     (u) => u.username === session?.username || u.id === (session as any)?.id
   );
@@ -59,7 +61,6 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   const [suratTugas, setSuratTugas] = useState("");
   const [suratTugasPreview, setSuratTugasPreview] = useState("");
   const [suratTugasFileName, setSuratTugasFileName] = useState("");
-  const [suratTugasMimeType, setSuratTugasMimeType] = useState("");
   const [isUploadingSuratTugas, setIsUploadingSuratTugas] = useState(false);
 
   useEffect(() => {
@@ -77,7 +78,6 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     setIsUploadingSuratTugas(true);
     setSuratTugas("");
     setSuratTugasFileName(file.name);
-    setSuratTugasMimeType(file.type);
     setSuratTugasPreview(URL.createObjectURL(file));
     try {
       let finalFileToUpload = file;
@@ -240,12 +240,14 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   };
 
   useEffect(() => {
+    setIsUsersLoading(true);
     fetch("/api/users?limit=2000")
       .then((res) => res.json())
       .then((res) => {
         if (res.success && res.data) setUsers(res.data);
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setIsUsersLoading(false));
   }, []);
 
   useEffect(() => {
@@ -2372,6 +2374,8 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       )}
 
       {currentRole === "pending" &&
+        !isUsersLoading &&
+        currentUser &&
         currentUser?.status !== "Menunggu Approve" && (
           <div
             style={{
@@ -2570,33 +2574,21 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                             Mengunggah surat tugas...
                           </span>
                         )}
-                        {suratTugas && (
-                          <span
-                            style={{
-                              fontSize: "0.8rem",
-                              color: "var(--brand-primary)",
-                            }}
-                          >
-                            File berhasil diunggah: {suratTugasFileName}
-                          </span>
-                        )}
-                        {suratTugasPreview && suratTugasMimeType === "image/png" && (
-                          <img
-                            src={suratTugasPreview}
-                            alt="Preview surat tugas"
-                            style={{ width: "100%", maxHeight: "280px", objectFit: "contain", borderRadius: "8px", border: "1px solid var(--border-subtle)" }}
-                          />
-                        )}
-                        {suratTugasPreview && suratTugasMimeType === "application/pdf" && (
-                          <iframe
-                            src={suratTugasPreview}
-                            title="Preview surat tugas"
-                            style={{ width: "100%", height: "280px", borderRadius: "8px", border: "1px solid var(--border-subtle)" }}
-                          />
-                        )}
-                        {suratTugasPreview && suratTugasMimeType !== "image/png" && suratTugasMimeType !== "application/pdf" && (
-                          <div style={{ padding: "12px", borderRadius: "8px", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)", fontSize: "0.85rem" }}>
-                            Dokumen Word siap diunggah: {suratTugasFileName}. Preview visual tersedia untuk PDF dan PNG.
+                        {suratTugas && suratTugasPreview && (
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "10px 12px", borderRadius: "8px", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
+                            <span style={{ fontSize: "0.8rem", color: "var(--brand-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {suratTugasFileName}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => window.open(suratTugasPreview, "_blank", "noopener,noreferrer")}
+                              className="icon-action-button"
+                              title="Preview dokumen di tab baru"
+                              aria-label="Preview dokumen di tab baru"
+                              style={{ flexShrink: 0 }}
+                            >
+                              <Eye size={18} />
+                            </button>
                           </div>
                         )}
                       </label>
