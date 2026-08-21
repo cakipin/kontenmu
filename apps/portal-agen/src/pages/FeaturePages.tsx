@@ -6094,47 +6094,20 @@ export function Library() {
   const libraryContents = useMemo(() => {
     if (!session) return [];
 
-    if (session.role === "siswa") {
+    const currentUser = 
+      apiUsers.find((user: any) => user.username === session.username) ||
+      data.users.find((user: any) => user.username === session.username);
 
-      const sessionSchoolId = session.sekolahId || (session as any).sekolah_id;
-      const studentSchool = sessionSchoolId
-        ? data.schools.find((school: any) => String(school.id) === String(sessionSchoolId))
-        : null;
-      const schoolLevel = getSchoolLevel(
-        studentSchool?.nama || (session as any).wilayah || "",
-      ).toLowerCase();
-      const matchesSchoolLevel = (target: string) => {
-        const normalizedTarget = String(target || "").toLowerCase();
-        if (!schoolLevel || !normalizedTarget || normalizedTarget === "umum" || normalizedTarget.includes("semua")) return true;
-        if (schoolLevel === "sd/mi") return normalizedTarget.includes("sd") || normalizedTarget.includes("mi");
-        if (schoolLevel === "smp/mts") return normalizedTarget.includes("smp") || normalizedTarget.includes("mts");
-        if (schoolLevel === "sma/ma/smk") return normalizedTarget.includes("sma") || normalizedTarget.includes("ma") || normalizedTarget.includes("smk");
-        return false;
-      };
+    if (session.role === "siswa") {
       const allocatedIsbns = new Set(
         data.allocations
           .filter((a) => a.studentUsername === session.username)
           .map((a) => String(a.isbn).trim()),
       );
-      const currentStudent =
-        apiUsers.find((user: any) => user.username === session.username) ||
-        data.users.find((user: any) => user.username === session.username);
-      const books = [...apiBooks, ...data.books];
+      // For siswa, if a book is explicitly allocated, they have full access to it.
+      // We don't need to strictly check school level or class because the Admin already verified it when allocating.
       return data.contents.filter(
-        (content) => {
-          if (
-            !content.isbn ||
-            !allocatedIsbns.has(String(content.isbn).trim()) ||
-            !matchesSchoolLevel(content.target)
-          ) {
-            return false;
-          }
-          const book = books.find(
-            (candidate: any) =>
-              String(candidate.isbn).trim() === String(content.isbn).trim(),
-          );
-          return matchesClass(currentStudent?.kelas, book?.kelas);
-        },
+        (content) => content.isbn && allocatedIsbns.has(String(content.isbn).trim())
       );
     }
 
@@ -6144,8 +6117,26 @@ export function Library() {
           .filter((a: any) => a.studentUsername === session.username)
           .map((a: any) => String(a.isbn).trim()),
       );
+      
+      const teacherMapel = (currentUser?.kelas || "").toLowerCase();
+      const books = [...apiBooks, ...data.books];
 
-      return data.contents.filter((c: any) => c.isbn && allocatedIsbns.has(String(c.isbn).trim()));
+      return data.contents.filter((content: any) => {
+        if (!content.isbn) return false;
+        
+        // 1. If explicitly allocated, grant access
+        if (allocatedIsbns.has(String(content.isbn).trim())) return true;
+        
+        // 2. If no explicit allocation, check if the content matches the teacher's mapel
+        if (teacherMapel && teacherMapel !== "") {
+           const book = books.find((b: any) => String(b.isbn).trim() === String(content.isbn).trim());
+           if (book && book.mapel && book.mapel.toLowerCase().includes(teacherMapel)) {
+             return true;
+           }
+        }
+        
+        return false;
+      });
     }
 
     return data.contents;
