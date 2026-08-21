@@ -626,7 +626,6 @@ export function loadRemoteAppData(): Promise<AppData | null> {
         const baseData = (fullPayload?.found && fullPayload?.data) ? fullPayload.data : initialData;
         if (baseData) {
           const fullResult = normalizeAppData(baseData);
-          const fullResult = normalizeAppData(fullPayload.data);
           
           if (allocationsPayload?.success && Array.isArray(allocationsPayload.data)) {
              fullResult.allocations = allocationsPayload.data;
