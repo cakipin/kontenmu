@@ -6112,6 +6112,23 @@ export function Library() {
     }
 
     if (session.role === "guru") {
+      const sessionSchoolId = session.sekolahId || (session as any).sekolah_id;
+      const guruSchool = sessionSchoolId
+        ? data.schools.find((school: any) => String(school.id) === String(sessionSchoolId))
+        : null;
+      const schoolLevel = getSchoolLevel(
+        guruSchool?.nama || (session as any).wilayah || "",
+      ).toLowerCase();
+      
+      const matchesSchoolLevel = (target: string) => {
+        const normalizedTarget = String(target || "").toLowerCase();
+        if (!schoolLevel || !normalizedTarget || normalizedTarget === "umum" || normalizedTarget.includes("semua")) return true;
+        if (schoolLevel === "sd/mi") return normalizedTarget.includes("sd") || normalizedTarget.includes("mi");
+        if (schoolLevel === "smp/mts") return normalizedTarget.includes("smp") || normalizedTarget.includes("mts");
+        if (schoolLevel === "sma/ma/smk") return normalizedTarget.includes("sma") || normalizedTarget.includes("ma") || normalizedTarget.includes("smk");
+        return false;
+      };
+
       const allocatedIsbns = new Set(
         data.allocations
           .filter((a: any) => a.studentUsername === session.username)
@@ -6127,11 +6144,15 @@ export function Library() {
         // 1. If explicitly allocated, grant access
         if (allocatedIsbns.has(String(content.isbn).trim())) return true;
         
-        // 2. If no explicit allocation, check if the content matches the teacher's mapel
+        // 2. If no explicit allocation, check if the content matches the teacher's mapel AND school level
         if (teacherMapel && teacherMapel !== "") {
            const book = books.find((b: any) => String(b.isbn).trim() === String(content.isbn).trim());
            if (book && book.mapel && book.mapel.toLowerCase().includes(teacherMapel)) {
-             return true;
+             // Validate that this book belongs to the guru's school level
+             const target = content.target || book.jenjang || book.peruntukan || "";
+             if (matchesSchoolLevel(target)) {
+                 return true;
+             }
            }
         }
         

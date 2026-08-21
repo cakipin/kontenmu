@@ -663,11 +663,37 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
          
        if (currentRole === "guru") {
           const teacherMapel = (currentStudentClass || "").toLowerCase();
+          
+          // Get Guru's School Level
+          const sessionSchoolId = session?.sekolahId || (session as any)?.sekolah_id;
+          const guruSchool = sessionSchoolId
+             ? data.schools?.find((school: any) => String(school.id) === String(sessionSchoolId))
+             : null;
+          const schoolNameForLevel = guruSchool?.nama || (session as any)?.wilayah || "";
+          
+          // Basic getSchoolLevel logic inline
+          let sl = "";
+          const sn = schoolNameForLevel.toLowerCase();
+          if (sn.includes("sd") || sn.includes("mi") || sn.includes("sekolah dasar")) sl = "sd/mi";
+          else if (sn.includes("smp") || sn.includes("mts")) sl = "smp/mts";
+          else if (sn.includes("sma") || sn.includes("smk") || sn.includes("ma")) sl = "sma/ma/smk";
+          
           if (teacherMapel && teacherMapel !== "") {
              const allBooks = [...distributionBooks, ...(data.books || [])];
              allBooks.forEach(b => {
                 if (b.mapel && b.mapel.toLowerCase().includes(teacherMapel)) {
-                    allocatedIsbns.push(String(b.isbn).trim());
+                    // Check School Level
+                    const p = (b.jenjang || b.peruntukan || "").toLowerCase();
+                    let match = false;
+                    if (p === "umum" || p.includes("semua") || p === "") match = true;
+                    else if (sl === "sd/mi" && (p.includes("sd") || p.includes("mi"))) match = true;
+                    else if (sl === "smp/mts" && (p.includes("smp") || p.includes("mts"))) match = true;
+                    else if (sl === "sma/ma/smk" && (p.includes("sma") || p.includes("smk") || p.includes("ma"))) match = true;
+                    else if (!sl) match = true; // If school level unknown, show it
+                    
+                    if (match) {
+                        allocatedIsbns.push(String(b.isbn).trim());
+                    }
                 }
              });
           }
@@ -696,9 +722,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
          }))
          .filter((row) => row.book);
     }
-  }, [currentRole, session?.username, data.allocations, data.learning, distributionBooks, data.books, currentStudentClass]);
-
-  const [librarySearch, setLibrarySearch] = useState("");
+  }, [currentRole, session?.username, data.allocations, data.learning, distributionBooks, data.books, currentStudentClass, session, data.schools]);const [librarySearch, setLibrarySearch] = useState("");
   const [libraryPage, setLibraryPage] = useState(1);
   const [libraryMapel, setLibraryMapel] = useState("");
   const libraryPageSize = 10;
