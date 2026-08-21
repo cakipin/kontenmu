@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { desc, eq, or, sql } from "drizzle-orm";
 import { users } from "../../src/db/schema";
 import bcrypt from "bcryptjs";
-import { getTenantSchoolId, tenantError } from "./_tenant";
+import { getTenantSchoolId, resolveTenantSchoolId, tenantError } from "./_tenant";
 
 export const onRequestGet = async (context: any) => {
   try {
@@ -13,7 +13,7 @@ export const onRequestGet = async (context: any) => {
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "1000", 10);
     const offset = (page - 1) * limit;
-    const tenantSchoolId = getTenantSchoolId(context);
+    const tenantSchoolId = await resolveTenantSchoolId(context);
     if (tenantSchoolId === 0) return tenantError();
     const auth = context.data?.auth || {};
     const tenantWhere = auth.role === "pending"
@@ -106,8 +106,23 @@ export const onRequestPost = async (context: any) => {
     // Untuk public request (unauthenticated), tenantSchoolId akan null, yang valid.
     let tenantSchoolId = null;
     if (Object.keys(auth).length > 0) {
-      tenantSchoolId = getTenantSchoolId(context);
-      if (tenantSchoolId === 0) return tenantError();
+      tenantSchoolId = await resolveTenantSchoolId(context);
+      if (tenantSchoolId === 0) {
+        // Auto-heal: Jika token tidak memiliki sekolah_id, coba cari dari database berdasarkan username atau wilayah
+        try {
+          const rawDb = context.env.DB;
+          const userDb = await rawDb.prepare("SELECT sekolah_id, wilayah FROM users WHERE username = ? LIMIT 1").bind(auth.username).first<{ sekolah_id: number, wilayah: string }>();
+          if (userDb?.sekolah_id) {
+            tenantSchoolId = userDb.sekolah_id;
+          } else if (userDb?.wilayah) {
+            const schoolDb = await rawDb.prepare("SELECT id FROM schools WHERE nama = ? LIMIT 1").bind(userDb.wilayah).first<{ id: number }>();
+            if (schoolDb?.id) tenantSchoolId = schoolDb.id;
+          }
+        } catch (e) {
+          // Ignore DB error and let it fail below
+        }
+        if (!tenantSchoolId || tenantSchoolId === 0) return tenantError();
+      }
     }
     
     const passwordHash = user.password ? await bcrypt.hash(user.password, 10) : "";

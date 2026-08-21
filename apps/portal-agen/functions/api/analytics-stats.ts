@@ -1,6 +1,6 @@
 const jsonHeaders = { "Content-Type": "application/json" };
 
-import { getTenantSchoolId, tenantError } from "./_tenant";
+import { getTenantSchoolId, resolveTenantSchoolId, tenantError } from "./_tenant";
 
 export const onRequestGet = async (context: any) => {
   try {
@@ -19,7 +19,7 @@ export const onRequestGet = async (context: any) => {
     const bindings: any[] = [];
     
     if (auth.role !== "superadmin") {
-      const tenantSchoolId = getTenantSchoolId(context);
+      const tenantSchoolId = await resolveTenantSchoolId(context);
       if (tenantSchoolId === 0) return tenantError();
       tenantWhere = " AND sekolah_id = ?";
       bindings.push(tenantSchoolId);

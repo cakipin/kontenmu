@@ -1,11 +1,11 @@
-import { getTenantSchoolId, tenantError } from "../_tenant";
+import { getTenantSchoolId, resolveTenantSchoolId, tenantError } from "../_tenant";
 
 const jsonHeaders = { "Content-Type": "application/json" };
 
 export const onRequestGet = async (context: any) => {
   try {
     const auth = context.data?.auth || {};
-    const sekolahId = getTenantSchoolId(context);
+    const sekolahId = await resolveTenantSchoolId(context);
 
     if (auth.role !== "superadmin" && auth.role !== "sekolah") {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
@@ -48,7 +48,7 @@ export const onRequestGet = async (context: any) => {
 export const onRequestPatch = async (context: any) => {
   try {
     const auth = context.data?.auth || {};
-    const sekolahId = getTenantSchoolId(context);
+    const sekolahId = await resolveTenantSchoolId(context);
 
     if (auth.role !== "superadmin" && auth.role !== "sekolah") {
       return new Response(JSON.stringify({ error: "Forbidden" }), {

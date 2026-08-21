@@ -1,14 +1,27 @@
-import { getTenantSchoolId, tenantError } from "./_tenant";
+import { getTenantSchoolId, resolveTenantSchoolId, tenantError } from "./_tenant";
 
 const jsonHeaders = { "Content-Type": "application/json" };
 
 export const onRequestGet = async (context: any) => {
   try {
     const rawDb = context.env.DB;
-    const url = new URL(context.request.url);
-    const tenantSchoolId = getTenantSchoolId(context);
+    let tenantSchoolId = await resolveTenantSchoolId(context);
     
-    if (tenantSchoolId === 0) return tenantError();
+    if (tenantSchoolId === 0) {
+      const auth = context.data?.auth || {};
+      if (auth.username) {
+        try {
+          const userDb = await rawDb.prepare("SELECT sekolah_id, wilayah FROM users WHERE username = ? LIMIT 1").bind(auth.username).first();
+          if (userDb?.sekolah_id) {
+            tenantSchoolId = userDb.sekolah_id;
+          } else if (userDb?.wilayah) {
+            const schoolDb = await rawDb.prepare("SELECT id FROM schools WHERE nama = ? LIMIT 1").bind(userDb.wilayah).first();
+            if (schoolDb?.id) tenantSchoolId = schoolDb.id;
+          }
+        } catch(e) {}
+      }
+      if (!tenantSchoolId || tenantSchoolId === 0) return tenantError();
+    }
 
     let results;
     if (tenantSchoolId) {

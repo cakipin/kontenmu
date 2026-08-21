@@ -1,19 +1,12 @@
 const jsonHeaders = { "Content-Type": "application/json" };
 
 import { drizzle } from "drizzle-orm/d1";
-import { eq, desc, count, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { contents } from "../../src/db/schema";
 
 export const onRequestGet = async (context: any) => {
   try {
     const request = context.request;
-    const cacheUrl = new URL(request.url);
-    const cacheKey = new Request(cacheUrl.toString(), request);
-    const cache = caches.default;
-
-    let response = await cache.match(cacheKey);
-
-    if (!response) {
       if (!context.env.DB) {
         console.error("[GET /api/contents] Configuration Error: 'DB' binding is missing from environment variables.");
         return new Response(
@@ -73,17 +66,12 @@ export const onRequestGet = async (context: any) => {
         limit,
       });
 
-      response = new Response(payload, {
+      return new Response(payload, {
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "s-maxage=60", // Cache globally on Edge for 60 seconds
+          "Cache-Control": "no-store",
         },
       });
-
-      context.waitUntil(cache.put(cacheKey, response.clone()));
-    }
-
-    return response;
   } catch (error: any) {
     console.error("[GET /api/contents] Fatal Error:", error);
     

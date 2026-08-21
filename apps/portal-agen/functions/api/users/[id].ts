@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { eq, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { users } from "../../../src/db/schema";
-import { getTenantSchoolId, tenantError } from "../_tenant";
+import { getTenantSchoolId, resolveTenantSchoolId, tenantError } from "../_tenant";
 
 const jsonHeaders = { "Content-Type": "application/json" };
 
@@ -32,7 +32,7 @@ export const onRequestPut = async (context: any) => {
       });
     }
 
-    const tenantSchoolId = getTenantSchoolId(context);
+    const tenantSchoolId = await resolveTenantSchoolId(context);
     if (tenantSchoolId === 0) return tenantError();
     const sessionSchoolId = String(tenantSchoolId || "");
     const isPendingSelf = role === "pending";

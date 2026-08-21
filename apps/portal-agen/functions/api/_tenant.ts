@@ -9,6 +9,24 @@ export function getTenantSchoolId(context: any): number | null {
   return Number.isInteger(schoolId) && schoolId > 0 ? schoolId : 0;
 }
 
+
+export async function resolveTenantSchoolId(context: any): Promise<number | null> {
+  let schoolId = getTenantSchoolId(context);
+  if (schoolId === 0 && context.data?.auth?.username && context.env?.DB) {
+    try {
+      const rawDb = context.env.DB;
+      const userDb = await rawDb.prepare("SELECT sekolah_id, wilayah FROM users WHERE username = ? LIMIT 1").bind(context.data.auth.username).first();
+      if (userDb?.sekolah_id) {
+        schoolId = Number(userDb.sekolah_id);
+      } else if (userDb?.wilayah) {
+        const schoolDb = await rawDb.prepare("SELECT id FROM schools WHERE nama = ? LIMIT 1").bind(userDb.wilayah).first();
+        if (schoolDb?.id) schoolId = Number(schoolDb.id);
+      }
+    } catch (e) {}
+  }
+  return schoolId;
+}
+
 export function tenantError() {
   return new Response(
     JSON.stringify({ success: false, error: "Tenant sekolah pada sesi tidak valid" }),

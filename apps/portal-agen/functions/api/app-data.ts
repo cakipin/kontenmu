@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { appState } from "../../src/db/schema";
 import {
   filterTenantState,
-  getTenantSchoolId,
+  getTenantSchoolId, resolveTenantSchoolId,
   mergeTenantState,
   tenantError,
 } from "./_tenant";
@@ -79,7 +79,7 @@ export const onRequestGet = async (context: any) => {
     }
 
     const data: any = stateString ? JSON.parse(stateString) : {};
-    const tenantSchoolId = getTenantSchoolId(context);
+    const tenantSchoolId = await resolveTenantSchoolId(context);
     if (tenantSchoolId === 0) return tenantError();
     const allowedLearningUsers = isLite
       ? undefined
@@ -132,7 +132,7 @@ export const onRequestPut = async (context: any) => {
     let payload = await context.request.json();
     const rawDb = context.env.DB;
     const db = drizzle(rawDb);
-    const tenantSchoolId = getTenantSchoolId(context);
+    const tenantSchoolId = await resolveTenantSchoolId(context);
     if (tenantSchoolId === 0) return tenantError();
 
     if (tenantSchoolId) {
