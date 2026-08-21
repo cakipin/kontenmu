@@ -17,20 +17,19 @@ export const onRequestGet = async (context: any) => {
     
     const auth = context.data?.auth || {};
     let tenantWhere;
-    if (tenantSchoolId && tenantSchoolId !== 0) {
-      tenantWhere = auth.role === "pending"
-        ? or(eq(users.id, String(auth.sub || "")), eq(users.username, String(auth.username || "")))
-        : eq(users.sekolahId, tenantSchoolId);
+    if (auth.role === "superadmin" || auth.role === "agen") {
+      tenantWhere = undefined; // Fetch all users for superadmin/agen
+    } else if (auth.role === "pending") {
+      tenantWhere = or(eq(users.id, String(auth.sub || "")), eq(users.username, String(auth.username || "")));
+    } else if (tenantSchoolId && tenantSchoolId !== 0) {
+      tenantWhere = eq(users.sekolahId, tenantSchoolId);
     } else {
-      if (auth.role === "superadmin" || auth.role === "agen") {
-        tenantWhere = undefined; // Fetch all users for superadmin/agen (or filter differently on frontend)
-      } else if (auth.username && (auth.role === "siswa" || auth.role === "guru")) {
+      if (auth.username && (auth.role === "siswa" || auth.role === "guru")) {
         tenantWhere = eq(users.username, String(auth.username));
       } else {
         return tenantError();
       }
     }
-
 
     const [totalResult, result] = await Promise.all([
       ormDb.select({ value: sql`count(*)` }).from(users).where(tenantWhere),
