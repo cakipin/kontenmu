@@ -79,8 +79,14 @@ export const onRequestGet = async (context: any) => {
     }
 
     const data: any = stateString ? JSON.parse(stateString) : {};
+    
     const tenantSchoolId = await resolveTenantSchoolId(context);
-    if (tenantSchoolId === 0) return tenantError();
+    const auth = context.data?.auth || {};
+    // DO NOT return tenantError if they are siswa/guru, just let them through with schoolId 0
+    if (tenantSchoolId === 0 && auth.role !== "siswa" && auth.role !== "guru") {
+      return tenantError();
+    }
+
     const allowedLearningUsers = isLite
       ? undefined
       : await getAllowedLearningUsers(rawDb, context, tenantSchoolId);
