@@ -9,25 +9,29 @@ export const onRequestPost = async (context: any) => {
     if (tenantSchoolId === 0) return tenantError();
 
     const body = await context.request.json();
-    const sekolahId = tenantSchoolId || body.sekolahId;
+    let sekolahId = Number(tenantSchoolId || body.sekolahId);
     const { isbn, siswaId, studentUsername } = body;
     
     // Support both siswaId and studentUsername for backward compatibility
     const targetUserId = siswaId || studentUsername;
 
-    if (!sekolahId || !isbn || !targetUserId?.trim()) {
-      return new Response(JSON.stringify({ success: false, error: "sekolahId, isbn, dan siswaId wajib diisi" }), { status: 400, headers: jsonHeaders });
-    }
-
     // Relaxed check: allow any valid user to receive an allocation.
     const student = await rawDb.prepare(
-      "SELECT id FROM users WHERE (id = ? OR username = ?) LIMIT 1",
+      "SELECT id, sekolah_id FROM users WHERE (id = ? OR username = ?) LIMIT 1",
     )
-      .bind(targetUserId.trim(), targetUserId.trim())
+      .bind(targetUserId?.trim() || "", targetUserId?.trim() || "")
       .first();
 
     if (!student) {
-      return new Response(JSON.stringify({ success: false, error: "Pengguna tidak terdaftar pada sekolah sesi" }), { status: 403, headers: jsonHeaders });
+      return new Response(JSON.stringify({ success: false, error: "Pengguna tidak terdaftar" }), { status: 403, headers: jsonHeaders });
+    }
+
+    if (!sekolahId || isNaN(sekolahId)) {
+      sekolahId = Number(student.sekolah_id);
+    }
+
+    if (!sekolahId || isNaN(sekolahId) || !isbn || !targetUserId?.trim()) {
+      return new Response(JSON.stringify({ success: false, error: "sekolahId, isbn, dan siswaId wajib diisi valid" }), { status: 400, headers: jsonHeaders });
     }
 
     const existing = await rawDb.prepare(
