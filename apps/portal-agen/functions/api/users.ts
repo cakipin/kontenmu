@@ -22,7 +22,9 @@ export const onRequestGet = async (context: any) => {
         ? or(eq(users.id, String(auth.sub || "")), eq(users.username, String(auth.username || "")))
         : eq(users.sekolahId, tenantSchoolId);
     } else {
-      if (auth.username && (auth.role === "siswa" || auth.role === "guru")) {
+      if (auth.role === "superadmin" || auth.role === "agen") {
+        tenantWhere = undefined; // Fetch all users for superadmin/agen (or filter differently on frontend)
+      } else if (auth.username && (auth.role === "siswa" || auth.role === "guru")) {
         tenantWhere = eq(users.username, String(auth.username));
       } else {
         return tenantError();
