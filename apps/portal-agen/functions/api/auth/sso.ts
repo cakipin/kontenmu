@@ -6,7 +6,7 @@ export const onRequestPost = async (context: any) => {
   const jsonHeaders = { "Content-Type": "application/json" };
 
   try {
-    const { code, redirectUri } = await context.request.json();
+    const { code, redirectUri, userId } = await context.request.json();
 
     if (!code || !redirectUri) {
       return new Response(
@@ -93,52 +93,30 @@ export const onRequestPost = async (context: any) => {
     // Check existing by sso_id OR email OR username
     const ssoId = userData.id || userData.sub || "";
     const email = userData.email || "";
-    const identityConditions: string[] = [];
-    const identityValues: string[] = [];
-    if (ssoId) {
-      identityConditions.push("sso_id = ?");
-      identityValues.push(ssoId);
+    let existingUser = null;
+    if (userId) {
+      existingUser = await db
+        .prepare(
+          "SELECT id, role_slug, nama, initial, sekolah_id, status FROM users WHERE id = ?",
+        )
+        .bind(userId)
+        .first();
     }
-    if (email) {
-      identityConditions.push("lower(email) = lower(?)");
-      identityValues.push(email);
+
+    if (!existingUser) {
+      existingUser = await db
+        .prepare(
+          "SELECT id, role_slug, nama, initial, sekolah_id, status FROM users WHERE sso_id = ? OR email = ? OR username = ?",
+        )
+        .bind(ssoId, email, username)
+        .first();
     }
-    identityConditions.push("lower(username) = lower(?)");
-    identityValues.push(username);
 
-    const identityWhere = identityConditions.join(" OR ");
-    const matched = await db
-      .prepare(
-        `SELECT id, username, email, sso_id, role_slug, requested_role, nama,
-                initial, sekolah_id, status, wilayah, surat_tugas, masa_aktif,
-                updated_at
-           FROM users
-          WHERE ${identityWhere}`,
-      )
-      .bind(...identityValues)
-      .all<any>();
-    const candidates = matched.results || [];
-    const scoreCandidate = (candidate: any) =>
-      (candidate.sekolah_id ? 8 : 0) +
-      (candidate.surat_tugas ? 8 : 0) +
-      (candidate.requested_role ? 4 : 0) +
-      (candidate.status === "Menunggu Approve" ? 2 : 0) +
-      (ssoId && candidate.sso_id === ssoId ? 1 : 0);
-    candidates.sort((a: any, b: any) => scoreCandidate(b) - scoreCandidate(a));
-    const existingUser = candidates[0] || null;
-    const approvedCandidate = candidates.find(
-      (candidate: any) =>
-        candidate.status === "Aktif" &&
-        candidate.role_slug &&
-        candidate.role_slug !== "pending",
-    );
-
-    let finalRole = approvedCandidate?.role_slug || existingUser?.role_slug || "pending";
-    const finalStatus = approvedCandidate ? "Aktif" : existingUser?.status || "Aktif";
+    let finalRole = existingUser ? existingUser.role_slug : "pending";
     let finalNama =
       userData.name || (existingUser ? existingUser.nama : username);
 
-    if (existingUser && !approvedCandidate && (existingUser.status === "Nonaktif" || existingUser.status === "Ditolak")) {
+    if (existingUser && (existingUser.status === "Nonaktif" || existingUser.status === "Ditolak")) {
       return new Response(
         JSON.stringify({ error: "Akun Anda telah dinonaktifkan atau ditolak." }),
         { status: 403, headers: jsonHeaders },
@@ -186,46 +164,12 @@ export const onRequestPost = async (context: any) => {
           updated_at = CURRENT_TIMESTAMP, 
           sso_id = ?, 
           email = ?,
-          nama = ?,
-          role_slug = ?,
-          status = ?
+          nama = ?
         WHERE id = ?
       `,
         )
-        .bind(ssoId, email, finalNama, finalRole, finalStatus, existingUser.id)
+        .bind(ssoId, email, finalNama, existingUser.id)
         .run();
-
-      // Samakan record kembar historis agar sekolah dan dokumen onboarding
-      // terlihat konsisten pada daftar admin tanpa menghapus record apa pun.
-      if (candidates.length > 1) {
-        await db
-          .prepare(
-            `UPDATE users SET
-               role_slug = ?,
-               status = ?,
-               sekolah_id = COALESCE(?, sekolah_id),
-               wilayah = CASE WHEN ? <> '' THEN ? ELSE wilayah END,
-               surat_tugas = COALESCE(?, surat_tugas),
-               masa_aktif = COALESCE(?, masa_aktif),
-               updated_at = CURRENT_TIMESTAMP
-             WHERE ${identityWhere}`,
-          )
-          .bind(
-            finalRole,
-            finalStatus,
-            existingUser.sekolah_id || null,
-            existingUser.wilayah && existingUser.wilayah !== "SSO Login"
-              ? existingUser.wilayah
-              : "",
-            existingUser.wilayah && existingUser.wilayah !== "SSO Login"
-              ? existingUser.wilayah
-              : "",
-            existingUser.surat_tugas || null,
-            existingUser.masa_aktif || null,
-            ...identityValues,
-          )
-          .run();
-      }
     } else {
       // Insert new user
       await db
