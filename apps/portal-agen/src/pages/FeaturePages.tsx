@@ -6122,7 +6122,7 @@ export function Library() {
       const allocatedIsbns = new Set(
         data.allocations
           .filter((a) => a.studentUsername === session.username)
-          .map((a) => a.isbn),
+          .map((a) => String(a.isbn).trim()),
       );
       const currentStudent =
         apiUsers.find((user: any) => user.username === session.username) ||
@@ -6132,14 +6132,14 @@ export function Library() {
         (content) => {
           if (
             !content.isbn ||
-            !allocatedIsbns.has(content.isbn) ||
+            !allocatedIsbns.has(String(content.isbn).trim()) ||
             !matchesSchoolLevel(content.target)
           ) {
             return false;
           }
           const book = books.find(
             (candidate: any) =>
-              String(candidate.isbn) === String(content.isbn),
+              String(candidate.isbn).trim() === String(content.isbn).trim(),
           );
           return matchesClass(currentStudent?.kelas, book?.kelas);
         },
@@ -6150,10 +6150,10 @@ export function Library() {
       const allocatedIsbns = new Set(
         data.allocations
           .filter((a: any) => a.studentUsername === session.username)
-          .map((a: any) => String(a.isbn)),
+          .map((a: any) => String(a.isbn).trim()),
       );
 
-      return data.contents.filter((c: any) => c.isbn && allocatedIsbns.has(String(c.isbn)));
+      return data.contents.filter((c: any) => c.isbn && allocatedIsbns.has(String(c.isbn).trim()));
     }
 
     return data.contents;
