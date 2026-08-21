@@ -5558,11 +5558,21 @@ export function TeacherAccess() {
   const [selectedBuku, setSelectedBuku] = useState<any[]>([]);
   const [message, setMessage] = useState("");
 
-  const removeAllocation = (allocationId: string) => {
-    setData((current) => ({
-      ...current,
-      allocations: current.allocations.filter((a) => a.id !== allocationId),
-    }));
+  const removeAllocation = async (allocationId: string) => {
+    try {
+      const res = await fetch(`/api/allocate?id=${allocationId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const j = await res.json().catch(()=>({}));
+        alert(j.error || "Gagal menghapus alokasi dari database");
+        return;
+      }
+      setData((current) => ({
+        ...current,
+        allocations: current.allocations.filter((a) => a.id !== allocationId),
+      }));
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    }
   };
 
   const handleEdit = (teacher: any) => {

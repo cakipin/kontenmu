@@ -19,8 +19,9 @@ export const onRequestPost = async (context: any) => {
       return new Response(JSON.stringify({ success: false, error: "sekolahId, isbn, dan siswaId wajib diisi" }), { status: 400, headers: jsonHeaders });
     }
 
+    // Relaxed check: allow any valid user to receive an allocation.
     const student = await rawDb.prepare(
-      "SELECT id FROM users WHERE (id = ? OR username = ?) AND role_slug IN ('siswa', 'guru') LIMIT 1",
+      "SELECT id FROM users WHERE (id = ? OR username = ?) LIMIT 1",
     )
       .bind(targetUserId.trim(), targetUserId.trim())
       .first();
