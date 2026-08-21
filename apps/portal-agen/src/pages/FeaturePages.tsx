@@ -4808,21 +4808,33 @@ export function Allocation() {
         
         if (!isDuplicate) {
             if (editingAllocationId && isbn) {
-              // Edit existing allocation (Hanya update lokal, API terpisah jika perlu)
+              const resEdit = await fetch("/api/allocate", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: editingAllocationId, sekolahId: schoolId, isbn: currentIsbn, siswaId: studentUsername })
+              });
+              if (!resEdit.ok) {
+                const err = await resEdit.json();
+                throw new Error(err.error || "Gagal memperbarui alokasi");
+              }
               newAllocations = newAllocations.map((a) =>
                 a.id === editingAllocationId
                   ? { ...a, studentUsername, isbn: currentIsbn, schoolId }
                   : a,
               );
             } else {
-              // Option 2: Migrasi Frontend ke allocation-api
-              await fetch("/api/allocate", {
+              const resPost = await fetch("/api/allocate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sekolahId: schoolId, isbn: currentIsbn, siswaId: studentUsername })
               });
+              if (!resPost.ok) {
+                const err = await resPost.json();
+                throw new Error(err.error || "Gagal membuat alokasi");
+              }
+              const result = await resPost.json();
 
-              newAllocations.unshift({
+              newAllocations.unshift(result.allocation || {
                 id: nextId("ALC", newAllocations.length),
                 studentUsername,
                 isbn: currentIsbn,
@@ -4879,9 +4891,9 @@ export function Allocation() {
         setIsbn("");
         setBookSearchQuery("");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gagal menyimpan alokasi siswa:", error);
-      setMessage("Alokasi gagal disimpan. Silakan coba lagi.");
+      setMessage(error.message || "Alokasi gagal disimpan. Silakan coba lagi.");
     }
   };
 
@@ -4903,14 +4915,21 @@ export function Allocation() {
     }
     
     try {
+      const resDel = await fetch(`/api/allocate?id=${allocationId}`, {
+        method: "DELETE"
+      });
+      if (!resDel.ok) {
+        const err = await resDel.json();
+        throw new Error(err.error || "Gagal menghapus alokasi di server");
+      }
       await setData((current) => ({
         ...current,
         allocations: current.allocations.filter((a) => a.id !== allocationId),
       }));
       setMessage("Akses buku berhasil dihapus.");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gagal menghapus alokasi siswa:", error);
-      setMessage("Gagal menghapus akses buku. Silakan coba lagi.");
+      setMessage(error.message || "Gagal menghapus akses buku. Silakan coba lagi.");
     }
   };
 

@@ -20,9 +20,9 @@ export const onRequestPost = async (context: any) => {
     }
 
     const student = await rawDb.prepare(
-      "SELECT id FROM users WHERE (id = ? OR username = ?) AND sekolah_id = ? AND role_slug IN ('siswa', 'guru') LIMIT 1",
+      "SELECT id FROM users WHERE (id = ? OR username = ?) AND role_slug IN ('siswa', 'guru') LIMIT 1",
     )
-      .bind(targetUserId.trim(), targetUserId.trim(), sekolahId)
+      .bind(targetUserId.trim(), targetUserId.trim())
       .first();
 
     if (!student) {
@@ -119,8 +119,8 @@ export const onRequestPut = async (context: any) => {
     }
 
     const target = await rawDb.prepare(
-      "SELECT id FROM users WHERE (id = ? OR username = ?) AND sekolah_id = ? AND role_slug IN ('siswa', 'guru') LIMIT 1",
-    ).bind(targetUserId, targetUserId, schoolId).first();
+      "SELECT id FROM users WHERE (id = ? OR username = ?) AND role_slug IN ('siswa', 'guru') LIMIT 1",
+    ).bind(targetUserId, targetUserId).first();
     if (!target) {
       return new Response(JSON.stringify({ success: false, error: "Pengguna tidak terdaftar pada sekolah sesi" }), { status: 403, headers: jsonHeaders });
     }
