@@ -738,9 +738,9 @@ function AppContent() {
       if (!res.ok) return;
       const json = (await res.json()) as { success?: boolean; data?: any[] };
       const allUsers: any[] = json.data ?? [];
-      // Tampilkan user pending (role=pending) atau menunggu approve
+      // Pengajuan baru boleh diproses setelah pengguna menyelesaikan onboarding.
       const pending = allUsers.filter(
-        (u) => u.role === "pending" || u.status === "Menunggu Approve",
+        (u) => u.status === "Menunggu Approve",
       );
       setPendingApiUsers(pending);
     } catch {

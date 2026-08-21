@@ -140,6 +140,38 @@ export const onRequestPut = async (context: any) => {
       if (data[inputKey] !== undefined) updateData[columnKey] = data[inputKey];
     }
     const requestedSchoolId = data.sekolah_id ?? data.sekolahId;
+
+    if (data.status === "Aktif" && ["sekolah", "guru", "siswa"].includes(String(data.role || ""))) {
+      const approvalSchoolId = Number(tenantSchoolId || requestedSchoolId || existing.sekolahId);
+      if (!Number.isInteger(approvalSchoolId) || approvalSchoolId <= 0) {
+        return new Response(JSON.stringify({ success: false, error: "Sekolah wajib dilengkapi sebelum approval" }), {
+          status: 400,
+          headers: jsonHeaders,
+        });
+      }
+
+      const school = await context.env.DB.prepare(
+        "SELECT id FROM master_data_sekolah WHERE id = ? LIMIT 1",
+      ).bind(approvalSchoolId).first<{ id: number }>();
+      if (Number(school?.id) !== approvalSchoolId) {
+        return new Response(JSON.stringify({ success: false, error: "Sekolah tidak valid" }), {
+          status: 400,
+          headers: jsonHeaders,
+        });
+      }
+
+      if (data.role === "sekolah") {
+        const approvalDocument = data.suratTugas ?? existing.suratTugas;
+        const approvalPeriod = data.masaAktif ?? existing.masaAktif;
+        if (!String(approvalDocument || "").startsWith("/api/media/") || !String(approvalPeriod || "").trim()) {
+          return new Response(JSON.stringify({ success: false, error: "Surat tugas dan masa aktif wajib dilengkapi sebelum approval" }), {
+            status: 400,
+            headers: jsonHeaders,
+          });
+        }
+      }
+    }
+
     if (tenantSchoolId) {
       updateData.sekolahId = tenantSchoolId;
     } else if (requestedSchoolId !== undefined) {
