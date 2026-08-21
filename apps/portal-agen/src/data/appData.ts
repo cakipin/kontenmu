@@ -577,39 +577,9 @@ function normalizeAppData(data: AppData): AppData {
 // Digunakan agar saat pindah halaman, data langsung muncul (bukan kosong)
 let cachedRemoteData: AppData | null = null;
 
-const LS_CONTENTS_KEY = "kontenmu_contents_cache";
-
-function readContentsFromLocalStorage(): AppData["contents"] | null {
-  try {
-    const raw = localStorage.getItem(LS_CONTENTS_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function writeContentsToLocalStorage(contents: AppData["contents"]) {
-  try {
-    if (contents && contents.length > 0) {
-      localStorage.setItem(LS_CONTENTS_KEY, JSON.stringify(contents));
-    }
-  } catch {
-    // ignore
-  }
-}
-
 export function loadAppData(): AppData {
-  if (cachedRemoteData) return cachedRemoteData;
-  // Saat refresh: langsung isi contents dari localStorage (0 detik, tanpa network)
-  const base = normalizeAppData(seedAppData);
-  const lsContents = readContentsFromLocalStorage();
-  if (lsContents) {
-    base.contents = lsContents;
-  }
-  return base;
+  // Selalu mulai dari seed netral. Data tenant/distribusi hanya berasal dari API.
+  return normalizeAppData(seedAppData);
 }
 
 let remoteAppPromise: Promise<AppData | null> | null = null;
@@ -633,15 +603,6 @@ export function loadRemoteAppData(): Promise<AppData | null> {
       
       const result = normalizeAppData(payload.data);
       
-      // FIX: Jangan hapus contents dan users jika sudah ada di cache!
-      const local = loadAppData();
-      if (local.contents.length > 0) {
-        result.contents = local.contents;
-      }
-      if (local.users.length > 0) {
-        result.users = local.users;
-      }
-      
       cachedRemoteData = result;
 
       // Beritahu UI agar langsung render data lite tanpa menunggu full data
@@ -662,7 +623,9 @@ export function loadRemoteAppData(): Promise<AppData | null> {
         fetch("/api/users?page=1&limit=2000", { cache: "no-store" }).then(res => res.json()).catch(() => null),
         fetch("/api/allocations", { cache: "no-store" }).then(res => res.json()).catch(() => null)
       ]).then(([fullPayload, contentsPayload, usersPayload, allocationsPayload]) => {
-        if (fullPayload?.found && fullPayload?.data) {
+        const baseData = (fullPayload?.found && fullPayload?.data) ? fullPayload.data : initialData;
+        if (baseData) {
+          const fullResult = normalizeAppData(baseData);
           const fullResult = normalizeAppData(fullPayload.data);
           
           if (allocationsPayload?.success && Array.isArray(allocationsPayload.data)) {
@@ -671,14 +634,7 @@ export function loadRemoteAppData(): Promise<AppData | null> {
           
           // Sisipkan hasil dari endpoint mandiri ke dalam state (Decoupled API)
           if (contentsPayload?.success && Array.isArray(contentsPayload.contents)) {
-            // Jangan overwrite dengan array kosong jika fullResult.contents (dari KV) memiliki data!
-            if (contentsPayload.contents.length > 0 || !fullResult.contents || fullResult.contents.length === 0) {
-              fullResult.contents = contentsPayload.contents;
-              // Simpan ke localStorage agar refresh berikutnya 0 detik
-              writeContentsToLocalStorage(fullResult.contents);
-            }
-          } else if (cachedRemoteData && cachedRemoteData.contents.length > 0) {
-            fullResult.contents = cachedRemoteData.contents;
+            fullResult.contents = contentsPayload.contents;
           }
 
           const apiUsers = Array.isArray(usersPayload?.data)
@@ -688,8 +644,6 @@ export function loadRemoteAppData(): Promise<AppData | null> {
               : null;
           if (usersPayload?.success && apiUsers) {
             fullResult.users = apiUsers;
-          } else if (cachedRemoteData && cachedRemoteData.users.length > 0) {
-            fullResult.users = cachedRemoteData.users;
           }
           console.log("Full data fetched successfully", {
             contentsLength: fullResult.contents.length,
