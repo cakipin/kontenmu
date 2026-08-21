@@ -9,6 +9,17 @@ import { getTenantSchoolId, tenantError } from "./_tenant";
 export const onRequestGet = async (context: any) => {
   try {
     const ormDb = drizzle(context.env.DB);
+    const existingUsername = await ormDb
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.username, String(user.username)))
+      .get();
+    if (existingUsername) {
+      return new Response(JSON.stringify({ error: "Username sudah digunakan" }), {
+        status: 409,
+        headers: jsonHeaders,
+      });
+    }
     const url = new URL(context.request.url);
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "1000", 10);
@@ -136,11 +147,8 @@ export const onRequestPost = async (context: any) => {
     });
   } catch (error: any) {
     console.error("[POST /api/users] Error:", error);
-    const isDuplicateUsername = String(error?.message || "").includes(
-      "UNIQUE constraint failed: users.username",
-    );
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: isDuplicateUsername ? 409 : 500,
+    return new Response(JSON.stringify({ error: "Gagal membuat akun" }), {
+      status: 500,
       headers: jsonHeaders,
     });
   }
