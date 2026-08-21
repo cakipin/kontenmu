@@ -52,6 +52,7 @@ const ROUTE_POLICIES: readonly RoutePolicy[] = [
   { methods: ["POST"], match: exact("/api/analytics"), roles: ACTIVE_ROLES },
   { methods: ["POST"], match: exact("/api/track-view"), roles: ACTIVE_ROLES },
   { methods: ["GET"], match: exact("/api/users"), roles: [...ACTIVE_ROLES, "pending"] },
+  { methods: ["GET"], match: exact("/api/debug-siswa"), roles: "public" },
   { methods: ["POST"], match: exact("/api/users"), roles: "public" },
   { methods: ["PUT"], match: pattern(/^\/api\/users\/[^/]+$/), roles: ["superadmin", "sekolah", "pending"] },
   { methods: ["DELETE"], match: pattern(/^\/api\/users\/[^/]+$/), roles: ["superadmin"] },
