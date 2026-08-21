@@ -1,10 +1,10 @@
 export const onRequestGet = async (context: any) => {
   try {
     const rawDb = context.env.DB;
-    const url = new URL(context.request.url);
-    const username = url.searchParams.get("username") || "siswates1";
-    const rows = await rawDb.prepare("SELECT * FROM Alokasi_Siswa WHERE siswa_id = ?").bind(username).all();
-    return new Response(JSON.stringify(rows.results, null, 2), { headers: { "Content-Type": "application/json" } });
+    await rawDb.prepare("INSERT INTO Alokasi_Siswa (siswa_id, sekolah_id, isbn) VALUES ('test-null-string', 'null', '123')").run();
+    const row = await rawDb.prepare("SELECT * FROM Alokasi_Siswa WHERE siswa_id = 'test-null-string'").first();
+    await rawDb.prepare("DELETE FROM Alokasi_Siswa WHERE siswa_id = 'test-null-string'").run();
+    return new Response(JSON.stringify(row), { headers: { "Content-Type": "application/json" } });
   } catch (e: any) {
     return new Response(e.message, { status: 500 });
   }
