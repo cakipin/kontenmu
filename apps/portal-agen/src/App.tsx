@@ -823,6 +823,7 @@ function AppContent() {
     if (!session) {
       localStorage.removeItem("kontenmu_books_cache");
       localStorage.removeItem("kontenmu_users_cache");
+      localStorage.removeItem("kontenmu_contents_cache");
     }
   }, [session]);
 
@@ -832,6 +833,7 @@ function AppContent() {
       if (navEntries.length > 0 && (navEntries[0] as PerformanceNavigationTiming).type === "reload") {
         localStorage.removeItem("kontenmu_books_cache");
         localStorage.removeItem("kontenmu_users_cache");
+        localStorage.removeItem("kontenmu_contents_cache");
       }
     }
   }, []);
