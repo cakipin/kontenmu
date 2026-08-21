@@ -3482,10 +3482,10 @@ export function SchoolUsers() {
         "",
     ).toUpperCase();
 
-    if (/\b(SMP|MTS)\b/.test(schoolLevel)) {
+    if (/(SMP|MTS)/.test(schoolLevel)) {
       return ["SMP Kelas VII", "SMP Kelas VIII", "SMP Kelas IX"];
     }
-    if (/\b(SD|MI)\b/.test(schoolLevel)) {
+    if (/(SD|MI)/.test(schoolLevel)) {
       return [
         "SD Kelas I",
         "SD Kelas II",
@@ -3495,13 +3495,13 @@ export function SchoolUsers() {
         "SD Kelas VI",
       ];
     }
-    if (/\bSMK\b/.test(schoolLevel)) {
+    if (/SMK/.test(schoolLevel)) {
       return ["SMK Kelas X", "SMK Kelas XI", "SMK Kelas XII"];
     }
-    if (/\b(SMA|MA)\b/.test(schoolLevel)) {
+    if (/(SMA|MA)/.test(schoolLevel)) {
       return ["SMA Kelas X", "SMA Kelas XI", "SMA Kelas XII"];
     }
-    if (/\b(PAUD|TK|RA)\b/.test(schoolLevel)) return ["PAUD/TK"];
+    if (/(PAUD|TK|RA)/.test(schoolLevel)) return ["PAUD/TK"];
 
     // Pertahankan fallback lama untuk sekolah yang jenjangnya belum terisi.
     return [
@@ -6029,44 +6029,21 @@ export function Library() {
   const [apiUsers, setApiUsers] = useState<any[]>([]);
   useEffect(() => {
     let active = true;
-    const isTargetRole = session?.role === "guru" || session?.role === "siswa";
-    const CACHE_TTL_MS = 15 * 60 * 1000; // 15 menit
 
-    const fetchWithCache = (url: string, cacheKey: string, setter: (data: any) => void) => {
-      // --- Logika Caching dengan TTL: Cek apakah ada di cache lokal dan masih segar ---
-      if (isTargetRole) {
-        const cachedRaw = localStorage.getItem(cacheKey);
-        if (cachedRaw) {
-          try {
-            const { data: cachedData, cachedAt } = JSON.parse(cachedRaw);
-            const isStillFresh = Date.now() - cachedAt < CACHE_TTL_MS;
-            if (isStillFresh && Array.isArray(cachedData)) {
-              setter(cachedData);
-              return; // Gunakan cache, skip fetch API
-            }
-          } catch (e) {
-            // Abaikan error parse dan lanjut fetch
-          }
-        }
-      }
-
-      fetch(url)
+    const fetchAuthoritative = (url: string, setter: (data: any) => void) => {
+      fetch(url, { cache: "no-store" })
         .then((res) => res.json())
         .then((payload) => {
           if (active && payload?.success && Array.isArray(payload.data)) {
             setter(payload.data);
-            // --- Logika Caching: Simpan hasil fetch baru ke cache dengan timestamp ---
-            if (isTargetRole) {
-              localStorage.setItem(cacheKey, JSON.stringify({ data: payload.data, cachedAt: Date.now() }));
-            }
           }
         })
         .catch(() => {});
     };
 
     const apiBase = import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev";
-    fetchWithCache(`${apiBase}/api/books`, "kontenmu_books_cache", setApiBooks);
-    fetchWithCache(`${apiBase}/api/users`, "kontenmu_users_cache", setApiUsers);
+    fetchAuthoritative(`${apiBase}/api/books`, setApiBooks);
+    fetchAuthoritative(`${apiBase}/api/users`, setApiUsers);
 
     return () => {
       active = false;
