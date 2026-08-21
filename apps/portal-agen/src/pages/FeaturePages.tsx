@@ -7133,9 +7133,10 @@ function RelatedContents({
       <h3 style={{ fontSize: "1rem", fontWeight: 600, margin: "0 0 12px" }}>
         Materi Terkait Buku Ini
       </h3>
+      <div style={{ display: "flex", gap: "24px", overflowX: "auto", paddingBottom: "8px", scrollbarWidth: "thin" }}>
 
       {infografis.length > 0 && (
-        <div style={{ marginBottom: "16px" }}>
+        <div style={{ minWidth: "max-content" }}>
           <h4
             style={{
               fontSize: "0.9rem",
@@ -7147,15 +7148,7 @@ function RelatedContents({
           >
             Info Grafis
           </h4>
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              overflowX: "auto",
-              paddingBottom: "8px",
-              scrollbarWidth: "thin",
-            }}
-          >
+          <div style={{ display: "flex", gap: "12px" }}>
             {infografis.map((c) => (
               <div key={c.id} style={{ width: "160px", flexShrink: 0 }}>
                 <ContentThumbnail content={c} onPlay={() => onPlay(c)} />
@@ -7179,7 +7172,7 @@ function RelatedContents({
       )}
 
       {videos.length > 0 && (
-        <div style={{ marginBottom: "16px" }}>
+        <div style={{ minWidth: "max-content" }}>
           <h4
             style={{
               fontSize: "0.9rem",
@@ -7191,15 +7184,7 @@ function RelatedContents({
           >
             Video
           </h4>
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              overflowX: "auto",
-              paddingBottom: "8px",
-              scrollbarWidth: "thin",
-            }}
-          >
+          <div style={{ display: "flex", gap: "12px" }}>
             {videos.map((c) => (
               <div key={c.id} style={{ width: "160px", flexShrink: 0 }}>
                 <ContentThumbnail content={c} onPlay={() => onPlay(c)} />
@@ -7223,7 +7208,7 @@ function RelatedContents({
       )}
 
       {games.length > 0 && (
-        <div style={{ marginBottom: "16px" }}>
+        <div style={{ minWidth: "max-content" }}>
           <h4
             style={{
               fontSize: "0.9rem",
@@ -7239,9 +7224,6 @@ function RelatedContents({
             style={{
               display: "flex",
               gap: "12px",
-              overflowX: "auto",
-              paddingBottom: "8px",
-              scrollbarWidth: "thin",
             }}
           >
             {games.map((c) => (
@@ -7265,6 +7247,7 @@ function RelatedContents({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
