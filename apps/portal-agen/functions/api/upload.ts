@@ -17,6 +17,8 @@ const ALLOWED_CONTENT_TYPES = new Set([
   "video/webm",
   // Document
   "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   // HTML5 game archives
   "application/zip",
   "application/x-zip-compressed",
@@ -32,6 +34,8 @@ const EXTENSION_MAP: Record<string, string> = {
   "video/mp4": "mp4",
   "video/webm": "webm",
   "application/pdf": "pdf",
+  "application/msword": "doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
   "application/zip": "zip",
   "application/x-zip-compressed": "zip",
 };
@@ -45,6 +49,8 @@ const ONBOARDING_DOCUMENT_TYPES = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
 
 /** Generate nama file aman menggunakan crypto random */
@@ -91,7 +97,7 @@ export const onRequestPost = async (context: any) => {
       }
       if (!ONBOARDING_DOCUMENT_TYPES.has(mimeType)) {
         return new Response(
-          JSON.stringify({ error: "Surat tugas harus berupa PDF, JPG, PNG, atau WebP." }),
+          JSON.stringify({ error: "Surat tugas harus berupa PDF, PNG, DOC, atau DOCX." }),
           { status: 415, headers: jsonHeaders },
         );
       }

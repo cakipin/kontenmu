@@ -15,7 +15,7 @@ function makeInitial(name: string) {
 export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { session, setCustomSession } = useAuth();
+  const { setCustomSession } = useAuth();
   const [status, setStatus] = useState("Memproses autentikasi...");
   const [error, setError] = useState<string | null>(null);
   const effectRan = useRef(false);
@@ -44,7 +44,6 @@ export default function OAuthCallback() {
           body: JSON.stringify({
             code,
             redirectUri: `${window.location.origin}/oauth/callback`,
-            userId: session?.id,
           }),
         });
 

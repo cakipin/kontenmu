@@ -8,9 +8,23 @@ const jsonHeaders = { "Content-Type": "application/json" };
 
 export const onRequestPut = async (context: any) => {
   try {
-    const id = String(context.params.id || "");
+    const payload = context.data?.auth || {};
+    const role = String(payload.role || "");
+    // Untuk onboarding, sub token adalah identitas yang otoritatif. Ini juga
+    // menangani sesi SSO lama yang sempat menyimpan ID frontend yang keliru.
+    let id = role === "pending"
+      ? String(payload.sub || "")
+      : String(context.params.id || "");
     const ormDb = drizzle(context.env.DB);
-    const existing = await ormDb.select().from(users).where(eq(users.id, id)).get();
+    let existing = await ormDb.select().from(users).where(eq(users.id, id)).get();
+    if (!existing && role === "pending" && payload.username) {
+      existing = await ormDb
+        .select()
+        .from(users)
+        .where(eq(users.username, String(payload.username)))
+        .get();
+      if (existing) id = existing.id;
+    }
     if (!existing) {
       return new Response(JSON.stringify({ success: false, error: "User tidak ditemukan" }), {
         status: 404,
@@ -18,12 +32,10 @@ export const onRequestPut = async (context: any) => {
       });
     }
 
-    const payload = context.data?.auth || {};
-    const role = String(payload.role || "");
     const tenantSchoolId = getTenantSchoolId(context);
     if (tenantSchoolId === 0) return tenantError();
     const sessionSchoolId = String(tenantSchoolId || "");
-    const isPendingSelf = role === "pending" && String(payload.sub || "") === id;
+    const isPendingSelf = role === "pending";
     if (
       role !== "superadmin" &&
       !isPendingSelf &&

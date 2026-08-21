@@ -1427,11 +1427,14 @@ function AppContent() {
                                     <div>Masa: {user.masaAktif}</div>
                                   )}
                                   {user.suratTugas && (
-                                    <div
+                                    <a
+                                      href={user.suratTugas}
+                                      target="_blank"
+                                      rel="noreferrer"
                                       style={{ color: "var(--brand-primary)" }}
                                     >
-                                      File: {user.suratTugas}
-                                    </div>
+                                      Preview surat tugas
+                                    </a>
                                   )}
                                 </div>
                               )}

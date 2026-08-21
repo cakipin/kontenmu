@@ -57,7 +57,16 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     (session as any)?.kelas ||
     "";
   const [suratTugas, setSuratTugas] = useState("");
+  const [suratTugasPreview, setSuratTugasPreview] = useState("");
+  const [suratTugasFileName, setSuratTugasFileName] = useState("");
+  const [suratTugasMimeType, setSuratTugasMimeType] = useState("");
   const [isUploadingSuratTugas, setIsUploadingSuratTugas] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (suratTugasPreview) URL.revokeObjectURL(suratTugasPreview);
+    };
+  }, [suratTugasPreview]);
 
   const handleUploadSuratTugas = async (file: File) => {
     if (file.size > 2 * 1024 * 1024) {
@@ -67,6 +76,9 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
 
     setIsUploadingSuratTugas(true);
     setSuratTugas("");
+    setSuratTugasFileName(file.name);
+    setSuratTugasMimeType(file.type);
+    setSuratTugasPreview(URL.createObjectURL(file));
     try {
       let finalFileToUpload = file;
       if (file.type.startsWith("image/")) {
@@ -2541,7 +2553,7 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                         <input
                           type="file"
                           className="input-control"
-                          accept=".pdf,.jpg,.jpeg,.png"
+                          accept=".pdf,.png,.doc,.docx"
                           onChange={(e) => {
                             if (e.target.files?.length) {
                               void handleUploadSuratTugas(e.target.files[0]);
@@ -2550,6 +2562,9 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                           disabled={isUploadingSuratTugas}
                           required
                         />
+                        <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                          Format: PDF, PNG, DOC, atau DOCX. Ukuran maksimal 2 MB.
+                        </span>
                         {isUploadingSuratTugas && (
                           <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
                             Mengunggah surat tugas...
@@ -2562,8 +2577,27 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                               color: "var(--brand-primary)",
                             }}
                           >
-                            File: {suratTugas}
+                            File berhasil diunggah: {suratTugasFileName}
                           </span>
+                        )}
+                        {suratTugasPreview && suratTugasMimeType === "image/png" && (
+                          <img
+                            src={suratTugasPreview}
+                            alt="Preview surat tugas"
+                            style={{ width: "100%", maxHeight: "280px", objectFit: "contain", borderRadius: "8px", border: "1px solid var(--border-subtle)" }}
+                          />
+                        )}
+                        {suratTugasPreview && suratTugasMimeType === "application/pdf" && (
+                          <iframe
+                            src={suratTugasPreview}
+                            title="Preview surat tugas"
+                            style={{ width: "100%", height: "280px", borderRadius: "8px", border: "1px solid var(--border-subtle)" }}
+                          />
+                        )}
+                        {suratTugasPreview && suratTugasMimeType !== "image/png" && suratTugasMimeType !== "application/pdf" && (
+                          <div style={{ padding: "12px", borderRadius: "8px", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)", fontSize: "0.85rem" }}>
+                            Dokumen Word siap diunggah: {suratTugasFileName}. Preview visual tersedia untuk PDF dan PNG.
+                          </div>
                         )}
                       </label>
                       <label
