@@ -3588,7 +3588,7 @@ export function SchoolUsers() {
       let resPayload;
       if (editingStaffId && !editingStaffId.startsWith("SCH-")) {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL || `${""}`}/api/users/${editingStaffId}`,
+          `/api/users/${editingStaffId}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -3599,11 +3599,7 @@ export function SchoolUsers() {
         if (!res.ok || resPayload.error)
           throw new Error(resPayload.error || "Gagal mengupdate user");
       } else {
-        const apiUrl = import.meta.env.DEV
-          ? ""
-          : import.meta.env.VITE_API_URL ||
-            "https://sales-api.1912.workers.dev";
-        const res = await fetch(`${apiUrl}/api/users`, {
+        const res = await fetch(`/api/users`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -3613,9 +3609,9 @@ export function SchoolUsers() {
           throw new Error(resPayload.error || "Gagal menambahkan user");
       }
 
-      // Re-fetch users to update the list
+      // Re-fetch from the API directly to ensure our UI is perfectly in sync with the DB.
       const res = await fetch(
-        `${""}/api/users`,
+        `/api/users`,
         { cache: "no-store" },
       );
       if (res.ok) {
@@ -3645,7 +3641,7 @@ export function SchoolUsers() {
     try {
       if (!staffId.startsWith("SCH-")) {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL || `${""}`}/api/users/${staffId}`,
+          `/api/users/${staffId}`,
           { method: "DELETE" },
         );
         if (!res.ok) {
