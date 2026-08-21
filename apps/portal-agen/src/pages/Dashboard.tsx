@@ -46,7 +46,9 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
   const { data, setData, isLoading } = useAppData();
 
   const [users, setUsers] = useState<any[]>([]);
-  const currentUser = users.find((u) => u.username === session?.username);
+  const currentUser = users.find(
+    (u) => u.username === session?.username || u.id === (session as any)?.id
+  );
   const sessionRefreshStarted = useRef(false);
   const currentStudentClass =
     currentUser?.kelas ||
@@ -309,8 +311,32 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     let userToUpdate = currentUser;
 
     if (!userToUpdate) {
+      try {
+        const res = await fetch("/api/users?limit=2000", { cache: "no-store" });
+        const json = await res.json();
+        if (json.success && json.data) {
+          const found = json.data.find(
+            (u: any) => u.username === session?.username || u.id === (session as any)?.id
+          );
+          if (found) {
+            userToUpdate = found;
+          }
+        }
+      } catch {
+        // Abaikan
+      }
+    }
+
+    const realId = userToUpdate?.id || (session as any)?.id;
+    if (!realId) {
+      alert("Gagal mengidentifikasi akun. Silakan refresh halaman.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!userToUpdate) {
       userToUpdate = {
-        id: `USR-${Date.now().toString().slice(-4)}`,
+        id: realId,
         username: session.username,
         nama: session.displayName || session.username,
         initial: session.initial || "U",
