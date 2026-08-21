@@ -5599,11 +5599,17 @@ export function TeacherAccess() {
                 a.isbn === b.value,
             );
             if (!duplicate) {
-              await fetch("/api/allocate", {
+              const resAlloc = await fetch("/api/allocate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sekolahId: schoolId, isbn: b.value, siswaId: editingTeacher.username, studentUsername: editingTeacher.username })
               });
+              if (!resAlloc.ok) {
+                const j = await resAlloc.json().catch(()=>({}));
+                if (resAlloc.status !== 409) {
+                  throw new Error(j.error || "Gagal menyimpan ke database SQL");
+                }
+              }
 
               newAllocations.unshift({
                 id: "ALC" + Date.now() + Math.random(),
