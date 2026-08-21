@@ -1,7 +1,5 @@
 import { sign } from "@tsndr/cloudflare-worker-jwt";
 
-const TENANT_ROLES = new Set(["sekolah", "guru", "siswa"]);
-
 export const onRequestPost = async (context: any) => {
   const jsonHeaders = { "Content-Type": "application/json" };
 
@@ -134,13 +132,6 @@ export const onRequestPost = async (context: any) => {
         if (Number(school?.id) === schoolId) validatedSchoolId = schoolId;
       }
     }
-    if (TENANT_ROLES.has(finalRole) && !validatedSchoolId) {
-      return new Response(
-        JSON.stringify({ error: "Akun belum terhubung dengan sekolah yang valid." }),
-        { status: 403, headers: jsonHeaders },
-      );
-    }
-
     // Create initial
     let finalInitial = existingUser?.initial;
     if (!finalInitial) {
