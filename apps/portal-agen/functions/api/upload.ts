@@ -39,6 +39,13 @@ const EXTENSION_MAP: Record<string, string> = {
 /** Batas ukuran: gambar maks 5 MB, konten lain maks 200 MB */
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
 const MAX_CONTENT_BYTES = 200 * 1024 * 1024; // 200 MB
+const MAX_ONBOARDING_DOCUMENT_BYTES = 2 * 1024 * 1024; // 2 MB
+const ONBOARDING_DOCUMENT_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 
 /** Generate nama file aman menggunakan crypto random */
 function safeFilename(mimeType: string): string {
@@ -63,6 +70,8 @@ export const onRequestPost = async (context: any) => {
   try {
     const formData = await context.request.formData();
     const file = formData.get("file") as File | null;
+    const purpose = String(formData.get("purpose") || "");
+    const authRole = String(context.data?.auth?.role || "");
 
     if (!file || typeof file === "string") {
       return new Response(
@@ -73,6 +82,26 @@ export const onRequestPost = async (context: any) => {
 
     // --- Validasi MIME type ---
     const mimeType = file.type || "";
+    if (authRole === "pending") {
+      if (purpose !== "surat-tugas") {
+        return new Response(
+          JSON.stringify({ error: "User pending hanya dapat mengunggah surat tugas." }),
+          { status: 403, headers: jsonHeaders },
+        );
+      }
+      if (!ONBOARDING_DOCUMENT_TYPES.has(mimeType)) {
+        return new Response(
+          JSON.stringify({ error: "Surat tugas harus berupa PDF, JPG, PNG, atau WebP." }),
+          { status: 415, headers: jsonHeaders },
+        );
+      }
+      if (file.size > MAX_ONBOARDING_DOCUMENT_BYTES) {
+        return new Response(
+          JSON.stringify({ error: "Ukuran surat tugas maksimal 2 MB." }),
+          { status: 413, headers: jsonHeaders },
+        );
+      }
+    }
     if (!ALLOWED_CONTENT_TYPES.has(mimeType)) {
       return new Response(
         JSON.stringify({

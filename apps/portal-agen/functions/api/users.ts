@@ -109,6 +109,7 @@ export const onRequestPost = async (context: any) => {
       terakhirLogin: user.terakhirLogin || "",
       kelas: user.kelas ?? null,
       nis: user.nis ?? null,
+      email: user.email ?? null,
       newUserSource:
         user.newUserSource !== undefined ? user.newUserSource : "manual",
       sekolahId: tenantSchoolId || user.sekolahId || user.sekolah_id || null,
@@ -118,30 +119,7 @@ export const onRequestPost = async (context: any) => {
       updatedAt: sql`CURRENT_TIMESTAMP`,
       password: passwordHash,
     };
-    await ormDb
-      .insert(users)
-      .values(insertData)
-      .onConflictDoUpdate({
-        target: users.username,
-        set: {
-          id: insertData.id,
-          nama: insertData.nama,
-          roleSlug: insertData.roleSlug,
-          wilayah: insertData.wilayah,
-          status: insertData.status,
-          initial: insertData.initial,
-          color: insertData.color,
-          terakhirLogin: insertData.terakhirLogin,
-          kelas: insertData.kelas,
-          nis: insertData.nis,
-          newUserSource: insertData.newUserSource,
-          sekolahId: insertData.sekolahId,
-          requestedRole: insertData.requestedRole,
-          suratTugas: insertData.suratTugas,
-          masaAktif: insertData.masaAktif,
-          updatedAt: insertData.updatedAt,
-        },
-      });
+    await ormDb.insert(users).values(insertData);
 
     if (insertData.sekolahId) {
       const notifId = crypto.randomUUID();
@@ -158,8 +136,11 @@ export const onRequestPost = async (context: any) => {
     });
   } catch (error: any) {
     console.error("[POST /api/users] Error:", error);
+    const isDuplicateUsername = String(error?.message || "").includes(
+      "UNIQUE constraint failed: users.username",
+    );
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+      status: isDuplicateUsername ? 409 : 500,
       headers: jsonHeaders,
     });
   }

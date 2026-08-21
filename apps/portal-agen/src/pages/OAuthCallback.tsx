@@ -79,6 +79,7 @@ export default function OAuthCallback() {
           initial: makeInitial(userData.name || username),
           nbm: userData.nbm,
           picture: userData.picture,
+          sekolahId: userData.sekolahId || undefined,
           loginAt: Date.now(),
           isSso: true,
           token: data.token,

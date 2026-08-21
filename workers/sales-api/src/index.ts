@@ -406,7 +406,9 @@ export default {
         const schoolId = tenantSchoolId(authUser);
         if (schoolId === -1) return json({ success: false, error: "Tenant sekolah pada token tidak valid" }, 403);
         const safeRole = authUser ? role : "pending";
-        const safeStatus = authUser ? (status || "Aktif") : "Menunggu";
+        // Pendaftar publik harus dapat login untuk menyelesaikan onboarding.
+        // Hak akses tetap dibatasi oleh role `pending` sampai disetujui.
+        const safeStatus = authUser ? (status || "Aktif") : "Aktif";
         const safeSchoolId = schoolId || sekolah_id || null;
         const passwordHash = password ? await bcrypt.hash(password, 10) : null;
 

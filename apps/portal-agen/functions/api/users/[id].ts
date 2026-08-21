@@ -41,6 +41,7 @@ export const onRequestPut = async (context: any) => {
       const requestedRole = String(data.requestedRole || data.role || "");
       const allowedRequestedRoles = new Set(["sekolah", "agen", "guru", "siswa"]);
       const requestedSchoolId = Number(data.sekolah_id ?? data.sekolahId);
+      let validatedSchoolName = "";
 
       if (!allowedRequestedRoles.has(requestedRole)) {
         return new Response(JSON.stringify({ success: false, error: "Role pengajuan tidak valid" }), {
@@ -64,6 +65,13 @@ export const onRequestPut = async (context: any) => {
             headers: jsonHeaders,
           });
         }
+        validatedSchoolName = String(school?.nama || "");
+        if (requestedRole === "sekolah" && !String(data.suratTugas || "").startsWith("/api/media/")) {
+          return new Response(JSON.stringify({ success: false, error: "Surat tugas wajib diunggah" }), {
+            status: 400,
+            headers: jsonHeaders,
+          });
+        }
       }
 
       const pendingUpdate: any = {
@@ -71,7 +79,7 @@ export const onRequestPut = async (context: any) => {
         status: "Menunggu Approve",
         requestedRole,
         nama: data.nama || existing.nama,
-        wilayah: data.wilayah || existing.wilayah,
+        wilayah: validatedSchoolName || data.wilayah || existing.wilayah,
         sekolahId: Number.isInteger(requestedSchoolId) && requestedSchoolId > 0
           ? requestedSchoolId
           : null,

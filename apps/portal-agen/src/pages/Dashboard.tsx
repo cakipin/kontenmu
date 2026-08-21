@@ -57,7 +57,42 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     (session as any)?.kelas ||
     "";
   const [suratTugas, setSuratTugas] = useState("");
-  const [suratTugasFile, setSuratTugasFile] = useState<File | null>(null);
+  const [isUploadingSuratTugas, setIsUploadingSuratTugas] = useState(false);
+
+  const handleUploadSuratTugas = async (file: File) => {
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Ukuran file maksimal 2MB");
+      return;
+    }
+
+    setIsUploadingSuratTugas(true);
+    setSuratTugas("");
+    try {
+      let finalFileToUpload = file;
+      if (file.type.startsWith("image/")) {
+        const { compressImageToWebp } = await import("../utils/image");
+        finalFileToUpload = await compressImageToWebp(file, 0.8);
+      }
+
+      const body = new FormData();
+      body.append("file", finalFileToUpload);
+      body.append("purpose", "surat-tugas");
+      const uploadRes = await fetch(`/api/upload`, {
+        method: "POST",
+        credentials: "same-origin",
+        body,
+      });
+      const result = await uploadRes.json().catch(() => ({}));
+      if (!uploadRes.ok || !result.url) {
+        throw new Error(result.error || `Gagal mengunggah file (${uploadRes.status})`);
+      }
+      setSuratTugas(result.url);
+    } catch (err: any) {
+      alert(err.message || "Gagal mengunggah surat tugas");
+    } finally {
+      setIsUploadingSuratTugas(false);
+    }
+  };
 
   // Add Subscription State
   const [isAddSubscriptionModalOpen, setIsAddSubscriptionModalOpen] =
@@ -351,6 +386,12 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
       return;
     }
 
+    if (selectedRole === "sekolah" && !suratTugas) {
+      alert("Surat tugas wajib diunggah sampai selesai.");
+      setIsSubmitting(false);
+      return;
+    }
+
     if ((selectedRole === "siswa" || selectedRole === "guru") && !sekolahId) {
       alert("Silakan pilih sekolah berlangganan dari daftar.");
       setIsSubmitting(false);
@@ -358,45 +399,6 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     }
 
     let finalSuratTugasUrl = selectedRole === "sekolah" ? suratTugas : null;
-
-    if (selectedRole === "sekolah" && suratTugasFile) {
-      try {
-        let finalFileToUpload = suratTugasFile;
-        // Compress if it's an image
-        if (suratTugasFile.type.startsWith("image/")) {
-          const { compressImageToWebp } = await import("../utils/image");
-          finalFileToUpload = await compressImageToWebp(suratTugasFile, 0.8);
-        }
-
-        const psRes = await fetch(`/api/upload/presign`, {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contentType: finalFileToUpload.type,
-            fileName: finalFileToUpload.name,
-          }),
-        });
-        const psJson = await psRes.json();
-        if (!psRes.ok || psJson.error) {
-          throw new Error(`Gagal menyiapkan upload: ${psJson.error ?? psRes.statusText}`);
-        }
-
-        const uploadRes = await fetch(psJson.url, {
-          method: "PUT",
-          headers: { "Content-Type": finalFileToUpload.type },
-          body: finalFileToUpload,
-        });
-        if (!uploadRes.ok) {
-          throw new Error(`Gagal mengunggah file: ${uploadRes.status} ${uploadRes.statusText}`);
-        }
-        finalSuratTugasUrl = psJson.mediaPath;
-      } catch (err: any) {
-        alert(err.message || "Gagal mengunggah surat tugas");
-        setIsSubmitting(false);
-        return;
-      }
-    }
 
     const updatedUser = {
       ...userToUpdate,
@@ -2542,12 +2544,17 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                           accept=".pdf,.jpg,.jpeg,.png"
                           onChange={(e) => {
                             if (e.target.files?.length) {
-                              setSuratTugas(e.target.files[0].name);
-                              setSuratTugasFile(e.target.files[0]);
+                              void handleUploadSuratTugas(e.target.files[0]);
                             }
                           }}
+                          disabled={isUploadingSuratTugas}
                           required
                         />
+                        {isUploadingSuratTugas && (
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                            Mengunggah surat tugas...
+                          </span>
+                        )}
                         {suratTugas && (
                           <span
                             style={{
@@ -2635,6 +2642,8 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
                     className="action-button"
                     disabled={
                       isSubmitting ||
+                      isUploadingSuratTugas ||
+                      (selectedRole === "sekolah" && !suratTugas) ||
                       ((selectedRole === "sekolah" ||
                         selectedRole === "guru" ||
                         selectedRole === "siswa") &&
