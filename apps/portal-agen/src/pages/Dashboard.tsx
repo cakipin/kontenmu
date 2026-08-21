@@ -39,7 +39,7 @@ import {
   type SimSale,
   subscriptionEndDate,
   subscriptionDurationMonths,
-  matchesClass,
+  
 } from "../data/appData";
 
 export default function Dashboard({ currentRole }: { currentRole: string }) {
@@ -655,45 +655,48 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
     };
   }, [currentRole]);
 
-  const libraryRows =
-    currentRole === "guru" || currentRole === "siswa"
-      ? (data.allocations || [])
-          .filter((a) => a.studentUsername === session?.username)
-          .map((a) => {
-            const learning = (data.learning || []).find(
-              (l) => l.studentUsername === session?.username && l.isbn === a.isbn
-            ) || {
-              studentUsername: a.studentUsername,
-              isbn: a.isbn,
-              progress: 0,
-            };
-            const book =
-              distributionBooks.find(
-                (b: any) => String(b.isbn) === String(a.isbn),
-              ) ||
-              (data.books || []).find(
-                (b: any) => String(b.isbn) === String(a.isbn),
-              ) ||
-              getBook(data, a.isbn);
-            return {
-              learning,
-              book,
-            };
-          })
-          .filter(
-            (row) =>
-              row.book &&
-              (currentRole !== "siswa" ||
-                (Boolean(currentStudentClass) &&
-                  Boolean(row.book.kelas) &&
-                  matchesClass(currentStudentClass, row.book.kelas))),
-          )
-      : (data.learning || [])
-          .map((learning) => ({
-            learning,
-            book: (data.books || []).find((b: any) => b.isbn === learning.isbn) || getBook(data, learning.isbn),
-          }))
-          .filter((row) => row.book);
+  const libraryRows = useMemo(() => {
+    if (currentRole === "guru" || currentRole === "siswa") {
+       let allocatedIsbns = (data.allocations || [])
+         .filter((a) => a.studentUsername === session?.username)
+         .map((a) => String(a.isbn).trim());
+         
+       if (currentRole === "guru") {
+          const teacherMapel = (currentStudentClass || "").toLowerCase();
+          if (teacherMapel && teacherMapel !== "") {
+             const allBooks = [...distributionBooks, ...(data.books || [])];
+             allBooks.forEach(b => {
+                if (b.mapel && b.mapel.toLowerCase().includes(teacherMapel)) {
+                    allocatedIsbns.push(String(b.isbn).trim());
+                }
+             });
+          }
+       }
+       
+       const uniqueIsbns = Array.from(new Set(allocatedIsbns));
+       return uniqueIsbns.map(isbn => {
+          const learning = (data.learning || []).find(
+             (l) => l.studentUsername === session?.username && String(l.isbn).trim() === isbn
+          ) || {
+             studentUsername: session?.username,
+             isbn: isbn,
+             progress: 0,
+          };
+          const book =
+             distributionBooks.find((b: any) => String(b.isbn).trim() === isbn) ||
+             (data.books || []).find((b: any) => String(b.isbn).trim() === isbn) ||
+             getBook(data, isbn);
+          return { learning, book };
+       }).filter(row => row.book);
+    } else {
+       return (data.learning || [])
+         .map((learning) => ({
+           learning,
+           book: (data.books || []).find((b: any) => b.isbn === learning.isbn) || getBook(data, learning.isbn),
+         }))
+         .filter((row) => row.book);
+    }
+  }, [currentRole, session?.username, data.allocations, data.learning, distributionBooks, data.books, currentStudentClass]);
 
   const [librarySearch, setLibrarySearch] = useState("");
   const [libraryPage, setLibraryPage] = useState(1);
