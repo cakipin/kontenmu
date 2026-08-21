@@ -95,7 +95,7 @@ export const onRequestPost = async (context: any) => {
     if (userId) {
       existingUser = await db
         .prepare(
-          "SELECT id, role_slug, nama, initial, sekolah_id, status FROM users WHERE id = ?",
+          "SELECT id, role_slug, nama, initial, sekolah_id, status, surat_tugas, masa_aktif FROM users WHERE id = ?",
         )
         .bind(userId)
         .first();
@@ -104,7 +104,7 @@ export const onRequestPost = async (context: any) => {
     if (!existingUser) {
       existingUser = await db
         .prepare(
-          "SELECT id, role_slug, nama, initial, sekolah_id, status FROM users WHERE sso_id = ? OR email = ? OR username = ?",
+          "SELECT id, role_slug, nama, initial, sekolah_id, status, surat_tugas, masa_aktif FROM users WHERE sso_id = ? OR email = ? OR username = ?",
         )
         .bind(ssoId, email, username)
         .first();
@@ -132,6 +132,19 @@ export const onRequestPost = async (context: any) => {
         if (Number(school?.id) === schoolId) validatedSchoolId = schoolId;
       }
     }
+
+    const tenantRole = ["sekolah", "guru", "siswa"].includes(finalRole);
+    const missingSchoolProfile = tenantRole && !validatedSchoolId;
+    const missingSchoolAdminDocuments =
+      finalRole === "sekolah" &&
+      (!existingUser?.surat_tugas || !existingUser?.masa_aktif);
+    const mustCompleteOnboarding =
+      Boolean(existingUser) &&
+      existingUser.status === "Aktif" &&
+      (missingSchoolProfile || missingSchoolAdminDocuments);
+
+    const requestedRole = finalRole;
+    if (mustCompleteOnboarding) finalRole = "pending";
     // Create initial
     let finalInitial = existingUser?.initial;
     if (!finalInitial) {
@@ -147,9 +160,19 @@ export const onRequestPost = async (context: any) => {
 
     if (existingUser) {
       // Update existing user
-      await db
-        .prepare(
-          `
+      const updateSql = mustCompleteOnboarding
+        ? `
+        UPDATE users SET
+          terakhir_login = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP,
+          sso_id = ?,
+          email = ?,
+          nama = ?,
+          role_slug = 'pending',
+          requested_role = ?
+        WHERE id = ?
+      `
+        : `
         UPDATE users SET 
           terakhir_login = CURRENT_TIMESTAMP, 
           updated_at = CURRENT_TIMESTAMP, 
@@ -157,10 +180,17 @@ export const onRequestPost = async (context: any) => {
           email = ?,
           nama = ?
         WHERE id = ?
-      `,
-        )
-        .bind(ssoId, email, finalNama, existingUser.id)
-        .run();
+      `;
+      const updateStatement = db.prepare(updateSql);
+      if (mustCompleteOnboarding) {
+        await updateStatement
+          .bind(ssoId, email, finalNama, requestedRole, existingUser.id)
+          .run();
+      } else {
+        await updateStatement
+          .bind(ssoId, email, finalNama, existingUser.id)
+          .run();
+      }
     } else {
       // Insert new user
       await db
