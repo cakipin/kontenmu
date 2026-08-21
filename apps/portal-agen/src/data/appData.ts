@@ -623,7 +623,7 @@ export function loadRemoteAppData(): Promise<AppData | null> {
         fetch("/api/users?page=1&limit=2000", { cache: "no-store" }).then(res => res.json()).catch(() => null),
         fetch("/api/allocations", { cache: "no-store" }).then(res => res.json()).catch(() => null)
       ]).then(([fullPayload, contentsPayload, usersPayload, allocationsPayload]) => {
-        const baseData = (fullPayload?.found && fullPayload?.data) ? fullPayload.data : initialData;
+        const baseData = (fullPayload?.found && fullPayload?.data) ? fullPayload.data : seedAppData;
         if (baseData) {
           const fullResult = normalizeAppData(baseData);
           
