@@ -14,16 +14,21 @@ export const onRequestGet = async (context: any) => {
     const limit = parseInt(url.searchParams.get("limit") || "1000", 10);
     const offset = (page - 1) * limit;
     const tenantSchoolId = await resolveTenantSchoolId(context);
-    if (tenantSchoolId === 0) return tenantError();
+    
     const auth = context.data?.auth || {};
-    const tenantWhere = auth.role === "pending"
-      ? or(
-          eq(users.id, String(auth.sub || "")),
-          eq(users.username, String(auth.username || "")),
-        )
-      : tenantSchoolId
-        ? eq(users.sekolahId, tenantSchoolId)
-        : undefined;
+    let tenantWhere;
+    if (tenantSchoolId && tenantSchoolId !== 0) {
+      tenantWhere = auth.role === "pending"
+        ? or(eq(users.id, String(auth.sub || "")), eq(users.username, String(auth.username || "")))
+        : eq(users.sekolahId, tenantSchoolId);
+    } else {
+      if (auth.username && (auth.role === "siswa" || auth.role === "guru")) {
+        tenantWhere = eq(users.username, String(auth.username));
+      } else {
+        return tenantError();
+      }
+    }
+
 
     const [totalResult, result] = await Promise.all([
       ormDb.select({ value: sql`count(*)` }).from(users).where(tenantWhere),
