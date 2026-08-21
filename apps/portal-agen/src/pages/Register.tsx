@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@repo/auth";
 import { GlassCard } from "../../../../packages/ui/src/GlassCard";
 
 export default function Register() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,13 +59,15 @@ export default function Register() {
       const result = await response.json();
 
       if (result.success) {
+        const loginError = await login(formData.username, formData.password);
+        if (loginError) {
+          throw new Error(loginError);
+        }
         setSuccess(true);
         document
           .getElementById("register-container")
           ?.scrollTo({ top: 0, behavior: "smooth" }); // Scroll ke atas agar notifikasi terlihat
-        setTimeout(() => {
-          navigate("/login");
-        }, 3000);
+        navigate("/dashboard", { replace: true });
       } else {
         let errMsg = result.error || "Gagal melakukan pendaftaran";
         if (errMsg.includes("UNIQUE constraint failed: users.username")) {
