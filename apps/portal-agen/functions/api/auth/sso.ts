@@ -95,7 +95,7 @@ export const onRequestPost = async (context: any) => {
     if (userId) {
       existingUser = await db
         .prepare(
-          "SELECT id, role_slug, nama, initial, sekolah_id, status, surat_tugas, masa_aktif FROM users WHERE id = ?",
+          "SELECT id, role_slug, nama, initial, wilayah, sekolah_id, status, surat_tugas, masa_aktif FROM users WHERE id = ?",
         )
         .bind(userId)
         .first();
@@ -104,7 +104,7 @@ export const onRequestPost = async (context: any) => {
     if (!existingUser) {
       existingUser = await db
         .prepare(
-          "SELECT id, role_slug, nama, initial, sekolah_id, status, surat_tugas, masa_aktif FROM users WHERE sso_id = ? OR email = ? OR username = ?",
+          "SELECT id, role_slug, nama, initial, wilayah, sekolah_id, status, surat_tugas, masa_aktif FROM users WHERE sso_id = ? OR email = ? OR username = ?",
         )
         .bind(ssoId, email, username)
         .first();
@@ -231,6 +231,7 @@ export const onRequestPost = async (context: any) => {
       ? existingUser.id
       : newUserId;
     userData.sekolahId = validatedSchoolId;
+    userData.wilayah = existingUser?.wilayah || undefined;
 
     if (!context.env.JWT_SECRET) {
       return new Response(JSON.stringify({ error: "Konfigurasi autentikasi server belum tersedia." }), {
