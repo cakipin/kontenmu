@@ -32,3 +32,7 @@ Aturan ini **wajib ditaati** oleh agen AI setiap kali berinteraksi atau melakuka
 ## 6. Smoke Test (VA) Wajib
 - Setiap selesai melakukan penambahan fitur/modul baru, perbaikan, maupun *bug fixing*, agen **WAJIB** melakukan *Smoke Test*.
 - Pastikan tidak ada sistem lain yang rusak (*regression*) akibat perubahan yang baru saja dilakukan sebelum menyatakan tugas selesai.
+
+## 7. Analisis dan Persetujuan (Approval) Pra-Eksekusi
+- Sebelum melakukan penulisan kode untuk perbaikan (*bug fixing*) atau penambahan fitur/modul baru, agen **WAJIB** melakukan analisis menyeluruh dan memberikan laporan (*report*) rencana perbaikan kepada *user*.
+- Agen **DILARANG** mengubah kode sebelum *user* memberikan persetujuan (*approval*) secara eksplisit terhadap rencana/laporan tersebut.
