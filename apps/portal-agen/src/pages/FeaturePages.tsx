@@ -6160,6 +6160,11 @@ export function Library() {
         // 1. If explicitly allocated, grant access
         if (allocatedIsbns.has(String(content.isbn).trim())) return true;
         
+        // STRICT OVERRIDE: If a teacher has explicit specific book allocations, 
+        // they ONLY get those books. We do not fallback to broad Mapel access.
+        // This prevents Kelas 9 from showing up when they only allocated Kelas 7 & 8.
+        if (allocatedIsbns.size > 0) return false;
+        
         // 2. If no explicit allocation, check if the content matches the teacher's mapel AND school level
         if (teacherMapel && teacherMapel !== "") {
            const book = books.find((b: any) => String(b.isbn).trim() === String(content.isbn).trim());
