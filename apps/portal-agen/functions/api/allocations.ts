@@ -13,12 +13,16 @@ export const onRequestGet = async (context: any) => {
     
     let results: any[] = [];
     if (tenantSchoolId && tenantSchoolId !== 0) {
-      // Self-healing: fix any corrupted null sekolah_id allocations for this school
+      // Self-healing: fix any corrupted sekolah_id allocations for this school
       await rawDb.prepare(`
         UPDATE Alokasi_Siswa 
-        SET sekolah_id = (SELECT sekolah_id FROM users WHERE users.username = Alokasi_Siswa.siswa_id LIMIT 1)
-        WHERE sekolah_id IS NULL OR sekolah_id = 'null'
-      `).run();
+        SET sekolah_id = ?
+        WHERE siswa_id IN (
+          SELECT username FROM users WHERE sekolah_id = ?
+          UNION
+          SELECT id FROM users WHERE sekolah_id = ?
+        ) AND (sekolah_id IS NULL OR sekolah_id != ?)
+      `).bind(tenantSchoolId, tenantSchoolId, tenantSchoolId, tenantSchoolId).run();
 
       const res = await rawDb.prepare(
         "SELECT id, siswa_id as studentUsername, isbn, sekolah_id as schoolId, tanggal_alokasi as tanggal FROM Alokasi_Siswa WHERE sekolah_id = ? ORDER BY tanggal_alokasi DESC"
