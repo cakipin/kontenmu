@@ -678,7 +678,10 @@ export default function Dashboard({ currentRole }: { currentRole: string }) {
           else if (sn.includes("smp") || sn.includes("mts")) sl = "smp/mts";
           else if (sn.includes("sma") || sn.includes("smk") || sn.includes("ma")) sl = "sma/ma/smk";
           
-          if (teacherMapel && teacherMapel !== "") {
+          // STRICT OVERRIDE: If a teacher has explicit specific book allocations, 
+          // they ONLY get those books. We do not fallback to broad Mapel access.
+          // This prevents Kelas 9 from showing up when they only allocated Kelas 7 & 8.
+          if (teacherMapel && teacherMapel !== "" && allocatedIsbns.length === 0) {
              const allBooks = [...distributionBooks, ...(data.books || [])];
              allBooks.forEach(b => {
                 if (b.mapel && b.mapel.toLowerCase().includes(teacherMapel)) {
