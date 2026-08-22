@@ -22,3 +22,9 @@ Aturan ini **wajib ditaati** oleh agen AI setiap kali berinteraksi atau melakuka
 - Kode yang di-*push* ke cabang (`branch`) `main` **TIDAK** akan langsung tayang di Production (`kontenmu.id`).
 - Kode di `main` hanya akan masuk ke Production ketika proses GitHub Action (`deploy-production` via *repository_dispatch*) dijalankan (baik melalui tombol "Push Production" di Dashboard Staging, atau dipicu secara manual via GitHub API).
 - Selalu pastikan status *deployment* terakhir (contoh: via `gh run list`) sebelum menyimpulkan bahwa "*bug* masih muncul padahal sudah diperbaiki". Bisa jadi *bug* tersebut muncul karena perbaikannya memang belum di-*deploy*.
+
+## 5. Prosedur Perbaikan (Staging vs Production)
+- Lingkungan **Staging** (`staging` branch) adalah *mirroring* (cermin) dari lingkungan **Production** (`main` branch).
+- Setiap perbaikan, modifikasi, atau *debugging* **HANYA BOLEH** dilakukan pada lingkungan Staging. 
+- Agen harus menguji perbaikan di Staging sampai benar-benar berfungsi sempurna dan tanpa *bug*.
+- **HARAM** melakukan perubahan atau perbaikan langsung ke Production. Setelah kodenya benar dan matang di Staging, barulah digabungkan (*merge*) ke cabang `main` lalu didorong (Push) ke Production.
