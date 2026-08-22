@@ -6597,6 +6597,22 @@ export function LearningHistory() {
   const { session } = useAuth();
   const isSiswa = session?.role === "siswa";
 
+  const [apiBooks, setApiBooks] = useState<any[]>([]);
+  useEffect(() => {
+    let active = true;
+    const apiBase = import.meta.env.VITE_API_URL || "https://sales-api.1912.workers.dev";
+    fetch(`${apiBase}/api/books`, { cache: "no-store" })
+      .then((res) => res.json())
+      .then((payload) => {
+        if (active && payload?.success && Array.isArray(payload.data)) {
+          setApiBooks(payload.data);
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+
   const addProgress = (studentUsername: string, isbn: string) => {
     setData((current) => ({
       ...current,
@@ -6618,7 +6634,56 @@ export function LearningHistory() {
 
   // [FIX] guruIsbns: Kumpulkan semua ISBN yang ada di alokasi sekolah (tidak filter by guru's username).
   // Data allocations sudah difilter per sekolah oleh backend, jadi semua entry di sini valid untuk ditampilkan guru.
-  const guruAllocatedStudents = useMemo(() => {
+  
+  const teacherAllowedIsbns = useMemo(() => {
+    if (session?.role !== "guru") return null;
+
+    let allocatedIsbns = (data.allocations || [])
+         .filter((a: any) => a.studentUsername === session?.username)
+         .map((a: any) => String(a.isbn).trim());
+         
+    const teacherMapel = (
+       (data.users || []).find((u: any) => u.username === session?.username)?.kelas ||
+       (session as any)?.kelas ||
+       ""
+    ).toLowerCase();
+
+    const sessionSchoolId = session?.sekolahId || (session as any)?.sekolah_id;
+    const guruSchool = sessionSchoolId
+       ? data.schools?.find((school: any) => String(school.id) === String(sessionSchoolId))
+       : null;
+    const schoolNameForLevel = guruSchool?.nama || (session as any)?.wilayah || "";
+    
+    let sl = "";
+    const sn = schoolNameForLevel.toLowerCase();
+    if (sn.includes("sd") || sn.includes("mi") || sn.includes("sekolah dasar")) sl = "sd/mi";
+    else if (sn.includes("smp") || sn.includes("mts")) sl = "smp/mts";
+    else if (sn.includes("sma") || sn.includes("smk") || sn.includes("ma")) sl = "sma/ma/smk";
+    
+    // STRICT OVERRIDE
+    if (teacherMapel && teacherMapel !== "" && allocatedIsbns.length === 0) {
+       const allBooks = [...data.books, ...apiBooks];
+       allBooks.forEach((b: any) => {
+          if (b.mapel && b.mapel.toLowerCase().includes(teacherMapel)) {
+              const p = (b.jenjang || b.peruntukan || "").toLowerCase();
+              let match = false;
+              if (p === "umum" || p.includes("semua") || p === "") match = true;
+              else if (sl === "sd/mi" && (p.includes("sd") || p.includes("mi"))) match = true;
+              else if (sl === "smp/mts" && (p.includes("smp") || p.includes("mts"))) match = true;
+              else if (sl === "sma/ma/smk" && (p.includes("sma") || p.includes("smk") || p.includes("ma"))) match = true;
+              else if (!sl) match = true; 
+              
+              if (match) {
+                  allocatedIsbns.push(String(b.isbn).trim());
+              }
+          }
+       });
+    }
+    
+    return new Set(allocatedIsbns);
+  }, [data.allocations, data.users, data.books, apiBooks, data.schools, session]);
+
+const guruAllocatedStudents = useMemo(() => {
     if (session?.role !== "guru") return null;
     // Kembalikan Set berisi semua studentUsername yang ada di alokasi sekolah ini
     return new Set(
@@ -6629,18 +6694,17 @@ export function LearningHistory() {
   const rawFilteredLearning = useMemo(() => {
     let result = data.learning || [];
     if (guruAllocatedStudents) {
-      // [FIX] Guru melihat semua learning dari semua siswa yang ada di alokasi sekolah,
-      // kecuali entry milik guru sendiri
       result = result.filter(
         (item: any) =>
           item.studentUsername !== session?.username &&
-          guruAllocatedStudents.has(String(item.studentUsername || ""))
+          guruAllocatedStudents.has(String(item.studentUsername || "")) &&
+          (!teacherAllowedIsbns || teacherAllowedIsbns.has(String(item.isbn).trim()))
       );
     } else if (isSiswa) {
        result = result.filter((item: any) => item.studentUsername === session?.username);
     }
     return result;
-  }, [data.learning, data.allocations, guruAllocatedStudents, session, isSiswa]);
+  }, [data.learning, data.allocations, guruAllocatedStudents, session, isSiswa, teacherAllowedIsbns]);
 
   const contentRows = useMemo(() => {
     const rows: any[] = [];
