@@ -28,3 +28,7 @@ Aturan ini **wajib ditaati** oleh agen AI setiap kali berinteraksi atau melakuka
 - Setiap perbaikan, modifikasi, atau *debugging* **HANYA BOLEH** dilakukan pada lingkungan Staging. 
 - Agen harus menguji perbaikan di Staging sampai benar-benar berfungsi sempurna dan tanpa *bug*.
 - **HARAM** melakukan perubahan atau perbaikan langsung ke Production. Setelah kodenya benar dan matang di Staging, barulah digabungkan (*merge*) ke cabang `main` lalu didorong (Push) ke Production.
+
+## 6. Smoke Test (VA) Wajib
+- Setiap selesai melakukan penambahan fitur/modul baru, perbaikan, maupun *bug fixing*, agen **WAJIB** melakukan *Smoke Test*.
+- Pastikan tidak ada sistem lain yang rusak (*regression*) akibat perubahan yang baru saja dilakukan sebelum menyatakan tugas selesai.
